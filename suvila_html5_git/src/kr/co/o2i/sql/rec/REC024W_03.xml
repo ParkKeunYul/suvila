@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC024w_03DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="SEL_YN" column="SEL_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+	
+	<select id="SELECT_REC_ALWAYS_PRAY_MGT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT 0 AS SORT
+			  ,''    AS PRAY_CODE
+			  ,'선택' AS PRAY_NM
+		  FROM REC_ALWAYS_PRAY_MGT
+		UNION
+		SELECT 1 AS SORT
+			  ,PRAY_CODE
+			  ,PRAY_NM
+		  FROM REC_ALWAYS_PRAY_MGT
+		 WHERE TEMPLE_CD   = #{V_TEMPLE_CD}
+		   AND USE_YN      = 'T'
+		ORDER BY SORT
+			    ,PRAY_CODE  												
+	</select>
+	
+	<select id="SELECT_DETAIL" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+			  ,CMS_TRADE_CD
+			  ,ACCEPT_SEQ
+			  ,SEQ
+			  ,PROPOSAL_BUD_NO
+			  ,PROPOSAL_BUD_NM
+			  ,SMS_YN
+			  ,MOBILE_TELNO1
+			  ,MOBILE_TELNO2
+			  ,MOBILE_TELNO3
+			  ,APPROVAL_GBN
+			  ,PRAY_CODE
+			  ,PRAY_NM
+			  ,BUNNAB_DAY
+			  ,PAYMENT_AMT
+			  ,START_YYYYMM
+			  ,BASE_AMOUNT
+			  ,END_YN
+			  ,MEMO
+			  ,REMARK
+			  ,DEL_YN
+			  ,AMOUNT
+			  ,MISU_MONTH
+			  ,PRAY_END_DATE
+			  ,BASE_AMOUNT * (-MISU_MONTH) as MISU_TOT
+			  ,MOBILE_TELNO
+			  ,SMS_GROUP_TRANS
+			  ,PROPOSAL_DEL_YN
+		 FROM (
+			SELECT DET.TEMPLE_CD
+				  ,MST.CMS_TRADE_CD
+				  ,DET.ACCEPT_SEQ
+				  ,DET.SEQ
+				  ,MST.PROPOSAL_BUD_NO
+				  ,SMS.NAME_KOR AS PROPOSAL_BUD_NM
+				  ,MST.SMS_YN
+				  ,SMS.MOBILE_TELNO1
+				  ,SMS.MOBILE_TELNO2
+				  ,SMS.MOBILE_TELNO3
+				  ,MST.APPROVAL_GBN
+				  ,DET.PRAY_CODE
+				  ,MGT.PRAY_NM
+				  ,MST.BUNNAB_DAY
+				  ,DET.PAYMENT_AMT
+				  ,DET.START_YYYYMM
+				  <!-- ,MGT.AMOUNT AS BASE_AMOUNT -->
+				  ,(CASE WHEN DET.BASE_AMT != 0 THEN DET.BASE_AMT WHEN DET.BASE_AMT  = 0 THEN MGT.AMOUNT ELSE NVL(DET.BASE_AMT, MGT.AMOUNT) END ) as BASE_AMOUNT
+				  ,DET.END_YN
+				  ,MST.MEMO
+				  ,DET.REMARK
+				  ,DET.DEL_YN
+				  ,SUM(RPH.AMOUNT) AS AMOUNT
+				  ,DET.PRAY_END_DATE
+				  ,(CASE
+				        WHEN 
+			            	DET.END_YN  = 'T' AND NVL(DET.PRAY_END_DATE,'000000') != 000000  THEN  (SUM(RPH.AMOUNT)/(CASE WHEN DET.BASE_AMT != 0 THEN DET.BASE_AMT WHEN DET.BASE_AMT  = 0 THEN MGT.AMOUNT ELSE NVL(DET.BASE_AMT, MGT.AMOUNT) END )) - (TRUNC(MONTHS_BETWEEN(TO_DATE(DET.PRAY_END_DATE,'YYYYMM'),TO_DATE(DET.START_YYYYMM,'YYYYMM')))+1) 
+				        ELSE (SUM(RPH.AMOUNT)/(CASE WHEN DET.BASE_AMT != 0 THEN DET.BASE_AMT WHEN DET.BASE_AMT  = 0 THEN MGT.AMOUNT ELSE NVL(DET.BASE_AMT, MGT.AMOUNT) END )) - (TRUNC(MONTHS_BETWEEN(SYSDATE,TO_DATE(DET.START_YYYYMM,'YYYYMM')))+1)        
+				     END) MISU_MONTH            
+			      ,SMS.MOBILE_TELNO1 || DECODE(SMS.MOBILE_TELNO1,NULL,'','-') || SMS.MOBILE_TELNO2 || DECODE(SMS.MOBILE_TELNO2,NULL,'','-') || SMS.MOBILE_TELNO3 AS MOBILE_TELNO
+		          ,SMS.SMS_GROUP_TRANS
+		          ,SMS.DEL_YN as PROPOSAL_DEL_YN		
+			FROM REC_ALWAYS_PRAY_DETAIL DET
+				,REC_ALWAYS_PRAY_MGT MGT
+				,REC_MASTER MST
+				,REC_SUB RS
+				,REC_PAYMENT_HIS RPH
+				,SIN_CARD_MASTER SMS
+			WHERE DET.TEMPLE_CD  = MGT.TEMPLE_CD
+			  AND DET.PRAY_CODE  = MGT.PRAY_CODE
+			  AND DET.TEMPLE_CD  = RS.TEMPLE_CD
+			  AND DET.ACCEPT_SEQ = RS.ACCEPT_SEQ
+			  AND DET.SEQ        = RS.SEQ
+			  AND RS.TEMPLE_CD   = MST.TEMPLE_CD
+			  AND RS.ACCEPT_SEQ  = MST.ACCEPT_SEQ
+			  AND RS.TEMPLE_CD   = RPH.TEMPLE_CD
+			  AND RS.ACCEPT_SEQ  = RPH.ACCEPT_SEQ
+			  AND RS.SEQ         = RPH.SEQ
+			  AND MST.TEMPLE_CD  = SMS.TEMPLE_CD(+)
+			  AND MST.PROPOSAL_BUD_NO = SMS.BUD_NO(+)
+			  AND DET.TEMPLE_CD  = #{V_TEMPLE_CD}
+			  AND DET.DEL_YN      = 'F'
+			  <if test="V_DATE_GBN == 1">
+			  	AND MST.ACCEPT_DATE BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+			  </if>
+			  <if test="V_DATE_GBN == 2">
+			  	AND RPH.PAYMENT_YYYYMM BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+			  </if>
+			  <if test="V_DATE_GBN == 3">
+			  	DET.START_YYYYMM BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+			  </if>
+			  <if test='V_PROPOSAL_BUD_NO != null and  V_PROPOSAL_BUD_NO != "" '>
+			  	AND MST.PROPOSAL_BUD_NO like  SUBSTR(#{V_PROPOSAL_BUD_NO},0,10) || '%'
+			  </if>
+			  <if test='V_PRAY_CODE != null and  V_PRAY_CODE != "" '>
+			  	AND DET.PRAY_CODE    = #{V_PRAY_CODE}
+			  </if>
+			  <if test='VV_USER_ID != null and  VV_USER_ID != "" '>
+			  	AND DET.CRT_USER = #{VV_USER_ID}
+			  </if>
+			  <if test='V_CLASS_CD != "0" and V_CLASS_CD != null and  V_CLASS_CD != "" '>
+				AND MST.PROPOSAL_BUD_NO IN (SELECT BUD_NO FROM SIN_CLASS_INFO WHERE TEMPLE_CD = MST.TEMPLE_CD AND CLASS_CD = #{V_CLASS_CD})			  
+			  </if>
+			  <if test='V_APPROV != null and  V_APPROV != "" '>
+			  	AND MST.APPROVAL_GBN = #{V_APPROV}
+			  </if>
+			GROUP BY DET.TEMPLE_CD, 
+				MST.CMS_TRADE_CD,
+			    DET.ACCEPT_SEQ, 
+			    DET.SEQ, 
+			    MST.PROPOSAL_BUD_NO,
+			    SMS.NAME_KOR,
+			    MST.SMS_YN,
+			    SMS.MOBILE_TELNO1,
+			    SMS.MOBILE_TELNO2,
+			    SMS.MOBILE_TELNO3, 
+			    MST.APPROVAL_GBN,
+			    DET.PRAY_CODE,
+			    MGT.PRAY_NM,
+			    MST.BUNNAB_DAY,
+			    DET.PAYMENT_AMT,
+			    DET.START_YYYYMM,
+			    <!-- MGT.AMOUNT, -->
+			    (CASE WHEN DET.BASE_AMT != 0 THEN DET.BASE_AMT WHEN DET.BASE_AMT  = 0 THEN MGT.AMOUNT ELSE NVL(DET.BASE_AMT, MGT.AMOUNT) END ),
+			    DET.END_YN,
+			    MST.MEMO,  
+			    DET.REMARK, 
+			    DET.DEL_YN,
+			    DET.PRAY_END_DATE,
+			    SMS.MOBILE_TELNO1 || DECODE(SMS.MOBILE_TELNO1,NULL,'','-') || SMS.MOBILE_TELNO2 || DECODE(SMS.MOBILE_TELNO2,NULL,'','-') || SMS.MOBILE_TELNO3,
+		        SMS.SMS_GROUP_TRANS,
+		        SMS.DEL_YN
+		)
+		WHERE 1=1
+		<if test="V_PAY_STATE == '1'">
+			AND MISU_MONTH >= 0
+		</if>
+		<if test="V_PAY_STATE == '2'">
+			AND MISU_MONTH &lt; 0
+		</if>
+		<if test="V_DATE_GBN == '2'">
+			AND AMOUNT > 0
+		</if>
+		ORDER BY TEMPLE_CD
+				,ACCEPT_SEQ
+				,SEQ
+	</select>
+	
+	<update id="UPDATE_REC_ALWAYS_PRAY_DETAIL" parameterType="java.util.Map">
+		UPDATE REC_ALWAYS_PRAY_DETAIL
+		   SET END_YN 		  = #{END_YN}
+		   	  ,REMARK		  = #{REMARK ,jdbcType=VARCHAR}
+		   	  ,UPT_USER		  = #{V_USER_ID}
+		   	  ,UPT_DATE		  = SYSDATE
+		   	  ,REMOTE		  = #{V_REMOTE}
+		   	  ,PRAY_END_DATE  = #{PRAY_END_DATE,jdbcType=VARCHAR}
+		 WHERE TEMPLE_CD 	  = #{V_TEMPLE_CD}
+		   AND SEQ			  = #{SEQ}
+		   AND ACCEPT_SEQ	  = #{ACCEPT_SEQ}
+		   AND PRAY_CODE	  = #{PRAY_CODE}
+	</update>
+</mapper>

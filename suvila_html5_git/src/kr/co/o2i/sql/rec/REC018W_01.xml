@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC018w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="SEL_YN" column="SEL_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+
+	
+	<select id="SELECT_General" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT A.BUD_NO
+			  ,A.GIBU_NO
+			  ,A.GIBU_DAY
+			  ,A.NAME_KOR
+			  ,substr(A.JUMIN_NO,0,6) as JUMIN_NO
+			  ,A.SAUP_NO
+			  ,A.ZIP_CD
+			  ,A.ADDR1
+			  ,A.REMARK
+			  ,A.ADDR2
+			  ,A.ADDR2 || ' ' || FN_ADDR_BLDG(A.BLDG_NUM)  as ADDR
+			  ,A.GIBU_AMT
+			  ,A.REISUE_YN
+			  ,'F'  AS BULJUNHAM
+			  ,TO_CHAR(A.CRT_DATE,'YYYY-MM-DD HH:MI:SS') AS CRT_DATE
+			  ,B.NAME AS PRINT_GBN_NM
+			  ,A.BLDG_NUM
+			  ,FN_ADDR_BLDG(A.BLDG_NUM) ADDR3
+			  ,(SELECT NVL(C.ACCEPT_SEQ,'0') ACCEPT_SEQ
+		     	  FROM SIN_DONATION_BILL_DETAIL C
+		      	 WHERE C.TEMPLE_CD (+)= A.TEMPLE_CD
+		      	   AND C.GIBU_DAY (+)= A.GIBU_DAY
+		      	   AND C.GIBU_NO (+)= A.GIBU_NO
+		      	   AND C.BUD_NO (+)= A.BUD_NO
+		      	    AND ROWNUM =1 ) ACCEPT_SEQ
+		      ,(SELECT USER_NM
+		     	  FROM ASP_TEMPLE_USER D
+		     	 WHERE D.USER_ID   = A.CRT_USER
+		     	   AND D.TEMPLE_CD = A.TEMPLE_CD) USER_NM
+		     ,'F' as SEL_YN
+		 FROM SIN_DONATION_BILL A,ASP_CODE_MGT B
+		WHERE A.TEMPLE_CD   = #{V_TEMPLE_CD}				  
+		  AND A.PRINT_GBN   = B.CODE(+)
+		  AND B.GROUP_CD(+) = 'BILL'
+		  AND A.GIBU_DAY BETWEEN #{V_YEAR} AND #{V_YEAR_END}
+		  <if test="V_BUD_NO != '' and V_BUD_NO != null  ">
+		  	AND A.BUD_NO = #{V_BUD_NO} 
+		  </if>
+		ORDER BY A.GIBU_DAY ASC 
+				,A.GIBU_NO ASC 
+				,A.BUD_NO ASC 
+				,A.NAME_KOR ASC
+	</select>
+	
+	<select id="SELECT_Detail" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT A.BUD_NO
+			  ,A.ACCEPT_SEQ
+			  ,A.SEQ
+			  ,A.REMARK AS REC_NM
+			  ,A.GIBU_AMT
+			  ,A.RECEIPT_DATE
+			  ,A.GIBU_NO
+			  ,A.GIBU_DAY
+			  ,A.APPROVAL_GBN
+			  ,A.EA
+        	  ,A.PRICE
+		 FROM SIN_DONATION_BILL_DETAIL A
+		WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+		  AND A.BUD_NO    = #{V_BUD_NO}
+		  AND A.GIBU_NO   = #{V_GIBU_NO}
+		  AND A.GIBU_DAY  = #{V_YEAR}
+		ORDER BY A.ACCEPT_SEQ ASC
+	</select>
+	
+	<update id="UPDATE_DONATION_CANCEL" parameterType="kr.co.o2i.util.CommonMap">
+		UPDATE SIN_DONATION_BILL
+			SET GIBU_AMT    = '0'
+			   ,UPT_USER    = #{V_USER_ID}
+			   ,UPT_DATE    = SYSDATE
+			   ,REMOTE      = #{V_REMOTE}
+		  WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+			AND BUD_NO    = #{BUD_NO}
+			AND GIBU_NO   = #{GIBU_NO}
+			AND GIBU_DAY  = #{GIBU_DAY}
+	</update>
+	
+	<delete id="UPDATE_DONATION_CANCEL_DETAIL" parameterType="java.util.Map">
+		DELETE SIN_DONATION_BILL_DETAIL
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND BUD_NO    = #{BUD_NO}
+		   AND GIBU_NO   = #{GIBU_NO}
+		   AND GIBU_DAY  = #{GIBU_DAY}
+	</delete>
+	
+	<update id="UPDATE_DONATION_ADDR" parameterType="kr.co.o2i.util.CommonMap">
+		UPDATE SIN_DONATION_BILL
+		   SET ZIP_CD   = #{ZIP_CD}
+		   	  ,ADDR1    = #{ADDR1}
+		   	  ,ADDR2    = #{ADDR2}
+		   	  ,UPT_USER = #{V_USER_ID}
+		   	  ,UPT_DATE = SYSDATE
+		   	  ,REMOTE   = #{V_REMOTE}
+		   	  ,BLDG_NUM = #{BLDG_NUM}
+		WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		AND   BUD_NO    = #{BUD_NO}
+		AND   GIBU_NO   = #{GIBU_NO}
+		AND   GIBU_DAY  = #{GIBU_DAY}
+	</update>
+	
+</mapper>

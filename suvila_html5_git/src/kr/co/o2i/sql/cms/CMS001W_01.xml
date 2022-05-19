@@ -1,0 +1,679 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="CMS001w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+	
+    <insert id="TEST_CMS_INSERT" parameterType="kr.co.o2i.util.CommonMap" >
+    	INSERT INTO AAA(
+    		AAA , BBB
+    	) VALUES (
+    	   '111', '222'
+    	)
+    </insert>
+    
+    <insert id="TEST_CMS_INSERTBB" parameterType="kr.co.o2i.util.CommonMap" >
+    	INSERT INTO AAA(
+    		AAA , BBB
+    	) VALUES (
+    	   '333', '444'
+    	)
+    </insert>
+    
+	
+
+	<!--  접수 신도 CMS 정보 조회  -->
+	<select id="SELECT_REC_SIN_CMS_INFO" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT T1.*
+		      , BANK_NM || ' | ' || IF_PAYMENT_ACCOUNT || ' | ' || ACCOUNT_SEQ || ' | ' || CMS_PAYMENT_DAY ||'일 '|| CMS_CUSTOMER_COMMENT as DISPLAY
+		  FROM (
+			SELECT
+			    SIN.TEMPLE_CD,
+			    SIN.BUD_NO,
+			    CMS.REG_NO AS JUMIN_NO,
+			    CMS.CMS_TRADE_CD,
+			    CMS.IF_PAYMENT_BANK_CD,
+			    CMS.IF_PAYMENT_ACCOUNT,
+			    CMS.CMS_PAYMENT_DAY,
+			    CMS.CMS_PAYMENT_DAY || '일' AS CMS_PAYMENT_DAY_TEMP,
+			    TCMS.CMS_CUSTOMER_COMMENT || '[' || CMS.CMS_TRADE_CD || ']' AS CMS_CUSTOMER_COMMENT,
+			    (SELECT NAME FROM ASP_CODE_MGT WHERE GROUP_CD = 'BANK' AND CODE = CMS.IF_PAYMENT_BANK_CD ) AS BANK_NM,
+				CMS.ACCOUNT_SEQ,
+				'N' as F_STATE
+			FROM SIN_CARD_MASTER SIN,
+			     SIN_CMS_INFO   CMS,
+			     ASP_TEMPLE_CMS_INFO TCMS
+			WHERE SIN.TEMPLE_CD  = CMS.TEMPLE_CD
+			AND SIN.BUD_NO       = CMS.BUD_NO
+			AND CMS.TEMPLE_CD    = TCMS.TEMPLE_CD
+			AND CMS.CMS_TRADE_CD = TCMS.CMS_TRADE_CD
+			AND SIN.TEMPLE_CD    = #{V_TEMPLE_CD}
+			AND CMS.DEL_YN       = 'F'
+			AND CMS.USE_YN       = 'T'
+			AND TCMS.USE_YN      = 'T'
+			AND SIN.BUD_NO       = #{V_BUD_NO}
+			AND (
+			        CMS.CMS_ACCOUNT_STATUS = '1' 
+			    OR  CMS.CMS_ACCOUNT_STATUS = '2'
+			)
+			ORDER BY SIN.TEMPLE_CD, SIN.BUD_NO, CMS.CMS_TRADE_CD, CMS.IF_PAYMENT_BANK_CD, CMS.IF_PAYMENT_ACCOUNT
+		) T1
+	</select>
+			
+			
+	<select id="SELECT_ASP_TEMPLE_CMS_INFO" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT
+		    #{V_TEMPLE_CD} AS TEMPLE_CD,
+		    '' AS CMS_TRADE_CD,
+		    '선택' AS CMS_CUSTOMER_COMMENT,
+		    '' AS REMARK,
+		    '' AS CMS_PAYMENT_MISU_DAY
+		FROM DUAL
+		UNION ALL
+		SELECT
+		    TEMPLE_CD,
+		    CMS_TRADE_CD,
+		    CMS_CUSTOMER_COMMENT,
+		    REMARK,
+			(
+		        SELECT
+		            NVL(MIN(CMS_PAYMENT_DAY),'00') AS CMS_PAYMENT_DAY
+		        FROM ASP_TEMPLE_CMS_PAYMENT_DAY_MGT
+		        WHERE TEMPLE_CD = A.TEMPLE_CD
+		        AND CMS_TRADE_CD = A.CMS_TRADE_CD
+		        AND CMS_REQUEST_GBN = '02'
+		    ) AS CMS_PAYMENT_MISU_DAY
+		FROM ASP_TEMPLE_CMS_INFO A
+		WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		AND USE_YN = 'T'
+	</select>		
+	
+	
+	
+	<select id="SELECT_SIN_CMS_INFO_ALL" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+			SELECT
+			    'S' AS SQL_MODE,
+			    SIN.TEMPLE_CD,
+			    SIN.BUD_NO,
+			    SIN.BUD_CODE,
+			    SIN.NAME_KOR,
+			    SIN.MOBILE_TELNO1,
+			    SIN.MOBILE_TELNO2,
+			    SIN.MOBILE_TELNO3,
+			    replace(SIN.MOBILE_TELNO1 ||'-' || SIN.MOBILE_TELNO2||'-' || SIN.MOBILE_TELNO3, '--', '')  as MOBILE_TELNO  ,
+			    CMS.CMS_TRADE_CD,
+			    CMS.IF_PAYMENT_BANK_CD,
+			    CMS.IF_PAYMENT_ACCOUNT,
+			    CMS.CMS_PAYMENT_DAY,
+			    CMS.CMS_ACCOUNT_STATUS,
+			    CMS.REMARK,
+				CMS.CMS_ACCOUNT_STATUS AS ORG_CMS_ACCOUNT_STATUS,
+				CMS.CMS_PAYMENT_DAY AS ORG_CMS_PAYMENT_DAY,
+				CMS.CMS_TRADE_CD AS ORG_CMS_TRADE_CD,
+				CMS.IF_PAYMENT_BANK_CD AS ORG_IF_PAYMENT_BANK_CD,
+			    CMS.IF_PAYMENT_ACCOUNT AS ORG_IF_PAYMENT_ACCOUNT,
+				CMS.USE_YN,
+				CMS.REG_GBN,
+				CMS.REG_NO,
+				CMS.REG_NO AS ORG_REG_NO,
+				CMS.ACCOUNT_SEQ,
+				CMS.ACCOUNT_SEQ AS ORG_ACCOUNT_SEQ,
+				TO_CHAR(CMS.CRT_DATE,'YYYY/MM/DD') AS CRT_DATE,
+				NVL( (SELECT IF_TRANSFER_STATE
+			     	    FROM SIN_CMS_MEMBER_HIS
+			    	   WHERE BUD_NO      = CMS.BUD_NO
+			      		 AND TEMPLE_CD   = CMS.TEMPLE_CD
+			      		 AND IF_TRAN_ID  = CMS.CMS_TRADE_CD
+			      		 AND IF_MEMBER_ID =  CMS.IF_PAYMENT_BANK_CD||IF_PAYMENT_ACCOUNT||LPAD(ACCOUNT_SEQ,2,0)
+			      	     AND IF_TRANSFER_STATE = 1  <!-- 1. 신청전 2.전문발송, 3.적용완료 4.해지신청전 -->
+			      		 AND ROWNUM = 1) ,0) AS FILE_CHECK,
+			     CMS.IF_MEMBER_ID
+			FROM SIN_CARD_MASTER SIN,
+			     SIN_CMS_INFO   CMS
+		   WHERE SIN.TEMPLE_CD = CMS.TEMPLE_CD
+			 AND SIN.BUD_NO    = CMS.BUD_NO
+			 AND SIN.TEMPLE_CD = #{V_TEMPLE_CD}
+			 AND CMS.DEL_YN = 'F'
+			 AND SIN.DEL_YN = 'F'
+			 AND TO_CHAR(CMS.CRT_DATE, 'YYYYMMDD') BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+			<if test='V_BUD_NO != nul and  V_BUD_NO != "" '>
+				AND SIN.BUD_NO = #{V_BUD_NO} 
+			</if>
+			<if test='V_STATUS != nul and  V_STATUS != "" '>
+				AND CMS.CMS_ACCOUNT_STATUS = #{V_STATUS}
+			</if>			
+			 AND SIN.BUD_NO NOT IN (
+			 						 SELECT BUD_NO 
+			 						  FROM SIN_DEATH_INFO 
+			 						 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+			 						)
+			ORDER BY CMS.CMS_ACCOUNT_STATUS DESC
+			        ,SIN.BUD_NO
+			        ,CMS.CMS_TRADE_CD
+			        ,CMS.IF_PAYMENT_BANK_CD
+			        ,CMS.IF_PAYMENT_ACCOUNT
+			        ,CMS.ACCOUNT_SEQ
+	</select>
+	
+	<select id="SELECT_SIN_CMS_INFO" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		select * from ( select pt.*, ceil(rownum / ${limit} ) page from (
+			SELECT
+			    'S' AS SQL_MODE,
+			    SIN.TEMPLE_CD,
+			    SIN.BUD_NO,
+			    SIN.BUD_CODE,
+			    SIN.NAME_KOR,
+			    SIN.MOBILE_TELNO1,
+			    SIN.MOBILE_TELNO2,
+			    SIN.MOBILE_TELNO3,
+			    CMS.CMS_TRADE_CD,
+			    CMS.IF_PAYMENT_BANK_CD,
+			    CMS.IF_PAYMENT_ACCOUNT,
+			    CMS.CMS_PAYMENT_DAY,
+			    CMS.CMS_ACCOUNT_STATUS,
+			    CMS.REMARK,
+				CMS.CMS_ACCOUNT_STATUS AS ORG_CMS_ACCOUNT_STATUS,
+				CMS.CMS_PAYMENT_DAY AS ORG_CMS_PAYMENT_DAY,
+				CMS.CMS_TRADE_CD AS ORG_CMS_TRADE_CD,
+				CMS.IF_PAYMENT_BANK_CD AS ORG_IF_PAYMENT_BANK_CD,
+			    CMS.IF_PAYMENT_ACCOUNT AS ORG_IF_PAYMENT_ACCOUNT,
+				CMS.USE_YN,
+				CMS.REG_GBN,
+				CMS.REG_NO,
+				CMS.REG_NO AS ORG_REG_NO,
+				CMS.ACCOUNT_SEQ,
+				CMS.ACCOUNT_SEQ AS ORG_ACCOUNT_SEQ,
+				TO_CHAR(CMS.CRT_DATE,'YYYY/MM/DD') AS CRT_DATE,
+				NVL( (SELECT IF_TRANSFER_STATE
+			     	    FROM SIN_CMS_MEMBER_HIS
+			    	   WHERE BUD_NO      = CMS.BUD_NO
+			      		 AND TEMPLE_CD   = CMS.TEMPLE_CD
+			      		 AND IF_TRAN_ID  = CMS.CMS_TRADE_CD
+			      		 AND IF_MEMBER_ID =  CMS.IF_PAYMENT_BANK_CD||IF_PAYMENT_ACCOUNT||LPAD(ACCOUNT_SEQ,2,0)
+			      	     AND IF_TRANSFER_STATE = 1 -- 1. 신청전 2.전문발송, 3.적용완료 4.해지신청전
+			      		 AND ROWNUM = 1) ,0) AS FILE_CHECK,
+			     CMS.IF_MEMBER_ID
+			FROM SIN_CARD_MASTER SIN,
+			     SIN_CMS_INFO   CMS
+			WHERE 1=1
+			AND SIN.TEMPLE_CD = CMS.TEMPLE_CD
+			AND SIN.BUD_NO    = CMS.BUD_NO
+			AND SIN.TEMPLE_CD = #{V_TEMPLE_CD}
+			AND CMS.DEL_YN = 'F'
+			AND SIN.DEL_YN = 'F'
+			AND TO_CHAR(CMS.CRT_DATE, 'YYYYMMDD') BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+			<if test='V_BUD_NO != nul and  V_BUD_NO != "" '>
+				AND SIN.BUD_NO = #{V_BUD_NO} 
+			</if>
+			<if test='V_STATUS != nul and  V_STATUS != "" '>
+				AND CMS.CMS_ACCOUNT_STATUS = #{V_STATUS}
+			</if>
+			AND SIN.BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = #{V_TEMPLE_CD})
+			ORDER BY CMS.CRT_DATE desc
+			 <!--       CMS.CMS_ACCOUNT_STATUS DESC
+			        ,SIN.BUD_NO
+			        ,CMS.CMS_TRADE_CD
+			        ,CMS.IF_PAYMENT_BANK_CD
+			        ,CMS.IF_PAYMENT_ACCOUNT
+			        ,CMS.ACCOUNT_SEQ-->
+		) pt ) where page = ${page}
+	</select>
+	
+	
+	<select id="SELECT_SIN_CMS_INFO_CNT" parameterType="kr.co.o2i.util.CommonMap" resultType="Integer">
+		SELECT
+		    count(SIN.TEMPLE_CD) as CNT		   
+		FROM SIN_CARD_MASTER SIN,
+		     SIN_CMS_INFO   CMS
+		WHERE 1=1
+		AND SIN.TEMPLE_CD = CMS.TEMPLE_CD
+		AND SIN.BUD_NO    = CMS.BUD_NO
+		AND SIN.TEMPLE_CD = #{V_TEMPLE_CD}
+		AND CMS.DEL_YN = 'F'
+		AND SIN.DEL_YN = 'F'
+		<if test='V_BUD_NO != nul and  V_BUD_NO != "" '>
+			AND SIN.BUD_NO = #{V_BUD_NO} 
+		</if>
+		<if test='V_STATUS != nul and  V_STATUS != "" '>
+			AND CMS.CMS_ACCOUNT_STATUS = #{V_STATUS}
+		</if>
+		AND SIN.BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = #{V_TEMPLE_CD})
+	</select>
+	
+	
+	<select id="SELECT_SIN_CMS_REC_CNT" parameterType="kr.co.o2i.util.CommonMap" resultType="Integer">
+		SELECT count(REC_CNT) as CNT																
+          FROM V_REC_CMS_INFO      															    
+		 WHERE TEMPLE_CD      =  #{V_TEMPLE_CD}
+		   AND BANK_NO 		  =	 #{V_BANK_CD} 		  
+		   AND ACCOUNT_NUMBER =  #{V_ACCOUNT} 		  
+		   AND ACCOUNT_SEQ    =  #{V_SEQ}
+		   AND CMS_TRADE_CD   =  #{V_REC_CMS_TRADE_CD}  
+	</select>
+	
+	
+	<select id="SELECT_SIN_CMS_AUTH_FILE" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT SEQ																															
+		     ,TEMPLE_CD																												
+			 ,FILE_NAME																												
+			 ,BUD_NO																													
+			 ,FILE_SIZE																												
+			 ,DEL_YN																													
+			 ,ACCOUNT_SEQ																										
+        FROM SIN_CMS_INFO_FILE																								
+       WHERE TEMPLE_CD    	=  #{V_TEMPLE_CD}							
+         AND BUD_NO	   		=  #{V_BUD_NO}							
+         AND BANK_CD	   	=  #{V_BANK_CD} 							
+         AND ACCOUNT	   	=  #{V_ACCOUNT} 							
+         AND ACCOUNT_SEQ	=  LPAD(#{V_SEQ},2,'0')  			
+         AND CMS_TRADE_CD	=  #{V_CMS_TRADE_CD} 
+	</select>
+	
+	
+	
+	
+	<select id="SELECT_SIN_CMS_INFO_T" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT
+		    SIN.TEMPLE_CD,
+		    SIN.BUD_NO,    
+		    (SELECT name FROM ASP_CODE_MGT WHERE GROUP_CD = 'BANK' AND CODE = CMS.IF_PAYMENT_BANK_CD ) as BUD_CODE,
+		    SIN.NAME_KOR,
+		    SIN.MOBILE_TELNO1,
+		    SIN.MOBILE_TELNO2,
+		    SIN.MOBILE_TELNO3,
+		    CMS.CMS_TRADE_CD,
+		    CMS.IF_PAYMENT_BANK_CD,
+		    CMS.IF_PAYMENT_ACCOUNT,
+		    CMS.CMS_PAYMENT_DAY,
+		    CMS.CMS_ACCOUNT_STATUS,
+		    CMS.REMARK,
+			CMS.CMS_ACCOUNT_STATUS AS ORG_CMS_ACCOUNT_STATUS,
+			CMS.CMS_PAYMENT_DAY AS ORG_CMS_PAYMENT_DAY,
+			CMS.CMS_TRADE_CD AS ORG_CMS_TRADE_CD,
+			CMS.IF_PAYMENT_BANK_CD AS ORG_IF_PAYMENT_BANK_CD,
+		    TO_CHAR(CMS.UPT_DATE,'YYYYMMDD') AS ORG_IF_PAYMENT_ACCOUNT,
+			CMS.USE_YN,
+			CMS.REG_GBN,
+			CMS.REG_NO,
+			CMS.REG_NO AS ORG_REG_NO,
+			CMS.ACCOUNT_SEQ,
+			CMS.ACCOUNT_SEQ AS ORG_ACCOUNT_SEQ,
+			TO_CHAR(CMS.CRT_DATE,'YYYY/MM/DD') AS CRT_DATE,
+			'' AS FILE_CHECK,
+		    CMS.UPT_USER as  IF_MEMBER_ID
+		FROM SIN_CARD_MASTER SIN,
+		     SIN_CMS_INFO   CMS
+		WHERE 1=1
+		AND SIN.TEMPLE_CD = CMS.TEMPLE_CD
+		AND SIN.BUD_NO    = CMS.BUD_NO
+		AND SIN.TEMPLE_CD = #{V_TEMPLE_CD}
+		AND CMS.DEL_YN = 'T'
+		AND SIN.BUD_NO NOT IN (SELECT BUD_NO 
+		                         FROM SIN_DEATH_INFO 
+		                        WHERE TEMPLE_CD =#{V_TEMPLE_CD} )
+		ORDER BY CMS.CMS_ACCOUNT_STATUS DESC, SIN.BUD_NO, CMS.CMS_TRADE_CD,  CMS.IF_PAYMENT_BANK_CD, CMS.IF_PAYMENT_ACCOUNT, CMS.ACCOUNT_SEQ
+	</select>
+	
+	<update id="UPDATE_SIN_CMS_INFO" parameterType="kr.co.o2i.util.CommonMap">
+		  UPDATE SIN_CMS_INFO
+			 SET CMS_PAYMENT_DAY 	= #{CMS_PAYMENT_DAY}
+				,CMS_ACCOUNT_STATUS	= '1'
+				,UPT_USER			= #{V_USER_ID}
+				,UPT_DATE			= SYSDATE
+		  WHERE TEMPLE_CD 			= #{V_TEMPLE_CD}
+		    AND CMS_TRADE_CD		= #{CMS_TRADE_CD}
+		    AND BUD_NO 				= #{BUD_NO}
+		    AND IF_PAYMENT_BANK_CD	= #{ORG_IF_PAYMENT_BANK_CD}
+		    AND IF_PAYMENT_ACCOUNT	= #{ORG_IF_PAYMENT_ACCOUNT}
+	 	    AND ACCOUNT_SEQ			= #{ORG_ACCOUNT_SEQ}
+	</update>
+	
+	
+	<select id="getExistSinCmsMemberHis" parameterType="kr.co.o2i.util.CommonMap" resultType="Integer">
+		SELECT COUNT(*)										
+		  FROM SIN_CMS_MEMBER_HIS								
+		 WHERE IF_REQUEST_DATE = TO_CHAR(SYSDATE,'YYYYMMDD')	
+		   AND IF_TRAN_ID      = '${CMS_TRADE_CD}'								
+		   AND IF_MEMBER_ID    = '${ORG_IF_PAYMENT_BANK_CD}' || '${ORG_IF_PAYMENT_ACCOUNT}' || LPAD('${ACCOUNT_SEQ}',2,'0')			
+	</select>
+	
+	
+	
+	<update id="UPDATE_SIN_CMS_MEMBER_HIS" parameterType="java.util.Map">
+		UPDATE SIN_CMS_MEMBER_HIS 
+		   SET IF_TRAN_ID 				= #{CMS_TRADE_CD}
+			  ,IF_MEMBER_ID				= #{IF_PAYMENT_BANK_CD} || #{IF_PAYMENT_ACCOUNT} || LPAD(#{ACCOUNT_SEQ},2,'0') 
+			  ,IF_PROCESS_GBN			= DECODE(#{CMS_ACCOUNT_STATUS},'1','N','3','D','N') 
+			  ,IF_MEMBER_NM				= #{NAME_KOR}
+			  ,IF_TRANSFER_WISH_DATE	= #{CMS_PAYMENT_DAY}
+			  ,IF_PAYMENT_BANK_CD		= #{IF_PAYMENT_BANK_CD}  
+			  ,IF_PAYMENT_ACCOUNT		= #{IF_PAYMENT_ACCOUNT}
+			  ,IF_ACCOUNT_NM			= #{NAME_KOR}
+			  ,IF_ACCOUNT_JUMIN			= #{REG_NO}
+			  ,IF_TRANSFER_STATE		= DECODE(#{CMS_ACCOUNT_STATUS},'1','1','3','4','1') 
+			  ,TEMPLE_CD				= #{V_TEMPLE_CD} 
+			  ,BUD_NO					= #{BUD_NO}
+	     WHERE IF_REQUEST_DATE          = TO_CHAR(SYSDATE,'YYYYMMDD')
+	       AND IF_TRAN_ID               = #{ORG_CMS_TRADE_CD}
+	       AND IF_MEMBER_ID             = #{ORG_IF_PAYMENT_BANK_CD} || #{ORG_IF_PAYMENT_ACCOUNT} || LPAD('${ACCOUNT_SEQ}',2,'0')
+		
+	</update>
+	
+	
+	<insert id="INSERT_SIN_CMS_MEMBER_HIS" parameterType="java.util.Map">
+		INSERT INTO SIN_CMS_MEMBER_HIS(
+			 IF_REQUEST_DATE 
+			,IF_TRAN_ID
+			,IF_MEMBER_ID 
+			,IF_RECORD_GBN
+			,IF_PROCESS_GBN 
+			,IF_MEMBER_NM 
+			,IF_PAYMENT_METHOD
+			,IF_FIRST_PAYMENT_YYYYMM 
+			,IF_END_REQUEST_DATE 
+			,IF_TRANSFER_WISH_DATE 
+			,IF_TRAN_AMOUNT 
+			,IF_PAYMENT_BANK_CD  
+			,IF_PAYMENT_ACCOUNT
+			,IF_ACCOUNT_NM 
+			,IF_ACCOUNT_JUMIN
+			,IF_SMS_YN 
+			,IF_EMAIL_YN 
+			,IF_PHONE 
+			,IF_EMAIL_ADDRESS  
+			,IF_GOODS_NM 
+			,IF_AGREE_YN 
+			,IF_PROCESS_RESULT
+			,IF_RESULT_CD 
+			,IF_RESULT_MESSAGE 
+			,IF_USER_DEFINE 
+			,IF_TRANSFER_DATE 
+			,IF_RECEIPT_DATE 
+			,IF_TRANSFER_STATE 
+			,TEMPLE_CD 
+			,BUD_NO
+		)VALUES	(
+			 TO_CHAR(SYSDATE,'YYYYMMDD') 
+			,#{CMS_TRADE_CD}
+			,#{IF_PAYMENT_BANK_CD} || #{IF_PAYMENT_ACCOUNT} || LPAD(#{ACCOUNT_SEQ},2,'0') 
+			,'D'
+			,DECODE(#{CMS_ACCOUNT_STATUS},'1','N','3','D','N') 
+			,#{NAME_KOR} 
+			,'B'
+			,NULL 
+			,NULL 
+			,#{CMS_PAYMENT_DAY}
+			,0 
+			,#{IF_PAYMENT_BANK_CD}  
+			,#{IF_PAYMENT_ACCOUNT}
+			,#{NAME_KOR} 
+			,#{REG_NO}
+			,'N' 
+			,'N' 
+			,NULL 
+			,NULL  
+			,NULL 
+			,'OFF' 
+			,NULL
+			,NULL 
+			,NULL 
+			,NULL 
+			,NULL
+			,NULL 
+			,DECODE(#{CMS_ACCOUNT_STATUS},'1','1','3','4','1') 
+			,#{V_TEMPLE_CD} 
+			,#{BUD_NO}
+		)
+	</insert>
+	
+	<update id="UPDATE_REC_MASTER_ACCOUNT_INFO" parameterType="java.util.Map">
+		UPDATE REC_MASTER 
+		   SET BANK_NO 		  = #{IF_PAYMENT_BANK_CD}
+		      ,ACCOUNT_NUMBER = #{IF_PAYMENT_ACCOUNT}
+		      ,ACCOUNT_SEQ	  = #{ACCOUNT_SEQ}
+		      ,JUMIN_NO		  = #{REG_NO}
+		WHERE TEMPLE_CD 	  = #{V_TEMPLE_CD}
+		  AND APPROVAL_GBN 	  = '3'
+		  AND PROPOSAL_BUD_NO = #{BUD_NO}
+		  AND BANK_NO 		  = #{ORG_IF_PAYMENT_BANK_CD,jdbcType=VARCHAR}
+		  AND ACCOUNT_NUMBER  = #{ORG_IF_PAYMENT_ACCOUNT,jdbcType=VARCHAR}
+		  AND ACCOUNT_SEQ 	  = #{ORG_ACCOUNT_SEQ,jdbcType=VARCHAR}
+	</update>
+	
+	<update id="DELETE_SIN_CMS_INFO" parameterType="java.util.Map">
+		 UPDATE SIN_CMS_INFO
+			SET REMARK		 	= #{REMARK ,jdbcType=VARCHAR},
+				DEL_YN		 	= 'T',
+				USE_YN			= #{USE_YN},
+				UPT_USER		= #{V_USER_ID},
+				UPT_DATE		= SYSDATE
+		WHERE TEMPLE_CD 		= #{V_TEMPLE_CD}
+		  AND CMS_TRADE_CD		= #{CMS_TRADE_CD}
+	 	  AND BUD_NO 			= #{BUD_NO}
+		  AND IF_PAYMENT_BANK_CD= #{ORG_IF_PAYMENT_BANK_CD}
+		  AND IF_PAYMENT_ACCOUNT= #{ORG_IF_PAYMENT_ACCOUNT}
+		  AND ACCOUNT_SEQ		= #{ORG_ACCOUNT_SEQ}
+	</update>
+	
+	<delete id="DELETE_SIN_CMS_MEMBER_HIS" parameterType="java.util.Map">
+		DELETE SIN_CMS_MEMBER_HIS
+		 WHERE IF_TRAN_ID   = #{ORG_CMS_TRADE_CD}
+		   AND IF_MEMBER_ID = #{ORG_IF_PAYMENT_BANK_CD} || #{ORG_IF_PAYMENT_ACCOUNT} || LPAD(#{ORG_ACCOUNT_SEQ},2,'0')		   
+		   AND TEMPLE_CD    = #{V_TEMPLE_CD} 
+		   AND BUD_NO       = #{BUD_NO}
+		   AND IF_TRANSFER_DATE IS NULL
+	</delete>
+			
+	<update id="UPDATE_SIN_CARD_MASTER_MOBILE" parameterType="kr.co.o2i.util.CommonMap">
+		UPDATE SIN_CARD_MASTER
+		   SET MOBILE_TELNO1 = #{MOBILE_TELNO1}
+		      ,MOBILE_TELNO2 = #{MOBILE_TELNO2}
+		      ,MOBILE_TELNO3 = #{MOBILE_TELNO3}
+		 WHERE TEMPLE_CD     = #{V_TEMPLE_CD}
+		   AND BUD_NO        = #{BUD_NO}
+	</update>	
+	
+	
+	<update id="UPDATE_SIN_CARD_MASTER_JUMIN_NO" parameterType="kr.co.o2i.util.CommonMap">
+		UPDATE SIN_CARD_MASTER
+		   SET JUMIN_NO  = #{REG_NO}
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND BUD_NO    = #{BUD_NO}
+	</update>
+	
+	<select  id="getSinCmsInfoAccountSeq" parameterType="kr.co.o2i.util.CommonMap"  resultType="Integer">
+		SELECT											
+			NVL(MAX(ACCOUNT_SEQ),0)+1 AS ACCOUNT_SEQ	
+		FROM SIN_CMS_INFO								
+		WHERE TEMPLE_CD        = #{V_TEMPLE_CD}								
+		AND IF_PAYMENT_BANK_CD = #{IF_PAYMENT_BANK_CD}					
+		AND IF_PAYMENT_ACCOUNT = #{IF_PAYMENT_ACCOUNT}						
+	</select>	
+			
+			
+	<select  id="getDupleMemberId" parameterType="kr.co.o2i.util.CommonMap" resultType="Integer">		
+		SELECT count(IF_MEMBER_ID) as MEM_CNT  
+		  FROM SIN_CMS_INFO 										
+		 WHERE IF_MEMBER_ID = #{IF_MEMBER_ID}								
+		   AND TEMPLE_CD    = #{V_TEMPLE_CD}                
+	</select>
+	
+	
+	<select  id="getNewAccountSeq" parameterType="kr.co.o2i.util.CommonMap"  resultType="Integer">
+		SELECT NVL(TO_NUMBER(substr(IF_MEMBER_ID , -2 , length(IF_MEMBER_ID) ) ) , 0) +1 as ACCOUNT_SEQ
+		  FROM SIN_CMS_INFO
+		 WHERE TEMPLE_CD   = #{V_TEMPLE_CD}
+		   AND substr(IF_MEMBER_ID , 0 , length(IF_MEMBER_ID)-2 ) =  #{IF_MEMBER_ID} 																						
+	</select>			
+	
+	<select  id="SELECT_NEW_CMS_TRADE_CD" parameterType="kr.co.o2i.util.CommonMap" resultType="String">
+		 SELECT NEW_CMS_TRADE_CD 																
+	 	   FROM ASP_TEMPLE_CMS_INFO															
+	 	  WHERE TEMPLE_CD 		= #{V_TEMPLE_CD}		
+	 	    AND CMS_TRADE_CD  	= #{CMS_TRADE_CD}							
+	</select>
+	
+	
+	<update id="UPDATE_SIN_CMS_INFO_PAYMENT_DAY" parameterType="java.util.Map">
+		UPDATE SIN_CMS_INFO
+		   SET CMS_PAYMENT_DAY      = #{CMS_PAYMENT_DAY}
+			  ,UPT_USER		        = #{V_USER_ID}
+			  ,UPT_DATE		        = SYSDATE
+		 WHERE TEMPLE_CD 		    = #{V_TEMPLE_CD}
+		   AND CMS_TRADE_CD		    = #{CMS_TRADE_CD}
+		   AND BUD_NO 				= #{BUD_NO}
+		   AND IF_PAYMENT_BANK_CD	= #{ORG_IF_PAYMENT_BANK_CD}
+		   AND IF_PAYMENT_ACCOUNT	= #{ORG_IF_PAYMENT_ACCOUNT}
+		   AND ACCOUNT_SEQ			= #{ORG_ACCOUNT_SEQ}
+	</update>
+	
+	<update id="UPDATE_SIN_CMS_INFO_REMARK" parameterType="java.util.Map">
+		  UPDATE SIN_CMS_INFO
+			 SET REMARK		 	    = #{REMARK}
+			    ,USE_YN			    = #{USE_YN}
+			    ,UPT_USER		    = #{V_USER_ID}
+			    ,UPT_DATE		    = SYSDATE
+		  WHERE TEMPLE_CD 		    = #{V_TEMPLE_CD}
+		    AND CMS_TRADE_CD		= #{CMS_TRADE_CD}
+		    AND BUD_NO 				= #{BUD_NO}
+		    AND IF_PAYMENT_BANK_CD	= #{ORG_IF_PAYMENT_BANK_CD}
+		    AND IF_PAYMENT_ACCOUNT	= #{ORG_IF_PAYMENT_ACCOUNT}
+		    AND ACCOUNT_SEQ			= #{ORG_ACCOUNT_SEQ}
+	</update>
+	
+	<update id="UPDATE_SIN_CMS_INFO_FAIL" parameterType="java.util.Map">
+		 UPDATE SIN_CMS_INFO
+			SET	CMS_TRADE_CD			= #{CMS_TRADE_CD}
+			   ,IF_PAYMENT_BANK_CD		= #{IF_PAYMENT_BANK_CD}
+			   ,IF_PAYMENT_ACCOUNT		= #{IF_PAYMENT_ACCOUNT}
+			   ,ACCOUNT_SEQ				= #{ACCOUNT_SEQ}
+			   ,CMS_PAYMENT_DAY			= #{CMS_PAYMENT_DAY}
+			   ,CMS_ACCOUNT_STATUS		= #{CMS_ACCOUNT_STATUS}
+			   ,REMARK					= #{REMARK ,jdbcType=VARCHAR}
+			   ,USE_YN					= #{USE_YN}
+			   ,REG_GBN					= #{REG_GBN}
+			   ,REG_NO					= #{REG_NO}
+			   ,UPT_USER				= #{V_USER_ID}
+			   ,UPT_DATE				= SYSDATE
+			   ,REMOTE					= #{V_REMOTE} 
+			   ,IF_MEMBER_ID            = #{IF_MEMBER_ID}
+		WHERE TEMPLE_CD 				= #{V_TEMPLE_CD}
+		  AND BUD_NO 					= #{BUD_NO}
+		  AND CMS_TRADE_CD				= #{ORG_CMS_TRADE_CD}
+		  AND IF_PAYMENT_BANK_CD		= #{ORG_IF_PAYMENT_BANK_CD}
+		  AND IF_PAYMENT_ACCOUNT		= #{ORG_IF_PAYMENT_ACCOUNT}
+		  AND ACCOUNT_SEQ				= #{ORG_ACCOUNT_SEQ}
+	</update>
+	
+	<select  id="SELECT_REC_SIN_CMS_FILE_INFO" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT SEQ																															
+			  ,TEMPLE_CD
+			  ,FILE_NAME
+			  ,BUD_NO
+			  ,FILE_SIZE
+			  ,DEL_YN
+			  ,ACCOUNT_SEQ
+		 FROM SIN_CMS_INFO_FILE
+		 WHERE TEMPLE_CD    	=  #{V_TEMPLE_CD}							
+		   AND BUD_NO	   		=  #{V_BUD_NO}  							
+		   AND BANK_CD	   		=  #{"V_BANK_CD} 							
+		   AND ACCOUNT	   		=  #{"V_ACCOUNT} 							
+		   AND ACCOUNT_SEQ	    =  LPAD(#{"V_SEQ},2,'0')  			
+		   AND CMS_TRADE_CD	    =  #{V_CMS_TRADE_CD}  				
+	</select>
+	
+	<insert id="DELETE_CMS_FILE_INFO" parameterType="java.util.Map">
+		UPDATE SIN_CMS_INFO_FILE
+		   SET DEL_YN = 'T'
+		 WHERE CMS_TRADE_CD       = #{CMS_TRADE_CD}
+		   AND CMS_DATA_FILE_NAME = #{CMS_DATA_FILE_NAME}
+	</insert>
+	
+	<insert id="INSERT_CMS_FILE_INFO" parameterType="java.util.Map">
+		INSERT INTO SIN_CMS_INFO_FILE(
+			 ACCOUNT
+			,SEQ
+			,TEMPLE_CD
+			,CMS_TRADE_CD
+			,BUD_NO
+			,ACCOUNT_SEQ
+			,FILE_NAME
+			,FILE_SIZE
+			,CRT_USER
+			,CRT_DATE
+			,REMOTE
+			,DEL_YN
+			,CMS_DATA_FILE_NAME
+			,BANK_CD
+			,HOST_IP
+			,NEW_CMS_TRADE_CD
+		) VALUES (
+			#{V_ACCOUNT}
+			,( SELECT NVL( MAX(SEQ),0)+1 FROM SIN_CMS_INFO_FILE ) 
+			,#{V_TEMPLE_CD}
+			,#{CMS_TRADE_CD}
+			,#{BUD_NO}
+			,#{ACCOUNT_SEQ}
+			,#{FILE_NAME}
+			,#{FILE_SIZE}
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_REMOTE}
+			,'F'
+			,#{CMS_DATA_FILE_NAME}
+			,#{BANK_CD}
+			,#{V_HOST_IP}
+			,#{V_NEW_CMS_TRADE_CD}
+		)
+	</insert>
+	
+			
+	<insert id="INSERT_SIN_CMS_INFO" parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO SIN_CMS_INFO(
+			TEMPLE_CD,
+			CMS_TRADE_CD, 
+			BUD_NO,
+			IF_PAYMENT_BANK_CD, 
+			IF_PAYMENT_ACCOUNT,
+			ACCOUNT_SEQ,
+			CMS_PAYMENT_DAY,
+			CMS_ACCOUNT_STATUS,
+			REMARK,
+			USE_YN,
+			DEL_YN,
+			REG_GBN,
+			REG_NO,
+			CRT_USER, 
+			CRT_DATE, 
+			UPT_USER,
+			UPT_DATE, 
+			REMOTE,
+			IF_MEMBER_ID
+		) VALUES (
+			 #{V_TEMPLE_CD}
+			,#{CMS_TRADE_CD}
+			,#{BUD_NO}
+			,#{IF_PAYMENT_BANK_CD}
+			,#{IF_PAYMENT_ACCOUNT}
+			,#{ACCOUNT_SEQ}
+			,#{CMS_PAYMENT_DAY}
+			,#{CMS_ACCOUNT_STATUS}
+			,#{REMARK ,jdbcType=VARCHAR}
+			,#{USE_YN}
+			,'F'
+			,#{REG_GBN}
+			,#{REG_NO}
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_REMOTE}
+			,#{IF_PAYMENT_BANK_CD} || #{IF_PAYMENT_ACCOUNT} || LPAD(#{ACCOUNT_SEQ},2,'0')
+		)
+	</insert>	
+	
+	
+</mapper>

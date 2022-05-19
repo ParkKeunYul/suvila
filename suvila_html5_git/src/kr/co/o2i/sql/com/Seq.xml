@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SeqDAO">
+	
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+	
+	<select id="SELECT_SYS_DATE"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TO_CHAR(SYSDATE + nvl(#{V_DATE ,jdbcType=VARCHAR},0),'YYYYMMDD') TODAY
+		      ,TO_CHAR(SYSDATE,'MONTH DD, YYYY') TODAY_ENG
+		      ,TO_CHAR(SYSDATE,'YYYYMMDD HHMISS') TODAY_FULL
+		      ,TO_CHAR(SYSDATE,'MONTH') MONTH_ENG
+		      ,TO_CHAR(SYSDATE,'MON') MONTH_ENG_ABBR
+		      ,TO_CHAR(SYSDATE,'MM') MONTH
+		      ,TO_CHAR(SYSDATE,'DAY') DAY
+		      ,TO_CHAR(SYSDATE,'DD') DAY_N
+		      ,TO_CHAR(SYSDATE,'DY') DAY_ABBR
+		      ,TO_CHAR(SYSDATE,'A.M.') TODAY_HALF
+		      ,TO_CHAR(SYSDATE, 'HH24MM') NOW_TIME
+		      ,TO_CHAR(SYSDATE,'HH') TIME
+		      ,TO_CHAR(SYSDATE,'MI') MINUTE
+		      ,TO_CHAR(SYSDATE,'SS') SECOND
+		      ,TO_CHAR(SYSDATE,'YYYYMM')||'01' FIRST_DATE
+		      ,TO_CHAR(LAST_DAY(SYSDATE),'YYYYMMDD') LAST_DATE
+		      ,TO_CHAR(SYSDATE -7,'YYYYMMDD') PRIOR_WEEK
+		      ,TO_CHAR(SYSDATE +7,'YYYYMMDD') NEXT_WEEK
+		      ,TO_CHAR(SYSDATE -14,'YYYYMMDD') PRIOR_WEEK2
+		      ,TO_CHAR(SYSDATE +14,'YYYYMMDD') NEXT_WEEK2
+		      ,TO_CHAR(ADD_MONTHS(SYSDATE,-1)+1,'YYYYMMDD') PRIOR_MONTH1
+		      ,TO_CHAR(ADD_MONTHS(SYSDATE,-2)+1,'YYYYMMDD') PRIOR_MONTH2
+		      ,TO_CHAR(ADD_MONTHS(SYSDATE,-3)+1,'YYYYMMDD') PRIOR_MONTH3
+		      ,TO_CHAR(ADD_MONTHS(SYSDATE,1)-1,'YYYYMMDD') NEXT_MONTH
+		      ,TO_CHAR(ADD_MONTHS(SYSDATE,-12),'YYYYMMDD') PRIOR_YEAR
+		      ,TO_CHAR(ADD_MONTHS(SYSDATE,12),'YYYYMMDD') NEXT_YEAR
+		      ,TO_CHAR(SYSDATE+nvl(#{V_DATE,jdbcType=VARCHAR},0),'YYYYMMDDHHMISS') TODAY_FULL1
+		      ,TO_CHAR(SYSDATE+nvl(#{V_DATE,jdbcType=VARCHAR},0),'YYYYMMDDHH24MISS') TODAY_FULL2
+		      ,TO_CHAR(SYSDATE+nvl(#{V_DATE,jdbcType=VARCHAR},0),'YYYY/MM/DD') TODAYMASK
+		      ,TO_CHAR(SYSDATE,'YYYY')||'01'||'01' YEAR_FIRSTDAY
+		      ,TO_CHAR(TO_NUMBER(TO_CHAR(SYSDATE,'YYYY'))-1)||'01'||'01' LASTYEAR_FIRSTDAY
+		      ,TO_CHAR(SYSDATE,'YYYY')||'12'||'31' YEAR_LASTDAY  
+		      ,TO_CHAR(SYSDATE,'YYYY') NOW_YEAR
+		      ,SUBSTR(TO_CHAR(SYSDATE,'YYYY'),2,3) PTSL_YEAR
+		      ,'출력일자  ' || TO_CHAR(SYSDATE+nvl(#{V_DATE,jdbcType=VARCHAR},0),'YYYY/MM/DD') PRINT_DT
+		      ,'종무행정시스템' Footer
+		      ,TO_CHAR(SYSDATE,'YYYY')||'년 '||TO_NUMBER(TO_CHAR(SYSDATE,'MM'))||'월 '||TO_NUMBER(TO_CHAR(SYSDATE,'DD'))||'일' AS PRINT_DATE
+		      ,'' "varchar1" ,'' "varchar2" ,'' "varchar3" ,'' "varchar4" ,'' "varchar5" ,'' "varchar6" ,'' "varchar7" ,'' "varchar8" ,'' "varchar9" ,'' "varchar10"
+		      ,'' "varchar11" ,'' "varchar12" ,'' "varchar13" ,'' "varchar14" ,'' "varchar15" ,'' "varchar16" ,'' "varchar17" ,'' "varchar18" ,'' "varchar19" ,'' "varchar20"
+		      ,'' "varchar21" ,'' "varchar22" ,'' "varchar23" ,'' "varchar24" ,'' "varchar25" ,'' "varchar26" ,'' "varchar27" ,'' "varchar28" ,'' "varchar29" ,'' "varchar30"
+		      ,'' "varchar31" ,'' "varchar32" ,'' "varchar33" ,'' "varchar34" ,'' "varchar35" ,'' "varchar36" ,'' "varchar37" ,'' "varchar38" ,'' "varchar39" ,'' "varchar40"
+		      ,'' "varchar41" ,'' "varchar42" ,'' "varchar43" ,'' "varchar44" ,'' "varchar45" ,'' "varchar46" ,'' "varchar47" ,'' "varchar48" ,'' "varchar49" ,'' "varchar50"
+		      ,'' "varchar51" ,'' "varchar52" ,'' "varchar53" ,'' "varchar54" ,'' "varchar55" ,'' "varchar56" ,'' "varchar57" ,'' "varchar58" ,'' "varchar59" ,'' "varchar60"
+		      ,'' "varchar61" ,'' "varchar62" ,'' "varchar63" ,'' "varchar64" ,'' "varchar65" ,'' "varchar66" ,'' "varchar67" ,'' "varchar68" ,'' "varchar69" ,'' "varchar70"
+		      ,'' "varchar71" ,'' "varchar72" ,'' "varchar73" ,'' "varchar74" ,'' "varchar75" ,'' "varchar76" ,'' "varchar77" ,'' "varchar78" ,'' "varchar79" ,'' "varchar80"
+		      ,'' "varchar81" ,'' "varchar82" ,'' "varchar83" ,'' "varchar84" ,'' "varchar85" ,'' "varchar86" ,'' "varchar87" ,'' "varchar88" ,'' "varchar89" ,'' "varchar90"
+		      ,'' "varchar91" ,'' "varchar92" ,'' "varchar93" ,'' "varchar94" ,'' "varchar95" ,'' "varchar96" ,'' "varchar97" ,'' "varchar98" ,'' "varchar99" ,'' "varchar100"
+		      ,'' "varchar101" ,'' "varchar102" ,'' "varchar103" ,'' "varchar104" ,'' "varchar105" ,'' "varchar106" ,'' "varchar107" ,'' "varchar108" ,'' "varchar109" ,'' "varchar110"
+		      ,'' "varchar111" ,'' "varchar112" ,'' "varchar113" ,'' "varchar114" ,'' "varchar115" ,'' "varchar116" ,'' "varchar117" ,'' "varchar118" ,'' "varchar119" ,'' "varchar120"
+		      ,'' "varchar121" ,'' "varchar122" ,'' "varchar123" ,'' "varchar124" ,'' "varchar125" ,'' "varchar126" ,'' "varchar127" ,'' "varchar128" ,'' "varchar129" ,'' "varchar130"
+		      ,'' "varchar131" ,'' "varchar132" ,'' "varchar133" ,'' "varchar134" ,'' "varchar135" ,'' "varchar136" ,'' "varchar137" ,'' "varchar138" ,'' "varchar139" ,'' "varchar140"
+		      ,'' "varchar141" ,'' "varchar142" ,'' "varchar143" ,'' "varchar144" ,'' "varchar145" ,'' "varchar146" ,'' "varchar147" ,'' "varchar148" ,'' "varchar149" ,'' "varchar150"
+		      ,'' "varchar151" ,'' "varchar152" ,'' "varchar153" ,'' "varchar154" ,'' "varchar155" ,'' "varchar156" ,'' "varchar157" ,'' "varchar158" ,'' "varchar159" ,'' "varchar160"
+		      ,'' "varchar161" ,'' "varchar162" ,'' "varchar163" ,'' "varchar164" ,'' "varchar165" ,'' "varchar166" ,'' "varchar167" ,'' "varchar168" ,'' "varchar169" ,'' "varchar170"
+		      ,'' "varchar171" ,'' "varchar172" ,'' "varchar173" ,'' "varchar174" ,'' "varchar175" ,'' "varchar176" ,'' "varchar177" ,'' "varchar178" ,'' "varchar179" ,'' "varchar180"
+		      ,'' "varchar181" ,'' "varchar182" ,'' "varchar183" ,'' "varchar184" ,'' "varchar185" ,'' "varchar186" ,'' "varchar187" ,'' "varchar188" ,'' "varchar189" ,'' "varchar190"
+		      ,'' "varchar191" ,'' "varchar192" ,'' "varchar193" ,'' "varchar194" ,'' "varchar195" ,'' "varchar196" ,'' "varchar197" ,'' "varchar198" ,'' "varchar199" ,'' "varchar200"
+		      ,TO_CHAR(TO_DATE(DECODE(#{V_STAN_DAY,jdbcType=VARCHAR},'00000000',TO_CHAR(SYSDATE ,'YYYYMMDD'),#{V_STAN_DAY,jdbcType=VARCHAR})) + #{V_AFTER_DAY,jdbcType=VARCHAR} ,'YYYYMMDD')   AS RDATE 
+		FROM DUAL
+	</select>
+	
+	
+</mapper>

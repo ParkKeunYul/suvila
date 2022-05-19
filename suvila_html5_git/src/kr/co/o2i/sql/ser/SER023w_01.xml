@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SER023w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+
+	<select id="SELECT_SIN_BUDDHISM_MGT" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT CONF_CODE						
+		      ,TEMPLE_CD						
+			  ,TEMPLE_CD AS TEMPLE_CD_TEMP		
+		      ,CONF_NAME					
+		      ,CONF_CONTENTS				
+		      ,MEMO						
+		      ,USE_YN            			
+		      ,CRT_USER					
+		      ,REMOTE						
+		      ,CRT_DATE					
+		      ,UPT_USER					
+		      ,UPT_DATE					
+		FROM SIN_BUDDHISM_MGT	
+	   WHERE TEMPLE_CD     = #{V_TEMPLE_CD} 
+		 AND CONF_NAME    like '%'||#{V_FIND_CONFNAME}||'%'
+		ORDER BY CONF_CODE
+	</select>
+	
+	
+	<select id="SELECT_SIN_BUDDHISM_MGT_SELECT" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT 0 AS CONF_CODE
+		      ,'선택' AS CONF_NAME
+		      ,'' AS CONF_CONTENTS
+		 FROM DUAL
+		UNION ALL
+	   SELECT CONF_CODE
+	         ,CONF_NAME
+	         ,CONF_CONTENTS
+		 FROM SIN_BUDDHISM_MGT	
+	    WHERE TEMPLE_CD  = #{V_TEMPLE_CD} 
+		  AND CONF_NAME like '%'||#{V_FIND_CONFNAME}||'%'
+		ORDER BY CONF_CODE
+	</select>
+	
+	<select id="SELECT_SIN_BUDDHISM_MGT_ALL" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT 0 AS CONF_CODE
+		      ,'전체' AS CONF_NAME
+		      ,'' AS CONF_CONTENTS
+		 FROM DUAL
+		UNION ALL
+		SELECT CONF_CODE
+		      ,CONF_NAME
+		      ,CONF_CONTENTS
+		 FROM SIN_BUDDHISM_MGT	
+		WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		  AND CONF_NAME like '%'||#{V_FIND_CONFNAME}||'%'
+		ORDER BY CONF_CODE 
+	</select>
+	
+	<insert  id="INSERT_SIN_BUDDHISM_MGT" parameterType="java.util.Map">
+		INSERT INTO SIN_BUDDHISM_MGT (
+		        TEMPLE_CD
+		       ,CONF_CODE
+		       ,CONF_NAME
+		       ,CONF_CONTENTS
+		       ,MEMO
+		       ,USE_YN
+		       ,CRT_USER
+		       ,REMOTE
+		       ,CRT_DATE
+		       ,UPT_USER
+		       ,UPT_DATE			
+		) VALUES (
+			    #{TEMPLE_CD}
+		       ,( SELECT NVL2( MAX(CONF_CODE), MAX(CONF_CODE)+1, 1) FROM SIN_BUDDHISM_MGT)
+		       ,#{CONF_NAME}
+		       ,#{CONF_CONTENTS}
+		       ,#{MEMO}
+			   ,#{USE_YN}
+		       ,#{CRT_USER}
+		       ,#{REMOTE}
+		       ,sysdate
+		       ,#{UPT_USER}
+		       ,sysdate
+		)
+	</insert>
+	
+	<update id="UPDATE_SIN_BUDDHISM_MGT" parameterType="java.util.Map">
+		UPDATE SIN_BUDDHISM_MGT 
+		   SET CONF_NAME     = #{CONF_NAME}
+		      ,CONF_CONTENTS = #{CONF_CONTENTS}
+		      ,MEMO          = #{MEMO}
+		      ,USE_YN		 = #{USE_YN}
+		      ,CRT_USER      = #{CRT_USER}
+		      ,REMOTE        = #{REMOTE}
+		      ,CRT_DATE      = sysdate
+		      ,UPT_USER      = #{UPT_USER}
+		      ,UPT_DATE      = sysdate
+		WHERE TEMPLE_CD      = #{TEMPLE_CD}
+		  AND CONF_CODE		 = #{CONF_CODE}
+	</update>
+	
+	<delete id="DELETE_SIN_BUDDHISM_MGT" parameterType="java.util.Map">
+		DELETE FROM SIN_BUDDHISM_MGT
+		 WHERE TEMPLE_CD     = #{TEMPLE_CD}
+  		   AND CONF_CODE     = #{CONF_CODE}
+	</delete>
+	
+</mapper>

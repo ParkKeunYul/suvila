@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SIN001p_02DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+	<select  id="SELECT_SIN_BRANCH_FAMILY_HIS"  parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT A.TEMPLE_CD
+		      ,A.BUD_NO
+		      ,B.NAME_KOR
+		      ,B.ADDR1 || ' ' || B.ADDR2 AS ADDR
+		      ,A.BUD_CODE
+		      ,A.BRANCH_GBN
+		      ,A.SEQ_NO
+		      ,A.BUD_CODE_AFTER
+		      ,A.BRANCH_DATE
+		      ,A.REMOTE
+		      ,A.CRT_USER
+		      ,A.CRT_DATE
+		      ,A.UPT_USER
+		      ,A.UPT_DATE 
+		FROM SIN_BRANCH_FAMILY_HIS A
+		    ,SIN_CARD_MASTER B
+	   WHERE A.TEMPLE_CD    = B.TEMPLE_CD
+		 AND A.BUD_NO       = B.BUD_NO
+		 AND A.TEMPLE_CD    = #{V_TEMPLE_CD}
+		 AND BUD_CODE_AFTER = #{V_BUD_CODE_AFTER}
+		 AND B.DEL_YN       = 'F'
+		 AND A.BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = #{V_TEMPLE_CD})
+	   ORDER BY BUD_NO   
+	</select>
+	
+</mapper>

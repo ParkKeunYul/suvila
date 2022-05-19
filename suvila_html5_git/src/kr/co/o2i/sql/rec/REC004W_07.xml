@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC004w_07DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="COMPLET_YN" column="COMPLET_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+		<result  property="SET_YN"     column="SET_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+	</resultMap>
+	
+	
+	<select id="SELECT_mgt" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		    SELECT TEMPLE_CD,
+			       EVENT_CD,
+			       EVENT_NAME,
+			       SET_YN,
+			       REMARK,
+			       CRT_DATE,
+			       CRT_USER,
+			       UPT_USER,
+			       UPT_DATE,
+			       REMOTE,
+			       ACCT_GBN,
+			       IE_GBN,
+			       KWAN,
+			       HANG,
+			       MOK,
+			       FN_ACC_NAME(TEMPLE_CD, ACCT_GBN, IE_GBN, KWAN, HANG, MOK , 'MOK')  AS ACCNAME,
+			       (CASE
+			   		  WHEN NVL(SORT_SEQ, 0) = 0 THEN ROWNUM
+			   		  ELSE SORT_SEQ
+			   	  	END ) SORT_SEQ
+			  FROM REC_WEPAE_CHONHON_MGT
+			WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+			 ORDER BY (CASE
+			   		  	WHEN NVL(SORT_SEQ, 0) = 0 THEN ROWNUM
+			   		  	 ELSE SORT_SEQ END ) 
+			   	     ,EVENT_CD ASC
+	</select>
+	
+	
+	<insert id="INSERT_mgt" parameterType="java.util.Map" >
+		INSERT INTO REC_WEPAE_CHONHON_MGT (
+		       TEMPLE_CD,
+		       EVENT_CD,
+		       EVENT_NAME,
+		       SET_YN,
+		       REMARK,
+		       CRT_DATE,
+		       CRT_USER,
+		       UPT_USER,
+		       UPT_DATE,
+		       REMOTE,
+			   ACCT_GBN, 
+			   IE_GBN,
+			   KWAN,
+			   HANG,
+			   MOK,
+			   SORT_SEQ
+		) VALUES (
+		       #{TEMPLE_CD},
+		       EVENT_CD.NEXTVAL,
+		       #{EVENT_NAME},
+		       #{SET_YN    ,jdbcType=VARCHAR},
+		       #{REMARK    ,jdbcType=VARCHAR},
+		       SYSDATE,
+		       #{V_USER_ID},
+		       #{V_USER_ID},
+		       SYSDATE,
+		       #{REMOTE},
+			   #{ACCT_GBN  ,jdbcType=VARCHAR}, 
+			   #{IE_GBN    ,jdbcType=VARCHAR},
+			   #{KWAN      ,jdbcType=VARCHAR},
+			   #{HANG      ,jdbcType=VARCHAR},
+			   #{MOK       ,jdbcType=VARCHAR},
+			   #{SORT_SEQ  ,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<update  id="UPDATE_mgt" parameterType="java.util.Map">
+		UPDATE REC_WEPAE_CHONHON_MGT 
+		   SET EVENT_NAME  = #{EVENT_NAME},
+		       SET_YN      = #{SET_YN ,jdbcType=VARCHAR},
+		       REMARK      = #{REMARK ,jdbcType=VARCHAR},
+		       CRT_DATE    = SYSDATE,
+		       UPT_USER    = #{CRT_USER},
+		       UPT_DATE    = SYSDATE,
+		       REMOTE      = #{REMOTE},
+		       ACCT_GBN    = #{ACCT_GBN ,jdbcType=VARCHAR}, 
+		       IE_GBN      = #{IE_GBN   ,jdbcType=VARCHAR},
+		       KWAN        = #{KWAN     ,jdbcType=VARCHAR},
+		       HANG        = #{HANG     ,jdbcType=VARCHAR},
+		       MOK         = #{MOK      ,jdbcType=VARCHAR},
+		       SORT_SEQ    = #{SORT_SEQ}
+		WHERE TEMPLE_CD    = #{TEMPLE_CD}
+		  AND EVENT_CD     = #{EVENT_CD}
+	</update>
+	
+	<delete  id="DELETE_mgt" parameterType="java.util.Map">
+		DELETE FROM REC_WEPAE_CHONHON_MGT
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		   AND  EVENT_CD  = #{EVENT_CD}
+	</delete>
+	
+	<select id="SELECT_event" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD,
+		       EVENT_CD,
+		       EVENT_DATE,
+		       EVENT_DATE  AS EVENT_DATE_TEMP,
+		       COMPLET_YN,
+		       AMOUNT,
+		       CRT_DATE,
+		       CRT_USER,
+		       UPT_USER,
+		       UPT_DATE,
+		       REMOTE
+		  FROM REC_WEPAE_CHONHON_EVENT_MGT
+		WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		 AND  EVENT_CD  = #{V_EVENT_CD}
+		ORDER BY EVENT_DATE DESC
+	</select>
+	
+	
+	<insert id="INSERT_event" parameterType="java.util.Map" >
+		INSERT INTO REC_WEPAE_CHONHON_EVENT_MGT (
+		       EVENT_DATE,
+		       TEMPLE_CD,
+		       EVENT_CD,
+		       COMPLET_YN,
+		       AMOUNT,
+		       CRT_DATE,
+		       CRT_USER,
+		       UPT_USER,
+		       UPT_DATE,
+		       REMOTE
+		) VALUES (
+		       #{EVENT_DATE},
+		       #{TEMPLE_CD},
+		       #{EVENT_CD},
+		       #{COMPLET_YN},
+		       #{AMOUNT},
+		       SYSDATE,
+		       #{V_USER_ID},
+		       #{V_USER_ID},
+		       SYSDATE,
+		       #{REMOTE}
+		)
+	</insert>
+	
+	<update  id="UPDATE_event" parameterType="java.util.Map">
+		UPDATE REC_WEPAE_CHONHON_EVENT_MGT 
+		   SET EVENT_DATE = #{EVENT_DATE},
+		       TEMPLE_CD  = #{TEMPLE_CD},
+		       EVENT_CD   = #{EVENT_CD},
+		       COMPLET_YN = #{COMPLET_YN},
+		       AMOUNT     = #{AMOUNT},
+		       UPT_USER   = #{V_USER_ID},
+		       UPT_DATE   = SYSDATE,
+		       REMOTE     = #{REMOTE}
+		WHERE EVENT_DATE  = #{EVENT_DATE_TEMP}
+		  AND TEMPLE_CD   = #{TEMPLE_CD}
+		  AND EVENT_CD    = #{EVENT_CD}
+	</update>
+	
+	<delete  id="DELETE_event" parameterType="java.util.Map">
+		DELETE FROM REC_WEPAE_CHONHON_EVENT_MGT
+		WHERE EVENT_DATE = #{EVENT_DATE_TEMP}
+		  AND TEMPLE_CD  = #{TEMPLE_CD}
+		  AND EVENT_CD   = #{EVENT_CD}
+	</delete>
+
+	
+	<select id="SELECT_REC" parameterType="java.util.Map"  resultType="String">
+		SELECT count(TEMPLE_CD)
+		  FROM REC_WEPAE_CHONHON_EVENT_MGT
+		 WHERE EVENT_DATE  = #{EVENT_DATE_TEMP}
+		   AND TEMPLE_CD   = #{TEMPLE_CD}
+		   AND EVENT_CD    = #{EVENT_CD} 
+	</select>
+	
+</mapper>

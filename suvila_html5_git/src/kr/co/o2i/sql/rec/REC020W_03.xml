@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC020w_03DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="SEL_YN" column="SEL_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+
+
+	<select id="SELECT_KIND" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT #{V_TEMPLE_CD} AS TEMPLE_CD,
+		       '' AS TEMPLE_STAY_CD,
+		       '' AS FDATE,
+		       '전체' AS TEMPLE_STAY_NM
+		  FROM DUAL
+		UNION ALL
+		SELECT DET.TEMPLE_CD,
+		       DET.TEMPLE_STAY_CD,
+		       DET.FDATE,
+		       DET.TEMPLE_STAY_NM
+		  FROM REC_TEMPLE_STAY_MGT DET, REC_TEMPLE_STAY_MGT MGT
+		 WHERE DET.TEMPLE_CD      = MGT.TEMPLE_CD
+		   AND DET.TEMPLE_STAY_CD = MGT.TEMPLE_STAY_CD
+		   AND MGT.FDATE          = '-1'
+		   AND DET.FDATE         != '-1'
+		   AND DET.USE_YN         = 'F'
+		   AND DET.TEMPLE_CD      = #{V_TEMPLE_CD}
+	</select>
+	
+	<select id="SELECT_DETAIL" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+			  ,SEQ
+			  ,ACCEPT_SEQ
+			  ,FILTER_KEY
+			  ,ACCEPT_DATE
+			  ,PROPOSAL_BUD_NO
+			  ,PROPOSAL_BUD_NM
+			  ,TEMPLE_STAY_CD
+			  ,TEMPLE_STAY_NM
+			  ,FDATE
+			  ,RDATE
+			  ,BUD_NO
+			  ,NAME_KOR
+			  ,SEX_GBN
+			  ,BIRTHDAY
+			  ,TELNO1
+			  ,TELNO2
+			  ,TELNO3
+			  ,TELNO
+			  ,MOBILE_TELNO1
+			  ,MOBILE_TELNO2
+			  ,MOBILE_TELNO3
+			  ,MOBILE_TELNO
+			  ,EMAIL
+			  ,EMAIL1
+			  ,EMAIL2
+			  ,EMAIL_TRANS
+			  ,ZIP_CD
+			  ,ADDR1
+			  ,ADDR2
+			  ,ADDR
+			  ,RELIGION_CD
+			  ,RELIGION_NM
+			  ,NATION_CD
+			  ,NATION_NM
+			  ,JOB_CD
+			  ,JOB_NM
+			  ,PAYMENT_PLAN_AMT
+			  ,PAYMENT_AMT
+			  ,(PAYMENT_PLAN_AMT-PAYMENT_AMT) MISU_AMT
+			  ,JOIN_EXPER_CD
+			  ,JOIN_PATH_CD
+			  ,JOIN_PATH_NM
+			  ,DEL_YN
+			  ,JOIN_REMARK
+			  ,REMARK
+			  ,CRT_USER
+			  ,CRT_DATE
+			  ,UPT_USER
+			  ,UPT_DATE
+			  ,REMOTE
+			  ,MEMO
+			  ,SMS_YN
+			  ,(SELECT TO_CHAR(COUNT(*)) FROM REC_TEMPLE_STAY_DETAIL WHERE TEMPLE_CD = A.TEMPLE_CD AND TEMPLE_STAY_CD = A.TEMPLE_STAY_CD AND FDATE = A.FDATE AND DEL_YN = 'F') || '/' || TO_CHAR(CAPACITY_ORG) AS CAPACITY
+		  FROM(
+				SELECT DET.TEMPLE_CD
+					  ,DET.SEQ
+					  ,DET.ACCEPT_SEQ
+					  ,DET.ACCEPT_SEQ || DET.SEQ AS FILTER_KEY
+					  ,MST.ACCEPT_DATE
+					  ,DGT.CAPACITY AS CAPACITY_ORG
+					  ,MST.PROPOSAL_BUD_NO
+					  ,SMS.NAME_KOR AS PROPOSAL_BUD_NM
+					  ,DET.TEMPLE_STAY_CD
+					  ,DGT.TEMPLE_STAY_NM
+					  ,DET.FDATE
+					  ,DGT.RDATE
+					  ,DET.BUD_NO
+					  ,SIN.NAME_KOR
+					  ,SIN.SEX_GBN
+					  ,SIN.BIRTHDAY
+					  ,SIN.TELNO1
+					  ,SIN.TELNO2
+					  ,SIN.TELNO3
+					  ,SIN.TELNO1 || DECODE(SIN.TELNO1,NULL,'','-') || SIN.TELNO2 || DECODE(SIN.TELNO2,NULL,'','-') || SIN.TELNO3 AS TELNO
+					  ,SIN.MOBILE_TELNO1
+					  ,SIN.MOBILE_TELNO2
+					  ,SIN.MOBILE_TELNO3
+					  ,SMS.MOBILE_TELNO1 || DECODE(SMS.MOBILE_TELNO1,NULL,'','-') || SMS.MOBILE_TELNO2 || DECODE(SMS.MOBILE_TELNO2,NULL,'','-') || SMS.MOBILE_TELNO3 AS MOBILE_TELNO
+					  ,DECODE(LENGTH(SIN.EMAIL),1,'',SIN.EMAIL) AS EMAIL
+					  ,SUBSTR(SIN.EMAIL,1,INSTR(SIN.EMAIL,'@')-1) AS EMAIL1
+					  ,SUBSTR(SIN.EMAIL,INSTR(SIN.EMAIL,'@')+1)  AS EMAIL2
+					  ,SIN.EMAIL_TRANS
+					  ,SIN.ZIP_CD
+					  ,SIN.ADDR1
+					  ,SIN.ADDR2
+					  ,SIN.ADDR1 || ' ' || SIN.ADDR2 AS ADDR
+					  ,SIN.RELIGION_CD
+					  ,REL.NAME AS RELIGION_NM
+					  ,SIN.NATION_CD
+					  ,NAT.NAME AS NATION_NM
+					  ,SIN.JOB_CD
+					  ,JOB.NAME AS JOB_NM
+					  ,DET.PAYMENT_PLAN_AMT
+					  ,(SELECT NVL(SUM(HIS.AMOUNT),0)
+				          FROM REC_PAYMENT_HIS HIS
+				         WHERE SUB.TEMPLE_CD  = HIS.TEMPLE_CD
+				           AND SUB.ACCEPT_SEQ = HIS.ACCEPT_SEQ
+				           AND SUB.SEQ        = HIS.SEQ
+				        ) AS PAYMENT_AMT
+				      ,DET.JOIN_EXPER_CD
+				      ,DET.JOIN_PATH_CD
+				      ,PAH.NAME AS JOIN_PATH_NM
+				      ,DET.DEL_YN
+				      ,DET.JOIN_REMARK
+				      ,DET.REMARK
+				      ,MST.CRT_USER
+				      ,TO_CHAR(MST.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+				      ,MST.UPT_USER
+				      ,TO_CHAR(MST.UPT_DATE,'YYYYMMDD') AS UPT_DATE
+				      ,MST.REMOTE
+				      ,MST.MEMO
+				      ,DECODE(MST.SMS_YN,'T',DECODE(SMS.MOBILE_TELNO1||SMS.MOBILE_TELNO2||SMS.MOBILE_TELNO3,NULL,'N','Y'),'N') SMS_YN
+				  FROM REC_MASTER MST
+				  	  ,REC_SUB SUB
+				  	  ,REC_TEMPLE_STAY_DETAIL DET
+				  	  ,SIN_CARD_MASTER SIN
+				  	  ,SIN_CARD_MASTER SMS
+				  	  ,REC_TEMPLE_STAY_MGT DGT
+				  	  ,ASP_CODE_MGT PAH
+				  	  ,ASP_CODE_MGT REL
+				  	  ,ASP_CODE_MGT NAT
+				  	  ,ASP_CODE_MGT JOB
+				 WHERE MST.TEMPLE_CD      = SUB.TEMPLE_CD
+				   AND MST.ACCEPT_SEQ     = SUB.ACCEPT_SEQ
+				   AND SUB.TEMPLE_CD      = DET.TEMPLE_CD
+				   AND SUB.ACCEPT_SEQ     = DET.ACCEPT_SEQ
+				   AND SUB.SEQ            = DET.SEQ
+				   AND SUB.DEL_YN         = 'F'
+				   AND DET.TEMPLE_CD      = DGT.TEMPLE_CD
+				   AND DET.TEMPLE_STAY_CD = DGT.TEMPLE_STAY_CD
+				   AND DET.FDATE          = DGT.FDATE
+				   AND DET.TEMPLE_CD      = SIN.TEMPLE_CD(+)
+				   AND DET.BUD_NO         = SIN.BUD_NO(+)
+				   AND MST.TEMPLE_CD      = SMS.TEMPLE_CD(+)
+				   AND MST.PROPOSAL_BUD_NO= SMS.BUD_NO(+)
+				   AND PAH.GROUP_CD(+)    = 'TS_JOINPATH'
+				   AND DET.JOIN_PATH_CD   = PAH.CODE(+)
+				   AND REL.GROUP_CD(+)    = 'RELIGION'
+				   AND SIN.RELIGION_CD    = REL.CODE(+)
+				   AND NAT.GROUP_CD(+)    = 'NATION'
+				   AND SIN.NATION_CD      = NAT.CODE(+)
+				   AND JOB.GROUP_CD(+)    = 'JOB'
+				   AND SIN.JOB_CD         = JOB.CODE(+)
+				   AND DET.TEMPLE_CD      = #{V_TEMPLE_CD}
+				   <if test="V_PROPOSAL_BUD_NO != '' and V_PROPOSAL_BUD_NO != null  ">
+				   	AND MST.PROPOSAL_BUD_NO LIKE SUBSTR(#{V_PROPOSAL_BUD_NO},0,10) || '%'
+				   </if>
+				   <if test="V_DATE_GBN == '1'">
+		           		AND MST.ACCEPT_DATE BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		           </if>
+		           <if test="V_DATE_GBN == '2'">
+		           		AND DET.FDATE BETWEEN #{V_EVENT_SDATE} AND #{V_EVENT_EDATE}
+		           </if>
+		           <if test="V_TEMPLE_STAY_CD != '' and V_TEMPLE_STAY_CD != null  ">
+		           		AND DET.TEMPLE_STAY_CD = #{V_TEMPLE_STAY_CD}
+		           		AND DET.FDATE          = #{V_FDATE}
+		           </if>
+				   <if test="VV_USER_ID != '' and VV_USER_ID != null  ">
+						AND MST.CRT_USER = #{VV_USER_ID} 
+					</if>
+					<if test="V_CLASS_CD != '0' and V_CLASS_CD != '' and V_CLASS_CD != null">
+						AND MST.PROPOSAL_BUD_NO IN (SELECT BUD_NO 
+													  FROM SIN_CLASS_INFO 
+													 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+													   AND CLASS_CD  = #{V_CLASS_CD})
+					</if>
+			<choose>
+           		<when test="V_PAY_STATE == 1">
+           			) A \n WHERE (PAYMENT_PLAN_AMT-PAYMENT_AMT) &lt;= 0
+           		</when>
+           		<when test="V_PAY_STATE == 2">
+           			) A \n WHERE (PAYMENT_PLAN_AMT-PAYMENT_AMT) > 0
+           		</when>
+           		<otherwise>
+           			) A
+           		</otherwise>
+           </choose>
+			ORDER BY ACCEPT_SEQ DESC
+					,SEQ
+	</select>
+
+	
+</mapper>

@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC003w_23DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="CONTENT"    column="CONTENT"      javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="ACCEPT_YN" column="ACCEPT_YN"   typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+		<result  property="MAIN_BOKWI" column="MAIN_BOKWI"   typeHandler="kr.co.o2i.handler.CustomTypeHandler" />		
+	</resultMap>
+
+
+	<!-- # 49재 제사정보 조회 # -->
+	<select id="SELECT_SAGU" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+			  ,FILTER_KEY
+			  ,ACCEPT_SEQ
+			  ,SEQ
+			  ,ACCEPT_GBN
+			  ,ACCEPT_DATE
+			  ,ACCEPT_NAME
+			  ,PROPOSAL_BUD_NO
+			  ,PROPOSAL_BUD_NM
+			  ,PAYMENT_PLAN_AMT
+			  ,PAYMENT_AMT
+			  ,(PAYMENT_PLAN_AMT-PAYMENT_AMT) MISU_AMT
+			  ,DAMDANG_MONK_ID
+			  ,DAMDANG_MONK_NM
+			  ,TELNO1
+			  ,TELNO2
+			  ,TELNO3
+			  ,TELNO
+			  ,MOBILE_TELNO1
+			  ,MOBILE_TELNO2
+			  ,MOBILE_TELNO3
+			  ,MOBILE_TELNO
+			  ,DEL_YN
+			  ,MEMO
+			  ,REMARK
+			  ,CRT_USER
+			  ,UPT_USER
+			  ,CRT_DATE
+			  ,UPT_DATE
+			  ,REMOTE
+			  ,SMS_YN              
+		  FROM (SELECT DET.TEMPLE_CD
+		  			  ,DET.ACCEPT_SEQ || DET.SEQ AS FILTER_KEY
+		  			  ,DET.ACCEPT_SEQ
+		  			  ,DET.SEQ
+		  			  ,SUB.ACCEPT_GBN
+		  			  ,MST.ACCEPT_DATE
+		  			  ,GBN.NAME AS ACCEPT_NAME
+		  			  ,MST.PROPOSAL_BUD_NO
+		  			  ,SMS.NAME_KOR AS PROPOSAL_BUD_NM
+		  			  ,DET.PAYMENT_PLAN_AMT
+		  			  ,(SELECT NVL(SUM(HIS.AMOUNT),0)
+			              FROM REC_PAYMENT_HIS HIS
+			             WHERE SUB.TEMPLE_CD  = HIS.TEMPLE_CD
+			               AND SUB.ACCEPT_SEQ = HIS.ACCEPT_SEQ
+			               AND SUB.SEQ        = HIS.SEQ         ) AS PAYMENT_AMT
+			          ,DET.DAMDANG_MONK_ID
+		              ,USR.USER_NM AS DAMDANG_MONK_NM
+		              ,SMS.TELNO1
+		              ,SMS.TELNO2
+		              ,SMS.TELNO3
+		              ,SMS.TELNO1 || DECODE(SMS.TELNO1,NULL,'','-') || SMS.TELNO2 || DECODE(SMS.TELNO2,NULL,'','-') || SMS.TELNO3 AS TELNO
+		              ,SMS.MOBILE_TELNO1
+		              ,SMS.MOBILE_TELNO2
+		              ,SMS.MOBILE_TELNO3
+		              ,SMS.MOBILE_TELNO1 || DECODE(SMS.MOBILE_TELNO1,NULL,'','-') || SMS.MOBILE_TELNO2 || DECODE(SMS.MOBILE_TELNO2,NULL,'','-') || SMS.MOBILE_TELNO3 AS MOBILE_TELNO
+		              ,DET.DEL_YN
+		              ,MST.MEMO
+		              ,DET.REMARK
+		              ,DET.CRT_USER
+		              ,DET.UPT_USER
+		              ,TO_CHAR(DET.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+		              ,TO_CHAR(DET.UPT_DATE,'YYYYMMDD') AS UPT_DATE
+		              ,DET.REMOTE
+		              ,DECODE(MST.SMS_YN,'T',DECODE(SMS.MOBILE_TELNO1||SMS.MOBILE_TELNO2||SMS.MOBILE_TELNO3,NULL,'N','Y'),'N') SMS_YN
+		          FROM REC_MASTER MST
+		          	  ,REC_SUB SUB
+		          	  ,SIN_CARD_MASTER SMS
+		          	  ,REC_FORTY_NINE_DETAIL DET
+		          	  ,ASP_TEMPLE_USER USR
+		          	  ,ASP_CODE_MGT GBN
+		         WHERE MST.TEMPLE_CD  = SUB.TEMPLE_CD
+		           AND MST.ACCEPT_SEQ = SUB.ACCEPT_SEQ
+		           AND MST.TEMPLE_CD  = SMS.TEMPLE_CD(+)
+		           AND MST.PROPOSAL_BUD_NO = SMS.BUD_NO(+)
+		           AND SUB.TEMPLE_CD  = DET.TEMPLE_CD
+		           AND SUB.ACCEPT_SEQ = DET.ACCEPT_SEQ
+		           AND SUB.SEQ        = DET.SEQ
+		           AND GBN.GROUP_CD(+)= 'REC'
+		           AND SUB.ACCEPT_GBN = GBN.CODE(+)
+		           AND DET.TEMPLE_CD  = USR.TEMPLE_CD(+)
+		           AND DET.DAMDANG_MONK_ID = USR.USER_ID(+)
+		           AND SUB.DEL_YN     = 'F'
+		           AND DET.TEMPLE_CD  = #{V_TEMPLE_CD}
+		           <if test="V_PROPOSAL_BUD_NO != '' and V_PROPOSAL_BUD_NO != null  ">
+		           	AND MST.PROPOSAL_BUD_NO LIKE SUBSTR(#{V_PROPOSAL_BUD_NO},0,10) || '%'
+		           </if>
+		           <choose>
+		           	<when test="V_DATE_GBN == 1">
+		           		AND MST.ACCEPT_DATE BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		           	</when>
+		           	<when test="V_DATE_GBN == 2">
+		           		AND DET.ACCEPT_SEQ IN (SELECT DISTINCT ACCEPT_SEQ
+		           							     FROM REC_FORTY_NINE_JESA_MGT
+		           							    WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		           							     AND EVENT_DATE BETWEEN #{V_ACCEPT_SDATE} 
+		           							     AND #{V_ACCEPT_EDATE})
+		           	</when>
+		           	<otherwise></otherwise>
+		           </choose>
+		           <if test="V_DAMDANG_MONK_ID != '' and V_DAMDANG_MONK_ID != null  ">
+		           		AND DET.DAMDANG_MONK_ID = #{V_DAMDANG_MONK_ID}
+		           </if>
+		           <if test="VV_USER_ID != '' and VV_USER_ID != null  ">
+		           		AND MST.CRT_USER = #{VV_USER_ID}
+		           </if>
+		           <if test="V_CLASS_CD != '0' and V_CLASS_CD != '' and V_CLASS_CD != null">
+		           		AND MST.PROPOSAL_BUD_NO IN (SELECT BUD_NO 
+		           		                              FROM SIN_CLASS_INFO 
+		           		                             WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		           		                               AND CLASS_CD  = #{V_CLASS_CD})
+		           </if>
+		           <if test="V_APPROV != '' and V_APPROV != null  ">
+		           		AND MST.APPROVAL_GBN = #{V_APPROV} 
+		           </if>
+		           
+		           <choose>
+		           	<when test="V_PAY_STATE == 1">
+		           		) WHERE (PAYMENT_PLAN_AMT-PAYMENT_AMT)   &lt;= 0
+		           	</when>
+		           	<when test="V_PAY_STATE == 2">
+		           		) WHERE (PAYMENT_PLAN_AMT-PAYMENT_AMT) > 0
+		           	</when>
+		           	<otherwise>
+		           		)
+		           	</otherwise>
+		           </choose>
+		ORDER BY ACCEPT_SEQ
+	</select>
+	
+	
+	<select id="SELECT_SAGU_KIND" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT SUB.TEMPLE_CD
+			  ,SUB.SEQ
+			  ,SUB.ACCEPT_SEQ
+			  ,SUB.JESA_GUBUN
+			  ,JES.NAME AS JESA_NAME
+			  ,SUB.LUNAR_SOLAR
+			  ,LUN.NAME AS LUNAR_SOLAR_NM
+			  ,SUB.EVENT_DATE
+			  ,SUB.EVENT_TIME
+			  ,SUB.NUMBER_COUNT
+			  ,SUB.REMARK
+			  ,SUB.ACCEPT_YN
+			  ,SUB.DEL_YN
+			  ,SUB.CRT_DATE
+			  ,SUB.UPT_DATE
+			  ,SUB.CRT_USER
+			  ,SUB.UPT_USER
+			  ,SUB.REMOTE
+		  FROM REC_FORTY_NINE_JESA_MGT SUB
+		  	  ,ASP_CODE_MGT JES
+		  	  ,ASP_CODE_MGT LUN
+		 WHERE JES.GROUP_CD(+) = 'SAGUJESA'
+		   AND SUB.JESA_GUBUN  = JES.CODE(+)
+		   AND LUN.GROUP_CD(+) = 'LUNAR_SOLAR'
+		   AND SUB.LUNAR_SOLAR = LUN.CODE(+)
+		   AND SUB.TEMPLE_CD   = #{V_TEMPLE_CD}
+		   AND SUB.SEQ         = #{V_SEQ}
+		   AND SUB.ACCEPT_SEQ  = #{V_ACCEPT_SEQ}
+		ORDER BY SUB.TEMPLE_CD
+			    ,SUB.ACCEPT_SEQ
+			    ,SUB.SEQ, SUB.JESA_GUBUN
+	</select>
+	
+	<select id="SELECT_SAGU_DEATH" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT REC.TEMPLE_CD
+			  ,REC.SEQ
+			  ,REC.ACCEPT_SEQ
+			  ,REC.SORT_SEQ
+			  ,REC.DECE_BUD_NO
+			  ,SPI.NAME_KOR AS DECE_BUD_NM
+			  ,DEA.LUNAR_SOLAR
+			  ,LUN.NAME AS LUNAR_SOLAR_NM
+			  ,DEA.BON
+			  ,BON.NAME AS BON_NM
+			  ,DEA.DEATH_DAY, 
+		       DEA.DEATH_TIME, 
+		       REC.CRT_USER, 
+		       REC.UPT_USER, 
+		       TO_CHAR(REC.CRT_DATE,'YYYYMMDD') AS CRT_DATE,
+		       TO_CHAR(REC.UPT_DATE,'YYYYMMDD') AS UPT_DATE,
+		       REC.REMOTE,
+		       REC.DECE_REL
+		  FROM REC_FORTY_NINE_DEATH REC
+		  	  ,SIN_DEATH_INFO DEA
+		  	  ,SIN_CARD_MASTER SPI
+		  	  ,ASP_CODE_MGT LUN
+		  	  ,ASP_CODE_MGT BON
+		 WHERE REC.TEMPLE_CD   = DEA.TEMPLE_CD
+		   AND REC.DECE_BUD_NO = DEA.BUD_NO
+		   AND REC.TEMPLE_CD   = SPI.TEMPLE_CD
+		   AND REC.DECE_BUD_NO = SPI.BUD_NO
+		   AND LUN.GROUP_CD(+) = 'LUNAR_SOLAR'
+		   AND DEA.LUNAR_SOLAR = LUN.CODE(+)
+		   AND BON.GROUP_CD(+) = 'BON'
+		   AND DEA.BON         = BON.CODE(+)
+		   AND REC.TEMPLE_CD   = #{V_TEMPLE_CD}
+		   AND REC.ACCEPT_SEQ  = #{V_ACCEPT_SEQ}
+		   AND REC.SEQ         = #{V_SEQ}
+		ORDER BY REC.ACCEPT_SEQ, REC.SORT_SEQ, REC.DECE_BUD_NO
+	</select>
+	
+	<select id="SELECT_SAGU_BOK" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT RFN.TEMPLE_CD
+			  ,RFN.SEQ
+			  ,RFN.ACCEPT_SEQ
+			  ,RFN.SORT_SEQ
+			  ,RFN.REP_YN AS MAIN_BOKWI
+			  ,RFN.HYO_REL
+			  ,RFN.BOKWI_KIBU_GBN
+			  ,COD.NAME AS BOKWI_KIBU_GBN_NM
+			  ,RFN.DECE_REL
+			  ,RFN.BOKWEJA_NM
+			  ,RFN.REMARK
+			  ,RFN.UPT_USER
+			  ,RFN.CRT_USER
+			  ,TO_CHAR(RFN.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+			  ,TO_CHAR(RFN.UPT_DATE,'YYYYMMDD') AS UPT_DATE
+			  ,RFN.REMOTE
+			  ,RFN.USE_YN
+		  FROM REC_FORTY_NINE_BOKWEJA_MGT RFN
+		  	  ,ASP_CODE_MGT COD 
+		 WHERE COD.GROUP_CD(+)    = 'BOKWIGBN'
+		   AND RFN.BOKWI_KIBU_GBN = COD.CODE(+)
+		   AND RFN.TEMPLE_CD      = #{V_TEMPLE_CD}
+		   AND RFN.ACCEPT_SEQ     = #{V_ACCEPT_SEQ}
+		   AND RFN.SEQ            = #{V_SEQ}
+		ORDER BY RFN.ACCEPT_SEQ
+			    ,RFN.SEQ
+			    ,RFN.SORT_SEQ
+	</select>
+	
+	
+	<update id="UPDATE_49KIND" parameterType="java.util.Map">
+		 UPDATE REC_FORTY_NINE_JESA_MGT 
+			SET EVENT_DATE 	   = #{EVENT_DATE}
+			   ,EVENT_TIME     = #{EVENT_TIME}
+			   ,NUMBER_COUNT   = #{NUMBER_COUNT}
+			   ,UPT_DATE       = SYSDATE
+		  WHERE TEMPLE_CD 	   = #{TEMPLE_CD}
+		    AND ACCEPT_SEQ     = #{ACCEPT_SEQ}
+		    AND JESA_GUBUN     = #{JESA_GUBU}
+	</update>
+	
+	<select id="GET_TEMPLE_NM" parameterType="java.util.Map" resultType="String">
+		SELECT TEMPLE_NM 
+		  FROM ASP_TEMPLE_MASTER 
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+	</select>
+	
+	<select id="GET_CONTENTS_TEMP" parameterType="java.util.Map" resultType="String">
+		SELECT CONTENTS 
+		  FROM ASP_TEMPLE_EVENT_ALARM_DOC 
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND CODE      = #{CODE}
+	  	   AND CHECK_YN  = 'T'
+	</select>
+	
+	<select id="GET_ALARM_DAY" parameterType="java.util.Map" resultType="String">
+		SELECT ALARM_DAY 
+		  FROM ASP_TEMPLE_EVENT_ALARM_MGT 
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND CODE      = #{CODE}
+	  	   AND USE_YN    = 'T'
+	</select>
+	
+	<select id="GET_EVENT_ALARM" parameterType="java.util.Map"  resultMap="boardMap">
+		SELECT COL_ID, COL_NAME 
+		  FROM ASP_TEMPLE_EVENT_ALARM_ITEM 
+		 WHERE GROUP_CD = 'SMSREC' 
+		   AND USE_YN   = 'T' 
+		   AND CODE     = #{CODE}		   
+	</select>
+	
+	<select id="GET_49NM" parameterType="java.util.Map"  resultType="String">
+		SELECT NAME FROM ASP_CODE_MGT 
+		 WHERE GROUP_CD = 'SAGUJESA' 
+		   AND CODE     = #{JESA_GUBUN}
+	</select>
+	
+	<select id="GET_MSG_ID" parameterType="java.util.Map"  resultType="String">
+		 SELECT MSG_ID 													
+		   FROM SMSKT.SDK_SMS_SEND									
+		  WHERE RESERVED1 = #{TEMPLE_CD}					
+		    AND RESERVED4 = #{CODE}					
+		    AND RESERVED6 = #{RESERVED6}
+		    <if test="VV_USER_ID != '' and VV_USER_ID != null  ">
+		    	AND SMS_MSG like '%' || #{PRAY_NM} || '%'	
+		    </if>				
+	</select>
+	
+	<update id="UPT_SMS_MSG" parameterType="java.util.Map" >
+		UPDATE SMSKT.SDK_SMS_SEND 									
+		   SET SMS_MSG			  = #{UPT_CONTENTS}	
+		      ,SEND_DATE		  = #{NEW_SEND_DATE}	
+		 WHERE RESERVED1 		  = #{TEMPLE_CD}		
+		   AND RESERVED6 		  = #{RESERVED6}		
+		   AND RESERVED4 		  = #{CODE}			
+		   AND MSG_ID             = #{MSG_ID}				
+	</update>
+	
+	<update id="UPDATE_49_YOUNGGA" parameterType="java.util.Map" >
+		UPDATE REC_FORTY_NINE_DEATH 
+		   SET DECE_REL    = #{DECE_REL}
+		   	  ,UPT_DATE    = SYSDATE
+		   	  ,UPT_USER    = #{UPT_USER}
+		 WHERE TEMPLE_CD   = #{TEMPLE_CD}
+		   AND SEQ         = #{SEQ}
+		   AND ACCEPT_SEQ  = #{ACCEPT_SEQ}
+		   AND DECE_BUD_NO = #{DECE_BUD_NO}
+	</update>
+	
+	<insert id="INSERT_49BOKWI" parameterType="java.util.Map">
+		INSERT INTO REC_FORTY_NINE_BOKWEJA_MGT (
+		        USE_YN
+		       ,SORT_SEQ
+		       ,REMARK
+		       ,CRT_USER
+		       ,HYO_REL
+		       ,REP_YN
+		       ,BOKWI_KIBU_GBN
+		       ,DECE_REL
+		       ,CRT_DATE
+		       ,BOKWEJA_NM
+		       ,UPT_DATE
+		       ,UPT_USER
+		       ,REMOTE
+		       ,TEMPLE_CD
+		       ,SEQ
+		       ,ACCEPT_SEQ
+		) VALUES (
+		        #{USE_YN      ,jdbcType=VARCHAR}
+		       ,#{SORT_SEQ}
+		       ,#{REMARK       ,jdbcType=VARCHAR}
+		       ,#{V_USER_ID}
+		       ,#{HYO_REL      ,jdbcType=VARCHAR}
+		       ,#{V_MAIN_BOKWI ,jdbcType=VARCHAR}
+		       ,#{BOKWI_KIBU_GBN}
+		       ,#{DECE_REL     ,jdbcType=VARCHAR}
+		       ,SYSDATE
+		       ,#{BOKWEJA_NM}
+		       ,SYSDATE
+		       ,#{V_USER_ID}
+		       ,#{REMOTE}
+		       ,#{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{ACCEPT_SEQ}
+		)
+	</insert>
+	
+	<update id="UPDATE_49BOKWI" parameterType="java.util.Map" >
+		UPDATE REC_FORTY_NINE_BOKWEJA_MGT 
+		   SET REP_YN 		  = #{V_MAIN_BOKWI}
+		      ,HYO_REL     	  = #{HYO_REL}
+		      ,BOKWEJA_NM     = #{BOKWEJA_NM}
+		      ,BOKWI_KIBU_GBN = #{V_BOKWI_KIBU_GBN}
+		      ,UPT_DATE       = SYSDATE
+		      ,UPT_USER		  = #{UPT_USER}
+		 WHERE TEMPLE_CD 	  = #{TEMPLE_CD}
+		   AND ACCEPT_SEQ  	  = #{ACCEPT_SEQ}
+		   AND SEQ  		  = #{SEQ}
+		   AND SORT_SEQ  	  = #{SORT_SEQ}
+	</update>
+	
+	<delete id="DELETE_49BOKWI"  parameterType="java.util.Map" >
+		DELETE FROM REC_FORTY_NINE_BOKWEJA_MGT 
+		 WHERE TEMPLE_CD 	 = #{TEMPLE_CD}
+		   AND ACCEPT_SEQ  	 = #{ACCEPT_SEQ}
+		   AND SEQ  	 	 = #{SEQ}
+		  AND SORT_SEQ  	 = #{SORT_SEQ}
+	</delete>
+	
+	<delete id="DELETE_49BOKWI_ALL"  parameterType="java.util.Map" >
+		DELETE FROM REC_FORTY_NINE_BOKWEJA_MGT 
+		 WHERE TEMPLE_CD 	 = #{V_TEMPLE_CD}
+		   AND ACCEPT_SEQ  	 = #{ACCEPT_SEQ}
+		   AND SEQ  	 	 = #{SEQ}
+	</delete>
+	
+	
+</mapper>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="CMS004w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+	
+	<select id="SELECT_REC_CMS_PAYMENT_MGT" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT SUB_DATE
+			  ,'성공' AS NAME1
+			  ,'실패' AS NAME2
+			  ,SUM(DECODE(IF_PROCESS_RESULT,'Y',IF_REQUEST_PAYMENT_AMOUNT)) AS AMOUNT1
+			  ,SUM(DECODE(IF_PROCESS_RESULT,'N',IF_REQUEST_PAYMENT_AMOUNT)) AS AMOUNT2
+			  ,COUNT(DECODE(IF_PROCESS_RESULT,'Y',IF_REQUEST_PAYMENT_AMOUNT)) AS COUNT1
+			  ,COUNT(DECODE(IF_PROCESS_RESULT,'N',IF_REQUEST_PAYMENT_AMOUNT)) AS COUNT2
+		 FROM (
+				SELECT
+					SUBSTR(MGT.IF_REQUEST_DATE,1,TO_NUMBER(#{V_DATE_GBN})) AS SUB_DATE,
+				    MGT.IF_PROCESS_RESULT,
+				    MGT.IF_REQUEST_PAYMENT_AMOUNT
+				FROM REC_CMS_PAYMENT_MGT MGT,
+					ASP_TEMPLE_CMS_INFO INFO
+				WHERE MGT.IF_TRAN_ID = INFO.CMS_TRADE_CD
+				AND INFO.TEMPLE_CD = #{V_TEMPLE_CD}
+				<if test='V_CMS_TRADE_CD != nul and  V_CMS_TRADE_CD != "" '>
+					AND INFO.CMS_TRADE_CD = #{V_CMS_TRADE_CD}
+				</if>
+				AND SUBSTR(MGT.IF_REQUEST_DATE,1,TO_NUMBER(#{V_DATE_GBN}))   &gt;= #{V_SDATE}
+				AND SUBSTR(MGT.IF_REQUEST_DATE,1,TO_NUMBER(#{V_DATE_GBN}))   &lt;= #{V_EDATE}   
+			  )
+		GROUP BY SUB_DATE
+		ORDER BY SUB_DATE			
+	</select>
+
+	
+	
+</mapper>

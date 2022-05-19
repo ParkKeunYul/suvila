@@ -1,0 +1,18 @@
+{
+   "success":true,
+   "data":{
+       "list":[
+        {"custNo":"A","custName":"홍길동","birth":"20140101","point":1,"addr":"A" },
+        {"custNo":"B","custName":"이순신","birth":"20150101","point":2,"addr":"B" },
+        {"custNo":"C","custName":"임걱정","birth":"20160101","point":3,"addr":"C" },
+        {"custNo":"D","custName":"임경업","birth":"20160422","point":4,"addr":"D" },
+        {"custNo":"E","custName":"유관순","birth":"20141219","point":5,"addr":"E" },
+        {"custNo":"F","custName":"전우치","birth":"20151121","point":6,"addr":"F" },
+        {"custNo":"G","custName":"정중부","birth":"20141231","point":7,"addr":"G" },
+        {"custNo":"H","custName":"이성계","birth":"20160302","point":8,"addr":"H" },
+        {"custNo":"I","custName":"안중근","birth":"20160402","point":9,"addr":"I" },
+        {"custNo":"J","custName":"김구","birth":"20160318","point":1,"addr":"J" }],
+       "listTotalSize":20,
+   },
+   "msg":""
+}

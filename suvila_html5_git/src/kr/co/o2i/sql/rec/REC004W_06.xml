@@ -1,0 +1,797 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC004w_06DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result property="CHECK_P" column="CHECK_P"   typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+	
+	
+	<select id="SELECT_DETAIL" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		  SELECT RWCD.TEMPLE_CD
+		  		,RWCD.ACCEPT_SEQ
+		  		,RWCD.SEQ
+		  		,RM.ACCEPT_DATE
+		  		,RWCD.EVENT_DATE
+		  		,RWCD.EVENT_CD
+		  		,RWCM.EVENT_NAME || ' (' || SUBSTR(RWCD.EVENT_DATE,1,4) || '/' || SUBSTR(RWCD.EVENT_DATE,5,2) || '/' ||SUBSTR(RWCD.EVENT_DATE,7,2) ||')' AS EVENT_NAME
+		  		,RM.PROPOSAL_BUD_NO
+		  		,PRO_SIN.NAME_KOR  AS PRO_NAME_KOR
+		  		,RWCD.WEPAECNT
+		  		,RWCD.EVENT_TIME
+		  		,RWCD.MEMO
+		  		,RWCD.ACCEPT_SEQ || RWCD.SEQ AS PAGE_SKIP
+		  		,'T' AS CHECK_P
+		  		,RWCJM.EVENT_SEQ
+		  		,RWCD.CLOSE_YN
+		   FROM REC_WEPAE_CHONHON_DETAIL		RWCD
+		   	   ,REC_WEPAE_CHONHON_JOIN_MGT		RWCJM
+		   	   ,REC_WEPAE_CHONHON_EVENT_MGT	    RWCEM
+		   	   ,REC_WEPAE_CHONHON_MGT			RWCM
+		   	   ,REC_MASTER						RM
+		   	   ,SIN_CARD_MASTER				PRO_SIN
+		  WHERE RWCD.TEMPLE_CD       = RWCJM.TEMPLE_CD
+		    AND RWCD.ACCEPT_SEQ      = RWCJM.ACCEPT_SEQ
+		    AND RWCD.SEQ             = RWCJM.SEQ
+		    AND RWCD.EVENT_CD        = RWCJM.EVENT_CD
+		    AND RWCD.EVENT_DATE      = RWCJM.EVENT_DATE
+		    AND RWCD.WEPAECNT        = RWCJM.WEPAECNT 
+		    AND RWCD.TEMPLE_CD       = RWCEM.TEMPLE_CD
+		    AND RWCD.EVENT_CD        = RWCEM.EVENT_CD
+		    AND RWCD.EVENT_DATE      = RWCEM.EVENT_DATE
+		    AND RWCEM.TEMPLE_CD      = RWCM.TEMPLE_CD
+		    AND RWCEM.EVENT_CD       = RWCM.EVENT_CD
+		    AND RWCD.TEMPLE_CD       = RM.TEMPLE_CD
+		    AND RWCD.ACCEPT_SEQ      = RM.ACCEPT_SEQ
+		    AND RM.TEMPLE_CD         = PRO_SIN.TEMPLE_CD
+		    AND RM.PROPOSAL_BUD_NO   = PRO_SIN.BUD_NO
+		    AND RWCJM.WEPAE_SEQ      = '1'
+		    AND RWCJM.JOIN_SEQ       = '1'
+		    AND RWCD.DEL_YN          = 'F'
+		    AND RM.DEL_YN            = 'F'
+		    AND RWCD.TEMPLE_CD       = #{V_TEMPLE_CD}
+		    <if test="V_CLOSE_YN != '' and V_CLOSE_YN != null  ">
+		    	AND RWCD.CLOSE_YN = #{V_CLOSE_YN}
+		    </if>
+		    <if test="V_DATE_GBN == 'accept'">
+		    	AND RM.ACCEPT_DATE BETWEEN #{V_SDATE} AND #{V_EDATE}
+		    </if>
+		    <if test="V_DATE_GBN == 'event'">
+		    	AND RWCD.EVENT_DATE BETWEEN #{V_SDATE} AND #{V_EDATE}
+		    </if>
+		    <if test="V_PROPOSAL_BUD_NO != '' and V_PROPOSAL_BUD_NO != null  ">
+		    	AND RM.PROPOSAL_BUD_NO LIKE #{V_PROPOSAL_BUD_NO} || '%'
+		    </if>
+		    <if test="V_EVENT_CD != '' and V_EVENT_CD != null  and V_EVENT_CD != '0'">
+		    	AND RWCD.EVENT_CD = #{V_EVENT_CD}
+		    </if>
+		    <if test="VV_USER_ID != '' and VV_USER_ID != null  and VV_USER_ID != '0'">
+		    	AND RM.CRT_USER = #{VV_USER_ID}
+		    </if>
+		ORDER BY RWCD.ACCEPT_SEQ
+				,RWCD.SEQ
+	</select>
+	
+	
+	<select id="SELECT_SPIRIT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT RWCJM.TEMPLE_CD
+			  ,RWCJM.WEPAE_SEQ
+			  ,RWCJM.JOIN_SEQ
+			  ,BOK_SIN.NAME_KOR AS BOKWIJA_NM
+			  ,SDBI.DECE_REL
+			  ,BON_ACM.NAME AS BON_NM
+			  ,SIN.NAME_KOR
+			  ,SDI.LUNAR_SOLAR
+			  ,LR_ACM.NAME AS LR_NM
+			  ,SDI.DEATH_DAY
+			  ,SDI.DEATH_TIME
+			  ,BOK_ACM.NAME AS BOKWI_NM	
+		 FROM REC_WEPAE_CHONHON_JOIN_MGT	RWCJM
+		 	 ,SIN_DEATH_INFO				SDI
+		 	 ,SIN_DEATH_BOKWI_INFO			SDBI
+		 	 ,SIN_CARD_MASTER				SIN
+		 	 ,SIN_CARD_MASTER				BOK_SIN
+		 	 ,ASP_CODE_MGT					BOK_ACM
+		 	 ,ASP_CODE_MGT					LR_ACM
+		 	 ,ASP_CODE_MGT					BON_ACM
+		WHERE RWCJM.TEMPLE_CD		= SIN.TEMPLE_CD
+		 AND RWCJM.DECE_BUD_NO		= SIN.BUD_NO
+		 AND RWCJM.TEMPLE_CD		= SDI.TEMPLE_CD
+		 AND RWCJM.DECE_BUD_NO		= SDI.BUD_NO
+		 AND RWCJM.TEMPLE_CD		= SDBI.TEMPLE_CD
+		 AND RWCJM.DECE_BUD_NO		= SDBI.DECE_BUD_NO
+		 AND RWCJM.BOKWIJA_NO		= SDBI.BUD_NO
+		 AND RWCJM.TEMPLE_CD 		= BOK_SIN.TEMPLE_CD
+		 AND RWCJM.BOKWIJA_NO		= BOK_SIN.BUD_NO
+		 AND LR_ACM.GROUP_CD(+) 	= 'LUNAR_SOLAR'
+		 AND LR_ACM.CODE(+)     	= SDI.LUNAR_SOLAR
+		 AND BOK_ACM.GROUP_CD(+) 	= 'BOKWIGBN'
+		 AND BOK_ACM.CODE(+)     	= SDBI.BOKWI_KIBU_GBN
+		 AND BON_ACM.GROUP_CD(+) 	= 'BON'
+		 AND BON_ACM.CODE(+)     	= SDI.BON
+		 AND SIN.DEL_YN 			= 'F'
+		 AND BOK_SIN.DEL_YN			= 'F'
+		 AND RWCJM.TEMPLE_CD 		= #{V_TEMPLE_CD}
+		 AND RWCJM.ACCEPT_SEQ		= #{V_ACCEPT_SEQ}
+		 AND RWCJM.SEQ				= #{V_SEQ}
+		 AND RWCJM.EVENT_DATE		= #{V_EVENT_DATE}
+		 AND RWCJM.EVENT_CD			= #{V_EVENT_CD}
+		 AND RWCJM.WEPAECNT			= #{V_WEPAECNT}
+	ORDER BY RWCJM.WEPAE_SEQ
+			,RWCJM.JOIN_SEQ
+	</select>
+	
+	
+	<select id="SELECT_PRINT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT RWCD.TEMPLE_CD
+			  ,RWCD.ACCEPT_SEQ
+			  ,RWCD.SEQ
+			  ,RM.ACCEPT_DATE
+			  ,RWCD.EVENT_DATE
+			  ,RWCD.EVENT_CD
+			  ,RM.PROPOSAL_BUD_NO
+			  ,PRO_SIN.NAME_KOR  AS PRO_NAME_KOR
+			  ,RWCD.WEPAECNT
+			  ,RWCJM.WEPAE_SEQ
+			  ,RWCJM.JOIN_SEQ
+			  ,RWCJM.EVENT_SEQ
+			  ,SDBI.HYO_REL
+			  ,RWCJM.DECE_BUD_NO
+			  ,DEATH_SIN.NAME_KOR AS DECE_BUD_NM			  
+			  ,SDBI.DECE_REL
+			  ,'亡' || SDBI.DECE_REL AS DECE_REL_MANG
+			  ,BON_ACM.NAME AS BON_NM
+			  ,SEX_ACM.NAME AS SEX_NM
+			  ,BON_ACM.NAME || SEX_ACM.NAME AS BON_SEX_NM
+			  ,DAE_SIN.ADDR1
+			  ,DAE_SIN.ADDR2
+			  ,DAE_SIN.ZIP_CD
+			  ,DAE_SIN.BUD_CODE
+			  ,BOK_SIN.NAME_KOR AS BOKWIJA_NM
+			  ,BOK_ACM.NAME AS BOKWI_NM
+			  ,BOK_ACM.ETC1 AS BOKWI_HAN_NM
+			  ,'영가' AS DEATH_KOR
+			  ,'靈駕' AS DEATH_HAN
+			  ,RWCD.ACCEPT_SEQ || RWCD.SEQ AS PAGE_SKIP
+			  ,(SELECT COUNT(*) 
+				  FROM REC_WEPAE_CHONHON_JOIN_MGT 
+				 WHERE TEMPLE_CD   = RWCJM.TEMPLE_CD 
+					AND ACCEPT_SEQ = RWCJM.ACCEPT_SEQ 
+					AND SEQ        = RWCJM.SEQ 
+					AND EVENT_DATE = RWCJM.EVENT_DATE 
+					AND EVENT_CD   = RWCJM.EVENT_CD
+					AND WEPAECNT   = RWCJM.WEPAECNT
+			   ) AS WEPAE_CNT
+			   ,(SELECT COUNT(*) 
+				   FROM REC_WEPAE_CHONHON_JOIN_MGT 
+				  WHERE TEMPLE_CD = RWCJM.TEMPLE_CD 
+					AND ACCEPT_SEQ = RWCJM.ACCEPT_SEQ 
+					AND SEQ = RWCJM.SEQ 
+					AND EVENT_DATE = RWCJM.EVENT_DATE 
+					AND EVENT_CD   = RWCJM.EVENT_CD
+					AND WEPAECNT   = RWCJM.WEPAECNT
+					AND WEPAE_SEQ  = RWCJM.WEPAE_SEQ
+				 ) AS WEPAE_SEQ_CNT
+			   ,DAE_SIN.ADDR1 || ' ' || DAE_SIN.ADDR2 || ' ' || FN_ADDR_BLDG2(DAE_SIN.BLDG_NUM) as ADDR_ALL
+		  FROM REC_WEPAE_CHONHON_DETAIL		RWCD
+		  	  ,REC_WEPAE_CHONHON_JOIN_MGT	RWCJM
+		  	  ,REC_WEPAE_CHONHON_EVENT_MGT	RWCEM
+		  	  ,REC_WEPAE_CHONHON_MGT		RWCM
+		  	  ,REC_MASTER					RM
+		  	  ,SIN_CARD_MASTER				PRO_SIN
+		  	  ,SIN_CARD_MASTER				DEATH_SIN
+		  	  ,SIN_CARD_MASTER				DAE_SIN
+		  	  ,SIN_CARD_MASTER				BOK_SIN
+		  	  ,SIN_DEATH_INFO				SDI
+		  	  ,SIN_DEATH_BOKWI_INFO			SDBI
+		  	  ,ASP_CODE_MGT					BON_ACM
+		  	  ,ASP_CODE_MGT					SEX_ACM
+		  	  ,ASP_CODE_MGT					BOK_ACM
+		 WHERE RWCD.TEMPLE_CD			= RWCJM.TEMPLE_CD 
+		   AND RWCD.ACCEPT_SEQ			= RWCJM.ACCEPT_SEQ 
+		   AND RWCD.SEQ					= RWCJM.SEQ 
+		   AND RWCD.EVENT_CD			= RWCJM.EVENT_CD
+		   AND RWCD.EVENT_DATE			= RWCJM.EVENT_DATE
+		   AND RWCD.WEPAECNT			= RWCJM.WEPAECNT
+		   AND RWCD.TEMPLE_CD			= RWCEM.TEMPLE_CD
+		   AND RWCD.EVENT_CD			= RWCEM.EVENT_CD
+		   AND RWCD.EVENT_DATE			= RWCEM.EVENT_DATE 
+		   AND RWCEM.TEMPLE_CD			= RWCM.TEMPLE_CD
+		   AND RWCEM.EVENT_CD			= RWCM.EVENT_CD
+		   AND RWCD.TEMPLE_CD			= RM.TEMPLE_CD
+		   AND RWCD.ACCEPT_SEQ			= RM.ACCEPT_SEQ
+		   AND RM.TEMPLE_CD				= PRO_SIN.TEMPLE_CD
+		   AND RM.PROPOSAL_BUD_NO		= PRO_SIN.BUD_NO
+		   AND PRO_SIN.TEMPLE_CD		= DAE_SIN.TEMPLE_CD
+		   AND PRO_SIN.DAEJU_BUD_NO		= DAE_SIN.BUD_NO
+		   AND RWCJM.TEMPLE_CD		    = DEATH_SIN.TEMPLE_CD
+		   AND RWCJM.DECE_BUD_NO		= DEATH_SIN.BUD_NO
+		   AND RWCJM.TEMPLE_CD		    = SDI.TEMPLE_CD
+		   AND RWCJM.DECE_BUD_NO		= SDI.BUD_NO
+		   AND RWCJM.TEMPLE_CD		    = SDBI.TEMPLE_CD
+		   AND RWCJM.DECE_BUD_NO		= SDBI.DECE_BUD_NO
+		   AND RWCJM.BOKWIJA_NO		    = SDBI.BUD_NO
+		   AND RWCJM.TEMPLE_CD		    = BOK_SIN.TEMPLE_CD
+		   AND RWCJM.BOKWIJA_NO		    = BOK_SIN.BUD_NO
+		   AND BON_ACM.GROUP_CD(+) 	    = 'BON'
+		   AND BON_ACM.CODE(+)          = SDI.BON
+		   AND SEX_ACM.GROUP_CD(+) 	    = 'DEATH_SEXGBN'
+		   AND SEX_ACM.CODE(+)     	    = DEATH_SIN.SEX_GBN
+		   AND BOK_ACM.GROUP_CD(+) 	    = 'BOKWIGBN'
+		   AND BOK_ACM.CODE(+)     	    = SDBI.BOKWI_KIBU_GBN
+		   AND RWCD.DEL_YN			    = 'F' 
+		   AND RM.DEL_YN				= 'F' 
+		   AND RWCD.TEMPLE_CD			= #{V_TEMPLE_CD}
+			<if test="V_DATE_GBN == 'accept'">
+		    	AND RM.ACCEPT_DATE BETWEEN #{V_SDATE} AND #{V_EDATE}
+		    </if>
+		    <if test="V_DATE_GBN == 'event'">
+		    	AND RWCD.EVENT_DATE BETWEEN #{V_SDATE} AND #{V_EDATE}
+		    </if>
+		    <if test="V_PROPOSAL_BUD_NO != '' and V_PROPOSAL_BUD_NO != null  ">
+		    	AND RM.PROPOSAL_BUD_NO LIKE #{V_PROPOSAL_BUD_NO} || '%'
+		    </if>
+		    <if test="V_EVENT_CD != '' and V_EVENT_CD != null  and V_EVENT_CD != '0'">
+		    	AND RWCD.EVENT_CD = #{V_EVENT_CD}
+		    </if>
+		    <if test="VV_USER_ID != '' and VV_USER_ID != null  and VV_USER_ID != '0'">
+		    	AND RM.CRT_USER = #{VV_USER_ID}
+		    </if>
+		ORDER BY RWCD.ACCEPT_SEQ
+				,RWCD.SEQ
+				,RWCJM.WEPAE_SEQ
+				,RWCJM.JOIN_SEQ
+	</select>
+	
+	<select id="SELECT_PRINT_000031" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT RWCD.TEMPLE_CD
+			  ,RWCD.ACCEPT_SEQ
+			  ,RWCD.SEQ
+			  ,RWCD.WEPAECNT
+			  ,RWCJM.WEPAE_SEQ
+			  ,RWCJM.JOIN_SEQ
+			  ,RWCJM.EVENT_SEQ
+			  ,RWCJM.DECE_BUD_NO AS DEAD_BUD_NO
+			  ,DAE_SIN.BUD_NO AS DAEJU_BUD_NO
+			  ,BOK_SIN.BUD_NO AS BOKWIJA_NO
+			  ,BOK_SIN.ADDR1
+			  ,BOK_SIN.ADDR2
+			  <if test="V_TEMPLE_CD != '000064'">
+		    	 ,TRIM(BOK_SIN.ADDR1 || NVL2(BOK_SIN.ADDR2,' ' ||BOK_SIN.ADDR2,NULL)|| ' ' || FN_ADDR_BLDG2(BOK_SIN.BLDG_NUM)) AS ADDR
+			  </if>
+			  <if test="V_DATE_GBN == '000064'">
+			    ,TRIM(BOK_SIN.ADDR1 || NVL2(BOK_SIN.ADDR2,' ' ||BOK_SIN.ADDR2,NULL)) AS ADDR
+			  </if>
+		      ,DAE_SIN.ZIP_CD
+		      ,DECODE(SDBI.SPIRITUAL_GBN,'2','','망') AS MANG
+		      ,SDBI.DECE_REL
+		      ,SDBI.HYO_REL
+		      ,BON_ACM.NAME || SEX_ACM.NAME AS BON_SGBN
+		      ,DEATH_SIN.NAME_KOR
+		      ,DECODE(EQUAL_GBN,'2','동일') || NVL(ACM_SPI.NAME,'영가') AS SPIRITUAL_GBN
+		      ,DAE_SIN.BUD_CODE
+		      ,BOK_SIN.NAME_KOR AS BOKWI_NAME_KOR
+		      ,SDBI.DEATH_YN
+		      ,ACM_DYN.NAME AS DEATH_GBN
+		      ,NVL(SDBI.BOKWI_KIBU_GBN,'T') AS BOKWI_KIBU_GBN
+		      ,(SELECT NAME 
+		      	  FROM ASP_CODE_MGT 
+		      	 WHERE GROUP_CD = 'BOKWIGBN' 
+		      	   AND CODE = NVL(SDBI.BOKWI_KIBU_GBN,'T')
+		       ) AS BOKWI_KIBU_GBN_NM
+		      ,RWCD.ACCEPT_SEQ || RWCD.SEQ || SDBI.BUD_NO || SDBI.DEATH_YN AS PAGE_SKIP
+		      ,RWCD.ACCEPT_SEQ || RWCD.SEQ  AS PAGE_SKIP2
+		      ,(SELECT COUNT(*) 
+				  FROM REC_WEPAE_CHONHON_JOIN_MGT 
+				 WHERE TEMPLE_CD   = RWCJM.TEMPLE_CD 
+				   AND ACCEPT_SEQ  = RWCJM.ACCEPT_SEQ 
+				   AND SEQ         = RWCJM.SEQ 
+				   AND EVENT_DATE  = RWCJM.EVENT_DATE 
+					AND EVENT_CD   = RWCJM.EVENT_CD
+					AND WEPAECNT   = RWCJM.WEPAECNT
+			   ) AS WEPAE_CNT
+			  ,SUVILA.FN_TEMPLE_INFO(#{V_TEMPLE_CD},'PRINT_FORM_YN') PRINT_FORM_YN
+			  ,'../com/img/bg/report_chonhon_bg.gif' BACK_IMAGE    
+		 FROM REC_WEPAE_CHONHON_DETAIL		RWCD
+		  	 ,REC_WEPAE_CHONHON_JOIN_MGT	RWCJM
+		  	 ,REC_WEPAE_CHONHON_EVENT_MGT	RWCEM
+		  	 ,REC_WEPAE_CHONHON_MGT			RWCM
+		  	 ,REC_MASTER					RM
+		  	 ,SIN_CARD_MASTER				PRO_SIN
+		  	 ,SIN_CARD_MASTER				DEATH_SIN
+		  	 ,SIN_CARD_MASTER				DAE_SIN
+		  	 ,SIN_CARD_MASTER				BOK_SIN
+		  	 ,SIN_DEATH_INFO				SDI
+		  	 ,SIN_DEATH_BOKWI_INFO			SDBI
+		  	 ,ASP_CODE_MGT					BON_ACM
+		  	 ,ASP_CODE_MGT					SEX_ACM
+		  	 ,ASP_CODE_MGT					BOK_ACM
+		  	 ,ASP_CODE_MGT					ACM_SPI
+		  	 ,ASP_CODE_MGT					ACM_DYN
+		WHERE RWCD.TEMPLE_CD					= RWCJM.TEMPLE_CD 
+		  AND RWCD.ACCEPT_SEQ			= RWCJM.ACCEPT_SEQ 
+		  AND RWCD.SEQ					= RWCJM.SEQ 
+		  AND RWCD.EVENT_CD				= RWCJM.EVENT_CD
+		  AND RWCD.EVENT_DATE			= RWCJM.EVENT_DATE
+		  AND RWCD.WEPAECNT				= RWCJM.WEPAECNT
+		  AND RWCD.TEMPLE_CD			= RWCEM.TEMPLE_CD
+		  AND RWCD.EVENT_CD				= RWCEM.EVENT_CD
+		  AND RWCD.EVENT_DATE			= RWCEM.EVENT_DATE 
+		  AND RWCEM.TEMPLE_CD			= RWCM.TEMPLE_CD
+		  AND RWCEM.EVENT_CD			= RWCM.EVENT_CD
+		  AND RWCD.TEMPLE_CD			= RM.TEMPLE_CD
+		  AND RWCD.ACCEPT_SEQ			= RM.ACCEPT_SEQ
+		  AND RM.TEMPLE_CD				= PRO_SIN.TEMPLE_CD
+		  AND RM.PROPOSAL_BUD_NO		= PRO_SIN.BUD_NO
+		  AND PRO_SIN.TEMPLE_CD			= DAE_SIN.TEMPLE_CD
+		  AND PRO_SIN.DAEJU_BUD_NO		= DAE_SIN.BUD_NO
+		  AND RWCJM.TEMPLE_CD			= DEATH_SIN.TEMPLE_CD
+		  AND RWCJM.DECE_BUD_NO			= DEATH_SIN.BUD_NO
+		  AND RWCJM.TEMPLE_CD			= SDI.TEMPLE_CD
+		  AND RWCJM.DECE_BUD_NO			= SDI.BUD_NO
+		  AND RWCJM.TEMPLE_CD			= SDBI.TEMPLE_CD
+		  AND RWCJM.DECE_BUD_NO			= SDBI.DECE_BUD_NO
+		  AND RWCJM.BOKWIJA_NO			= SDBI.BUD_NO
+		  AND RWCJM.TEMPLE_CD			= BOK_SIN.TEMPLE_CD
+		  AND RWCJM.BOKWIJA_NO			= BOK_SIN.BUD_NO
+		  AND BON_ACM.GROUP_CD(+) 		= 'BON'
+		  AND BON_ACM.CODE(+)         	= SDI.BON
+		  AND SEX_ACM.GROUP_CD(+) 		= 'DEATH_SEXGBN'
+		  AND SEX_ACM.CODE(+)     		= DEATH_SIN.SEX_GBN
+		  AND BOK_ACM.GROUP_CD(+) 		= 'BOKWIGBN'
+		  AND BOK_ACM.CODE(+)     		= SDBI.BOKWI_KIBU_GBN
+		  AND ACM_SPI.GROUP_CD(+)   	= 'SPIRITUAL_GBN'
+		  AND ACM_SPI.CODE(+)       	=  SDBI.SPIRITUAL_GBN
+		  AND ACM_DYN.GROUP_CD(+)   	= 'DEATH_GBN'
+		  AND ACM_DYN.CODE(+)       	=  SDBI.DEATH_YN
+		  AND RWCD.DEL_YN				= 'F' 
+		  AND RM.DEL_YN					= 'F' 
+		  AND RWCD.TEMPLE_CD			= #{V_TEMPLE_CD}
+		  <if test="V_DATE_GBN == 'accept'">
+		    	AND RM.ACCEPT_DATE BETWEEN #{V_SDATE} AND #{V_EDATE} 
+		  </if>
+		  <if test="V_DATE_GBN == 'event'">
+		    	AND RWCD.EVENT_DATE BETWEEN #{V_SDATE} AND #{V_EDATE}
+		  </if>
+		  <if test="V_PROPOSAL_BUD_NO != '' and V_PROPOSAL_BUD_NO != null  ">
+		    	AND RM.PROPOSAL_BUD_NO LIKE #{V_PROPOSAL_BUD_NO} || '%'
+		  </if>
+		  <if test="V_EVENT_CD != '' and V_EVENT_CD != null  and V_EVENT_CD != '0'">
+		    	AND RWCD.EVENT_CD = #{V_EVENT_CD}
+		  </if>
+		  <if test="VV_USER_ID != '' and VV_USER_ID != null  and VV_USER_ID != '0'">
+		    	AND RM.CRT_USER = #{VV_USER_ID}
+		  </if>
+		ORDER BY RWCD.ACCEPT_SEQ
+				,RWCD.SEQ
+				,RWCJM.WEPAE_SEQ
+				,RWCJM.JOIN_SEQ
+	</select>
+	
+	<select id="SELECT_PRINT_PRAY" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT RWCD.TEMPLE_CD
+			  ,RWCD.ACCEPT_SEQ
+			  ,RWCD.SEQ
+			  ,PRO_SIN.BUD_CODE
+			  ,DECODE(SIN.BUD_NO,SIN.DAEJU_BUD_NO,'T','F') AS DAEJU_YN
+			  ,SIN.NAME_KOR, 
+			  SIN.SORT_SEQ, 
+			  DAE_SIN.ADDR1, 
+			  DAE_SIN.ADDR2, 
+			  DAE_SIN.ZIP_CD, 
+			  '(' || DAE_SIN.TELNO1 || ') ' || DAE_SIN.TELNO2 || '-' || DAE_SIN.TELNO3 AS TELNO, 
+			  SIN.REPRESEN_REL, 
+			  SIN.SEXAGENARY, 
+			  NVL2(CM_SEX.NAME,CM_SEX.NAME||'생','') AS SEXAGENARY_NM, 
+			  SIN.LUNAR_SOLAR, 
+			  CM_LS.NAME AS LUNAR_SOLAR_NM, 
+			  DECODE(LENGTH(SIN.BIRTHDAY),8,SUBSTR(NVL(CM_LS.NAME,''),1,1)|| NVL2(SIN.BIRTHDAY,' ' || SUBSTR(SIN.BIRTHDAY,5,2) ||'월 '||SUBSTR(SIN.BIRTHDAY,7,2) || '일',''),'')  AS BIRTHDAY, 
+			  RWCD.CRT_USER, 
+			  RWCD.ACCEPT_SEQ || RWCD.SEQ AS PAGE_SKIP, 
+			  '' AS TEMPLE_NM,
+			  (CASE 
+			  	WHEN FN_FMT_NUMBER(SIN.BIRTHDAY)>1000 AND FN_TEMPLE_INFO(SIN.TEMPLE_CD,'PRINT_AGE_YN') = 'T' THEN (1+TO_CHAR(SYSDATE,'YYYY')-SUBSTR(SIN.BIRTHDAY,1,4))||'세' 
+			  	ELSE '' 
+			  END) AGE,
+			  DAE_SIN.ADDR1 || ' ' || DAE_SIN.ADDR2 || ' ' || FN_ADDR_BLDG2(DAE_SIN.BLDG_NUM) as ADDR_ALL
+		FROM REC_WEPAE_CHONHON_DETAIL		RWCD, 
+			 REC_WEPAE_CHONHON_JOIN_MGT		RWCJM,
+			 REC_WEPAE_CHONHON_EVENT_MGT	RWCEM, 
+			 REC_WEPAE_CHONHON_MGT			RWCM,
+			 REC_MASTER						RM,
+			 SIN_CARD_MASTER				PRO_SIN,
+			 SIN_CARD_MASTER				DAE_SIN,
+			 SIN_CARD_MASTER				SIN,
+			 ASP_CODE_MGT 					CM_SEX, 
+			 ASP_CODE_MGT 					CM_LS 
+		WHERE 
+			 RWCD.TEMPLE_CD					= RWCJM.TEMPLE_CD 
+			 AND RWCD.ACCEPT_SEQ			= RWCJM.ACCEPT_SEQ 
+			 AND RWCD.SEQ					= RWCJM.SEQ 
+			 AND RWCD.EVENT_CD				= RWCJM.EVENT_CD
+			 AND RWCD.EVENT_DATE			= RWCJM.EVENT_DATE
+			 AND RWCD.WEPAECNT				= RWCJM.WEPAECNT
+			 AND RWCD.TEMPLE_CD				= RWCEM.TEMPLE_CD
+			 AND RWCD.EVENT_CD				= RWCEM.EVENT_CD
+			 AND RWCD.EVENT_DATE			= RWCEM.EVENT_DATE 
+			 AND RWCEM.TEMPLE_CD			= RWCM.TEMPLE_CD
+			 AND RWCEM.EVENT_CD				= RWCM.EVENT_CD
+			 AND RWCD.TEMPLE_CD				= RM.TEMPLE_CD
+			 AND RWCD.ACCEPT_SEQ			= RM.ACCEPT_SEQ
+			 AND RM.TEMPLE_CD				= PRO_SIN.TEMPLE_CD
+			 AND RM.PROPOSAL_BUD_NO			= PRO_SIN.BUD_NO
+			 AND PRO_SIN.TEMPLE_CD			= DAE_SIN.TEMPLE_CD
+			 AND PRO_SIN.DAEJU_BUD_NO		= DAE_SIN.BUD_NO
+			 AND PRO_SIN.TEMPLE_CD   		= SIN.TEMPLE_CD 
+			 AND SIN.BUD_NO      	 		LIKE PRO_SIN.BUD_CODE || '%'
+			 AND CM_SEX.GROUP_CD(+)  		= 'GANJI' 
+			 AND SIN.SEXAGENARY 	 		= CM_SEX.CODE(+) 
+			 AND CM_LS.GROUP_CD(+)   		= 'LUNAR_SOLAR' 
+			 AND SIN.LUNAR_SOLAR 	 		= CM_LS.CODE(+) 
+			 AND RWCD.DEL_YN				= 'F' 
+			 AND RM.DEL_YN					= 'F'
+			 AND RWCJM.WEPAE_SEQ			= '1'
+			 AND RWCJM.JOIN_SEQ				= '1'
+			 AND SIN.DEL_YN 				= 'F'
+			 AND RWCD.TEMPLE_CD				= #{V_TEMPLE_CD}
+			 AND SIN.BUD_NO  IN (SELECT BUD_NO 
+			 					   FROM SIN_CARD_MASTER 
+			 					  WHERE TEMPLE_CD = SIN.TEMPLE_CD 
+			 					  MINUS 
+			 					 SELECT BUD_NO 
+			 					   FROM SIN_DEATH_INFO 
+			 					  WHERE TEMPLE_CD = SIN.TEMPLE_CD)
+			<if test="V_DATE_GBN == 'accept'">
+		    	AND RM.ACCEPT_DATE BETWEEN #{V_SDATE} AND #{V_EDATE} 
+		    </if>
+		    <if test="V_DATE_GBN == 'event'">
+		    	AND RWCD.EVENT_DATE BETWEEN #{V_SDATE} AND #{V_EDATE}
+		    </if>
+		    <if test="V_PROPOSAL_BUD_NO != '' and V_PROPOSAL_BUD_NO != null  ">
+		    	AND RM.PROPOSAL_BUD_NO LIKE #{V_PROPOSAL_BUD_NO} || '%'
+		    </if>
+		    <if test="V_EVENT_CD != '' and V_EVENT_CD != null  and V_EVENT_CD != '0'">
+		    	AND RWCD.EVENT_CD = #{V_EVENT_CD}
+		  </if>
+		  <if test="VV_USER_ID != '' and VV_USER_ID != null  and VV_USER_ID != '0'">
+		    	AND RM.CRT_USER = #{VV_USER_ID}
+		  </if>
+		ORDER BY RWCD.ACCEPT_SEQ
+				,RWCD.SEQ
+				,RWCJM.WEPAE_SEQ
+				,RWCJM.JOIN_SEQ
+				,SIN.SORT_SEQ
+	</select>
+	
+	
+	
+	<select id="SELECT_CHUKWON_CHONHON" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT A.ACCEPT_SEQ
+		      ,'1' BAND
+		      ,S.SORT_SEQ
+		      ,0 SORT_SEQ2
+		      ,SUVILA.FN_DAEJU_INFO('BUD_NO',A.TEMPLE_CD,A.ACCEPT_SEQ) BUD_NO
+		      ,SUVILA.FN_DAEJU_INFO('BUD_CODE',A.TEMPLE_CD,A.ACCEPT_SEQ) BUD_CODE
+		      ,SUVILA.FN_DAEJU_INFO('TELNO',A.TEMPLE_CD,A.ACCEPT_SEQ) TELNO
+		      ,SUVILA.FN_DAEJU_INFO('ADDR1',A.TEMPLE_CD,A.ACCEPT_SEQ) ADDR1
+		      ,SUVILA.FN_DAEJU_INFO('ADDR2',A.TEMPLE_CD,A.ACCEPT_SEQ) ADDR2
+		      ,SUVILA.FN_DAEJU_INFO('ZIPCD',A.TEMPLE_CD,A.ACCEPT_SEQ) ZIPCD
+		      ,S.REPRESEN_REL
+		      ,NVL2(S.SEXAGENARY,SUVILA.FN_CODE_NAME('GANJI',S.SEXAGENARY)||'생','') GANJI_NM
+		      ,S.NAME_KOR SINDO_NAME
+		      ,CASE WHEN LENGTH(S.BIRTHDAY) = 8
+		            THEN SUBSTR(SUVILA.FN_CODE_NAME('LUNAR_SOLAR',S.LUNAR_SOLAR),1,1)
+		                 ||NVL2(S.BIRTHDAY,' '||SUBSTR(S.BIRTHDAY,5,2)||'월 '||SUBSTR(S.BIRTHDAY,7,2)||'일','')
+		            ELSE '' END BIRTHDAY
+		      ,CASE WHEN FN_FMT_NUMBER(S.BIRTHDAY)>1000 AND FN_TEMPLE_INFO(A.TEMPLE_CD,'PRINT_AGE_YN') = 'T'
+		            THEN (1+TO_CHAR(SYSDATE,'YYYY')-SUBSTR(S.BIRTHDAY,1,4))||'세' 
+		            ELSE '' END AGE
+		      ,NULL HYO_REL
+		      ,NULL BOKWIJA_NAME
+		      ,NULL BOKWI_KIBU_NM
+		      ,NULL DECE_REL
+		      ,NULL BON_NM
+		      ,NULL DEATH_NAME
+		      ,(SELECT COUNT(*) 
+		         FROM REC_WEPAE_CHONHON_JOIN_MGT 
+		        WHERE TEMPLE_CD  = #{V_TEMPLE_CD} 
+		          AND ACCEPT_SEQ = B.ACCEPT_SEQ 
+		          AND SEQ        = B.SEQ 
+		          AND EVENT_DATE = B.EVENT_DATE 
+		          AND EVENT_CD   = B.EVENT_CD
+		          AND WEPAECNT   = B.WEPAECNT
+		       ) + (COUNT(1) OVER (PARTITION BY A.ACCEPT_SEQ)) AS WEPAE_CNT
+		      ,NULL DEATH_GB
+		      ,SUVILA.FN_DAEJU_INFO('ADDR1',A.TEMPLE_CD,A.ACCEPT_SEQ)|| ' ' || SUVILA.FN_DAEJU_INFO('ADDR2',A.TEMPLE_CD,A.ACCEPT_SEQ) as ADDR_ALL
+		  FROM REC_MASTER A
+		      ,REC_WEPAE_CHONHON_DETAIL B
+		      ,SIN_CARD_MASTER S
+		      ,(
+		        SELECT A.ACCEPT_SEQ
+		          FROM REC_MASTER A
+		         WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+		           AND A.ACCEPT_SEQ IN (
+		           <choose>
+          				<when test="V_ACCEPT_SEQ1 == ''">''</when>
+          				<otherwise>${V_ACCEPT_SEQ1}</otherwise>
+          		   </choose>
+		         )
+		        UNION ALL
+		        SELECT A.ACCEPT_SEQ
+		          FROM REC_MASTER A
+		         WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+		           AND A.ACCEPT_SEQ IN (
+		           <choose>
+          				<when test="V_ACCEPT_SEQ2 == ''">''</when>
+          				<otherwise>${V_ACCEPT_SEQ2}</otherwise>
+          		   </choose>
+		        )
+		        UNION ALL
+		        SELECT A.ACCEPT_SEQ
+		          FROM REC_MASTER A
+		         WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+		           AND A.ACCEPT_SEQ IN (
+		           <choose>
+          				<when test="V_ACCEPT_SEQ3 == ''">''</when>
+          				<otherwise>${V_ACCEPT_SEQ3}</otherwise>
+          		   </choose>
+		         )
+		        UNION ALL
+		        SELECT A.ACCEPT_SEQ
+		          FROM REC_MASTER A
+		         WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+		           AND A.ACCEPT_SEQ IN (
+		           <choose>
+          				<when test="V_ACCEPT_SEQ4 == ''">''</when>
+          				<otherwise>${V_ACCEPT_SEQ4}</otherwise>
+          		   </choose>
+		        )
+		        UNION ALL
+		        SELECT A.ACCEPT_SEQ
+		          FROM REC_MASTER A
+		         WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+		           AND A.ACCEPT_SEQ IN (
+		           <choose>
+          				<when test="V_ACCEPT_SEQ5 == ''">''</when>
+          				<otherwise>${V_ACCEPT_SEQ5}</otherwise>
+          		   </choose>
+		         )
+		        UNION ALL
+		        SELECT A.ACCEPT_SEQ
+		          FROM REC_MASTER A
+		         WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+		           AND A.ACCEPT_SEQ IN (
+		           <choose>
+          				<when test="V_ACCEPT_SEQ6 == ''">''</when>
+          				<otherwise>${V_ACCEPT_SEQ6}</otherwise>
+          		   </choose>
+		         )
+		       ) REC
+		 WHERE A.DEL_YN       = 'F'
+		   AND A.TEMPLE_CD    = #{V_TEMPLE_CD}
+		   AND A.ACCEPT_SEQ   = REC.ACCEPT_SEQ
+		   AND B.TEMPLE_CD    = #{V_TEMPLE_CD}
+		   AND B.ACCEPT_SEQ   = A.ACCEPT_SEQ
+		   AND B.DEL_YN       = 'F'
+		   AND S.TEMPLE_CD    = #{V_TEMPLE_CD}
+		   AND S.DAEJU_BUD_NO = SUVILA.FN_DAEJU_INFO('BUD_NO',A.TEMPLE_CD,A.ACCEPT_SEQ)
+		   AND S.DEL_YN = 'F'
+		   AND NOT EXISTS (SELECT 1
+		                     FROM SIN_DEATH_INFO Z
+		                    WHERE Z.TEMPLE_CD = #{V_TEMPLE_CD}
+		                      AND Z.BUD_NO    = S.BUD_NO)
+		UNION ALL
+		SELECT A.ACCEPT_SEQ
+			  ,'2' BAND
+			  ,0 SORT_SEQ
+			  ,0 SORT_SEQ2
+			  ,SUVILA.FN_DAEJU_INFO('BUD_NO',A.TEMPLE_CD,A.ACCEPT_SEQ) BUD_NO
+			  ,SUVILA.FN_DAEJU_INFO('BUD_CODE',A.TEMPLE_CD,A.ACCEPT_SEQ) BUD_CODE
+			  ,SUVILA.FN_DAEJU_INFO('TELNO',A.TEMPLE_CD,A.ACCEPT_SEQ) TELNO
+			  ,SUVILA.FN_DAEJU_INFO('ADDR1',A.TEMPLE_CD,A.ACCEPT_SEQ) ADDR1
+			  ,SUVILA.FN_DAEJU_INFO('ADDR2',A.TEMPLE_CD,A.ACCEPT_SEQ) ADDR2
+			  ,SUVILA.FN_DAEJU_INFO('ZIPCD',A.TEMPLE_CD,A.ACCEPT_SEQ) ZIPCD
+			  ,NULL REPRESEN_REL
+			  ,NULL GANJI_NM
+			  ,NULL SINDO_NAME
+			  ,NULL BIRTHDAY
+			  ,NULL AGE
+			  ,NULL HYO_REL
+			  ,NULL BOKWIJA_NAME
+			  ,NULL BOKWI_KIBU_NM
+			  ,NULL DECE_REL
+			  ,NULL BON_NM
+			  ,NULL DEATH_NAME
+			  ,0 WEPAE_CNT
+			  ,NULL DEATH_GB
+			  ,SUVILA.FN_DAEJU_INFO('ADDR1',A.TEMPLE_CD,A.ACCEPT_SEQ) || ' ' ||  SUVILA.FN_DAEJU_INFO('ADDR2',A.TEMPLE_CD,A.ACCEPT_SEQ) as  ADDR_ALL
+		  FROM REC_MASTER A
+			      ,REC_WEPAE_CHONHON_DETAIL B
+			      ,(SELECT A.ACCEPT_SEQ
+			          FROM REC_MASTER A
+			         WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+			           AND A.ACCEPT_SEQ IN (
+		           		<choose>
+		           			<when test="V_ACCEPT_SEQ1 == ''">''</when>
+		           			<otherwise>${V_ACCEPT_SEQ1}</otherwise>
+		           		</choose>			           		
+			          )
+			        UNION ALL
+			        SELECT A.ACCEPT_SEQ
+			          FROM REC_MASTER A
+			         WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+			           AND A.ACCEPT_SEQ IN (
+		           		<choose>
+		           			<when test="V_ACCEPT_SEQ2 == ''">''</when>
+		           			<otherwise>${V_ACCEPT_SEQ2}</otherwise>
+		           		</choose>
+			          )
+			        UNION ALL
+			        SELECT A.ACCEPT_SEQ
+			          FROM REC_MASTER A
+			         WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+			           AND A.ACCEPT_SEQ IN (
+			           	<choose>
+		           			<when test="V_ACCEPT_SEQ3 == ''">''</when>
+		           			<otherwise>${V_ACCEPT_SEQ3}</otherwise>
+		           		</choose>
+			           )
+			        UNION ALL
+			        SELECT A.ACCEPT_SEQ
+			          FROM REC_MASTER A
+			         WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+			           AND A.ACCEPT_SEQ IN (
+			           	<choose>
+		           			<when test="V_ACCEPT_SEQ4 == ''">''</when>
+		           			<otherwise>${V_ACCEPT_SEQ4}</otherwise>
+		           		</choose>
+			          )
+			        UNION ALL
+			        SELECT A.ACCEPT_SEQ
+			          FROM REC_MASTER A
+			         WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+			           AND A.ACCEPT_SEQ IN (
+			           	<choose>
+		           			<when test="V_ACCEPT_SEQ5 == ''">''</when>
+		           			<otherwise>${V_ACCEPT_SEQ5}</otherwise>
+		           		</choose>
+			         )
+			        UNION ALL
+			        SELECT A.ACCEPT_SEQ
+			          FROM REC_MASTER A
+			         WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+			           AND A.ACCEPT_SEQ IN (
+			           	<choose>
+		           			<when test="V_ACCEPT_SEQ6 == ''">''</when>
+		           			<otherwise>${V_ACCEPT_SEQ6}</otherwise>
+		           		</choose>
+			         )
+			       ) REC
+			 WHERE A.DEL_YN     = 'F'
+			   AND A.TEMPLE_CD  = #{V_TEMPLE_CD}
+			   AND A.ACCEPT_SEQ = REC.ACCEPT_SEQ
+			   AND B.TEMPLE_CD  = #{V_TEMPLE_CD}
+			   AND B.ACCEPT_SEQ = A.ACCEPT_SEQ
+			   AND B.DEL_YN     = 'F'
+			UNION ALL
+			SELECT A.ACCEPT_SEQ
+			      ,'2' BAND
+			      , C.WEPAE_SEQ as  SORT_SEQ	  	
+			      , C.JOIN_SEQ  as  SORT_SEQ2
+			      ,D.DECE_BUD_NO AS BUD_NO
+			      ,SUVILA.FN_DAEJU_INFO('BUD_CODE',A.TEMPLE_CD,A.ACCEPT_SEQ) BUD_CODE
+			      ,SUVILA.FN_DAEJU_INFO('TELNO',A.TEMPLE_CD,A.ACCEPT_SEQ) TELNO
+			      ,SUVILA.FN_DAEJU_INFO('ADDR1',A.TEMPLE_CD,A.ACCEPT_SEQ) ADDR1
+			      ,SUVILA.FN_DAEJU_INFO('ADDR2',A.TEMPLE_CD,A.ACCEPT_SEQ) ADDR2
+			      ,SUVILA.FN_DAEJU_INFO('ZIPCD',A.TEMPLE_CD,A.ACCEPT_SEQ) ZIPCD
+			      ,NULL REPRESEN_REL
+			      ,NULL GANJI_NM
+			      ,NULL SINDO_NAME
+			      ,NULL BIRTHDAY
+			      ,NULL AGE
+			      ,D.HYO_REL
+			      ,SUVILA.FN_SINDO_INFO('NAME_KOR',C.TEMPLE_CD,C.BOKWIJA_NO) BOKWIJA_NAME
+			      ,SUVILA.FN_CODE_NAME('BOKWIGBN',D.BOKWI_KIBU_GBN) BOKWI_KIBU_NM
+			      ,D.DECE_REL
+			      ,SUVILA.FN_CODE_NAME('BON',E.BON) || 
+			       (CASE 
+			          WHEN (SELECT SEX_GBN FROM SIN_CARD_MASTER WHERE TEMPLE_CD = #{V_TEMPLE_CD} AND BUD_NO  = D.DECE_BUD_NO AND ROWNUM = 1  ) = 'T' THEN '후인'
+			          WHEN (SELECT SEX_GBN FROM SIN_CARD_MASTER WHERE TEMPLE_CD = #{V_TEMPLE_CD} AND BUD_NO  = D.DECE_BUD_NO AND ROWNUM = 1  ) = 'F' THEN '유인'
+			            ELSE ''
+			        END )   BON_NM
+			      ,SUVILA.FN_SINDO_INFO('NAME_KOR',C.TEMPLE_CD,C.DECE_BUD_NO) DEATH_NAME
+			      ,0 WEPAE_CNT
+			      ,'영가' DEATH_GB
+			      ,NULL ADDR_ALL
+			  FROM REC_MASTER A
+			      ,REC_WEPAE_CHONHON_DETAIL B
+			      ,REC_WEPAE_CHONHON_JOIN_MGT C
+			      ,SIN_DEATH_BOKWI_INFO D
+			      ,SIN_DEATH_INFO E
+			      ,(
+			        SELECT A.ACCEPT_SEQ
+			          FROM REC_MASTER A
+			         WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+			           AND A.ACCEPT_SEQ IN (
+			           <choose>
+		           			<when test="V_ACCEPT_SEQ1 == ''">''</when>
+		           			<otherwise>${V_ACCEPT_SEQ1}</otherwise>
+		           		</choose>
+			        )
+			        UNION ALL
+			        SELECT A.ACCEPT_SEQ
+			          FROM REC_MASTER A
+			         WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+			           AND A.ACCEPT_SEQ IN (
+			           <choose>
+		           			<when test="V_ACCEPT_SEQ2 == ''">''</when>
+		           			<otherwise>${V_ACCEPT_SEQ2}</otherwise>
+		           		</choose>
+			        )
+			        UNION ALL
+			        SELECT A.ACCEPT_SEQ
+			          FROM REC_MASTER A
+			         WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+			           AND A.ACCEPT_SEQ IN (
+			           <choose>
+		           			<when test="V_ACCEPT_SEQ3 == ''">''</when>
+		           			<otherwise>${V_ACCEPT_SEQ3}</otherwise>
+		           		</choose>
+			        )
+			        UNION ALL
+			        SELECT A.ACCEPT_SEQ
+			          FROM REC_MASTER A
+			         WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+			           AND A.ACCEPT_SEQ IN (
+			           <choose>
+		           			<when test="V_ACCEPT_SEQ4 == ''">''</when>
+		           			<otherwise>${V_ACCEPT_SEQ4}</otherwise>
+		           		</choose>
+			        )
+			        UNION ALL
+			        SELECT A.ACCEPT_SEQ
+			          FROM REC_MASTER A
+			         WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+			           AND A.ACCEPT_SEQ IN (
+			           <choose>
+		           			<when test="V_ACCEPT_SEQ5 == ''">''</when>
+		           			<otherwise>${V_ACCEPT_SEQ5}</otherwise>
+		           		</choose>
+			        )
+			        UNION ALL
+			        SELECT A.ACCEPT_SEQ
+			          FROM REC_MASTER A
+			         WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+			           AND A.ACCEPT_SEQ IN (
+			           <choose>
+		           			<when test="V_ACCEPT_SEQ6 == ''">''</when>
+		           			<otherwise>${V_ACCEPT_SEQ6}</otherwise>
+		           		</choose>
+			         )
+			       ) REC
+			 WHERE A.DEL_YN      = 'F'
+			   AND A.TEMPLE_CD   = #{V_TEMPLE_CD}
+			   AND A.ACCEPT_SEQ  = REC.ACCEPT_SEQ
+			   AND B.TEMPLE_CD   = #{V_TEMPLE_CD}
+			   AND B.ACCEPT_SEQ  = A.ACCEPT_SEQ
+			   AND B.DEL_YN      = 'F'
+			   AND C.TEMPLE_CD   = #{V_TEMPLE_CD}
+			   AND C.ACCEPT_SEQ  = B.ACCEPT_SEQ
+			   AND C.SEQ         = B.SEQ
+			   AND C.EVENT_CD    = B.EVENT_CD
+			   AND C.EVENT_DATE  = B.EVENT_DATE
+			   AND C.WEPAECNT    = B.WEPAECNT
+			   AND D.TEMPLE_CD   = #{V_TEMPLE_CD}
+			   AND D.BUD_NO      = C.BOKWIJA_NO
+			   AND D.DECE_BUD_NO = C.DECE_BUD_NO
+			   AND E.TEMPLE_CD   = #{V_TEMPLE_CD}
+			   AND E.BUD_NO      = C.DECE_BUD_NO
+			 ORDER BY ACCEPT_SEQ
+			 	     ,BAND
+			 	     ,SORT_SEQ
+	</select>
+	
+	
+</mapper>

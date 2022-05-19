@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="CMS002w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+	
+	<select id="SELECT_ASP_TEMPLE_CMS_INFO_LIST" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT
+		    #{V_TEMPLE_CD} AS TEMPLE_CD,
+		    '' AS CMS_TRADE_CD,
+		    '선택' AS CMS_CUSTOMER_COMMENT,
+		    '' AS REMARK
+		FROM DUAL
+		UNION ALL
+		SELECT
+		    TEMPLE_CD,
+		    CMS_TRADE_CD,
+		    CMS_CUSTOMER_COMMENT,
+		    REMARK
+		FROM ASP_TEMPLE_CMS_INFO
+		WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+	</select>
+
+	
+	
+	<select id="SELECT_ALL_ASP_TEMPLE_CMS_INFO_LIST" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT
+		    #{V_TEMPLE_CD} AS TEMPLE_CD,
+		    '' AS CMS_TRADE_CD,
+		    '전체' AS CMS_CUSTOMER_COMMENT,
+		    '' AS REMARK
+		FROM DUAL
+		UNION ALL
+		SELECT
+		    TEMPLE_CD,
+		    CMS_TRADE_CD,
+		    CMS_CUSTOMER_COMMENT,
+		    REMARK
+		FROM ASP_TEMPLE_CMS_INFO
+		WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+	</select>
+	
+	
+	<select id="SELECT_ASP_TEMPLE_CMS_INFO_DETAIL" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT
+			TEMPLE_CD,
+		    CMS_TRADE_CD,
+		    CMS_TRADE_PW,
+		    CMS_CUSTOMER_COMMENT,
+		    CMS_ENTRANCE_FEE,
+		    USE_YN,
+		    MISU_METHOD,
+			REMARK,
+			MONTH_LIMIT_AMOUNT,
+			ONCE_MAX_AMOUNT,
+			ACCT_GBN,
+			IE_GBN,
+			KWAN,
+			HANG,
+			MOK,
+			(
+				SELECT
+					MOK_NAME
+				FROM ACC_ACCOUNTS
+				WHERE TEMPLE_CD = A.TEMPLE_CD
+				AND ACCT_GBN = A.ACCT_GBN
+				AND IE_GBN = A.IE_GBN
+				AND KWAN = A.KWAN
+				AND HANG = A.HANG
+				AND MOK = A.MOK
+			) AS ACCNAME,
+			SMS_FORMAT
+		FROM ASP_TEMPLE_CMS_INFO A
+		WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+		AND CMS_TRADE_CD = #{V_CMS_TRADE_CD}
+	</select>
+	
+	
+	<select id="SELECT_ASP_TEMPLE_CMS_PAYMENT_DAY_MGT" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT
+			TEMPLE_CD,
+		    CMS_TRADE_CD,
+		    CMS_PAYMENT_DAY,
+		    CMS_REQUEST_GBN,
+		    REMARK
+		 FROM ASP_TEMPLE_CMS_PAYMENT_DAY_MGT
+		WHERE TEMPLE_CD    = #{V_TEMPLE_CD}
+		  AND CMS_TRADE_CD = #{V_CMS_TRADE_CD}
+		ORDER BY CMS_PAYMENT_DAY
+	</select>
+	
+	
+	<update id="UPDATE_ASP_TEMPLE_CMS_INFO" parameterType="kr.co.o2i.util.CommonMap">
+		UPDATE ASP_TEMPLE_CMS_INFO 
+		   SET SMS_FORMAT			= #{SMS_FORMAT ,jdbcType=VARCHAR}
+		      ,REMARK				= #{REMARK     ,jdbcType=VARCHAR}
+		WHERE TEMPLE_CD    			= #{V_TEMPLE_CD}
+		  AND CMS_TRADE_CD 			= #{CMS_TRADE_CD}
+	</update>
+	
+</mapper>

@@ -1,0 +1,1222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC014w_00DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="SEL_YN"  column="SEL_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+		<result  property="CHECKED" column="CHECKED"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+	</resultMap>
+
+
+	<select id="SELECT_YOUNGTOP_DETAIL" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT A.TEMPLE_CD
+		      ,A.ACCEPT_SEQ
+		      ,A.SEQ
+		      ,A.BUD_NO
+		      ,A.ACCEPT_GBN
+		      ,A.JUNGAK_CD
+		      ,A.LIGHT_NO
+		      ,A.PAYMENT_PLAN_AMT
+		      ,A.PAYMENT_AMT
+		      ,A.ACCEPT_DT
+		      ,A.BULSA_DT
+		      ,A.BONGAN_DT
+		      ,A.REBONG_DT
+		      ,A.AGREE_SHEET_YN
+		      ,A.FAMILY_SHEET_YN
+		      ,A.HOJUK_SHEET_YN
+		      ,A.JUMIN_SHEET_YN
+		      ,A.JEJUK_SHEET_YN
+		      ,A.TOP_MNG_NM
+		      ,A.CLOSE_YN
+		      ,A.DEL_YN
+		      ,A.REMARK YOUNGTOP_MEMO
+		      ,(SELECT Z.JUNGAK_NM
+		          FROM ASP_JUNGAK_MGT Z
+		         WHERE Z.TEMPLE_CD  = A.TEMPLE_CD
+		           AND Z.ACCEPT_GBN = '14'
+		           AND Z.JUNGAK_CD = A.JUNGAK_CD
+		           AND ROWNUM = 1) JUNGAK_NM
+		      ,B.NAME_KOR
+		      ,B.JUMIN_NO
+		      ,B.ZIP_CD
+		      ,B.ADDR1
+		      ,B.ADDR2 || ' ' || FN_ADDR_BLDG2(B.BLDG_NUM) as ADDR2
+		      ,FN_MERGE_TEL_NO(B.TELNO1,B.TELNO2,B.TELNO3) TEL_NO
+		      ,FN_MERGE_TEL_NO(B.MOBILE_TELNO1,B.MOBILE_TELNO2,B.MOBILE_TELNO3) MOBILE_TELNO
+		      ,B.SEX_GBN
+		      ,FN_SINDO_INFO('NAME_KOR',A.TEMPLE_CD,A.BUD_NO) BUD_NM
+		      ,FN_PAYMENT_AMT(A.TEMPLE_CD,A.ACCEPT_SEQ,A.SEQ) PAYMENT_AMT_RESULT
+		      ,A.PAYMENT_PLAN_AMT - FN_PAYMENT_AMT(A.TEMPLE_CD,A.ACCEPT_SEQ,A.SEQ) MISU_AMT_RESULT
+		      ,FN_CODE_NAME('REC','14') ACCEPT_NM
+		      ,C.PROPOSAL_BUD_NO
+		      ,FN_SINDO_INFO('NAME_KOR',C.TEMPLE_CD,C.PROPOSAL_BUD_NO) PROPOSAL_BUD_NM
+		      ,C.MEMO REC_MEMO
+		      ,(SELECT COUNT(1)
+		          FROM REC_YOUNGTOP_YOUNGGA S1
+		         WHERE S1.TEMPLE_CD = A.TEMPLE_CD
+		           AND S1.ACCEPT_SEQ = A.ACCEPT_SEQ
+		           AND S1.SEQ = A.SEQ) AS BONGTOP_COUNT
+		      ,A.ACENST_YN
+		      ,A.NAMELESS_YN 
+		      ,A.HYO_BON
+		      ,A.HYO_REL
+		      ,FN_CODE_NAME('SEXGBN',B.SEX_GBN) SEX_GBN_NM
+		      ,B.BUD_CODE
+		      ,FN_CODE_NAME('BON',A.HYO_BON) HYO_BON_NAME
+		      ,DECODE(A.HYO_BON,NULL,'',FN_CODE_REMARK('BON',A.HYO_BON)) HYO_LAST_NAME
+		      ,FN_CODE_NAME('BON',A.HYO_BON)||DECODE(A.HYO_BON,NULL,'',FN_CODE_REMARK('BON',A.HYO_BON)||'씨') HYO_FULL_NAME
+		      ,'T' CHECKED
+		      ,NVL(A.CANCEL_YN, 'F') CANCEL_YN
+		      ,NVL(A.EXPORT_YN, 'F') EXPORT_YN
+		      ,NVL(A.CNTR_NMBR, '')  CNTR_NMBR
+		      ,( SELECT substr(max(SUB_DATE), 0 , 8) FROM REC_PAYMENT_HIS WHERE ACCEPT_SEQ = A.ACCEPT_SEQ AND SEQ = A.SEQ AND TEMPLE_CD = A.TEMPLE_CD ) as SUB_DATE
+		      ,C.ACCEPT_DATE
+		      ,A.MYU_NMBR 
+		      ,A.TEL_ETC1 
+		      ,A.TEL_ETC2 
+		      ,JANGJI_TYPE
+		      ,B.ZIP_CD
+		  FROM REC_YOUNGTOP_DETAIL A
+		      ,SIN_CARD_MASTER B
+		      ,REC_MASTER C
+		      ,REC_SUB D
+		 WHERE A.TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND A.DEL_YN = 'F'
+		   AND B.TEMPLE_CD = A.TEMPLE_CD
+		   AND B.BUD_NO = A.BUD_NO
+		   AND C.TEMPLE_CD(+) = A.TEMPLE_CD
+		   AND C.ACCEPT_SEQ(+) = A.ACCEPT_SEQ
+		   AND D.TEMPLE_CD(+) = A.TEMPLE_CD
+		   AND D.ACCEPT_SEQ(+) = A.ACCEPT_SEQ
+		   AND D.SEQ(+) = A.SEQ
+		   <if test="V_PRINT_YN != '' and V_PRINT_YN != null  ">
+		   		AND A.CLOSE_YN  = 'F'
+		   </if>
+		   <if test="V_SEARCH_ACCEPT_SEQ != '' and V_SEARCH_ACCEPT_SEQ != null  ">
+		   		AND A.ACCEPT_SEQ     = #{V_SEARCH_ACCEPT_SEQ}
+		   </if>
+		   <if test="V_BUD_NO != '' and V_BUD_NO != null  ">
+		   		AND A.BUD_NO     = #{V_BUD_NO} 
+		   </if>
+		   <if test="V_JUNGAK_CD != '0'  and  V_JUNGAK_CD != 0  and V_JUNGAK_CD != '' and V_JUNGAK_CD != null ">
+		   		AND A.JUNGAK_CD     = #{V_JUNGAK_CD} 
+		   </if>
+		   <choose>
+		   		<when test="V_DATE_GBN == 1">
+		   			AND NVL(C.ACCEPT_DATE,'00000000') BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		   		</when>
+		   		<when test="V_DATE_GBN == 2">
+		   			AND NVL(A.BULSA_DT,'00000000') BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		   		</when>
+		   		<when test="V_DATE_GBN == 3">
+		   			AND NVL(A.BONGAN_DT,'00000000') BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		   		</when>
+		   		<when test="V_DATE_GBN == 4">
+		   			AND NVL(A.REBONG_DT,'00000000') BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		   		</when>
+		   </choose>
+		   <if test="V_SEARCH_BUD_NO != '' and V_SEARCH_BUD_NO != null  ">
+		   		AND A.BUD_NO LIKE SUBSTR(#{V_SEARCH_BUD_NO},1,10) || '%'
+		   </if>
+		   <if test="V_REC_USER_ID != '' and V_REC_USER_ID != null  ">
+		   		AND C.CRT_USER = #{V_REC_USER_ID}
+		   </if>
+		   <if test="V_CLASS_CD != '0'  and  V_CLASS_CD != 0  and V_CLASS_CD != '' and V_CLASS_CD != null ">
+		   		AND C.PROPOSAL_BUD_NO IN (SELECT BUD_NO 
+		   								    FROM SIN_CLASS_INFO 
+		   								   WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   								     AND CLASS_CD = #{V_CLASS_CD})
+		   </if>
+		   <choose>
+		   		<when test="V_PAY_STATE == '1'">
+		   			AND A.PAYMENT_PLAN_AMT &lt;= FN_PAYMENT_AMT(A.TEMPLE_CD,A.ACCEPT_SEQ,A.SEQ)
+		   		</when>
+		   		<when test="V_PAY_STATE == '2'">
+		   			AND A.PAYMENT_PLAN_AMT >  FN_PAYMENT_AMT(A.TEMPLE_CD,A.ACCEPT_SEQ,A.SEQ)
+		   		</when>
+		   </choose>
+		   <if test="V_AGREE_SHEET_YN != '' and V_AGREE_SHEET_YN != null  ">
+		   		AND A.AGREE_SHEET_YN = #{V_AGREE_SHEET_YN}
+		   </if>
+		   <if test="V_FAMILY_SHEET_YN != '' and V_FAMILY_SHEET_YN != null  ">
+		   		AND A.FAMILY_SHEET_YN = #{V_FAMILY_SHEET_YN}
+		   </if>
+		   <if test="V_HOJUK_SHEET_YN != '' and V_HOJUK_SHEET_YN != null  ">
+		   		AND A.HOJUK_SHEET_YN = #{V_HOJUK_SHEET_YN}
+		   </if>		   
+		   <if test="V_JUMIN_SHEET_YN != '' and V_JUMIN_SHEET_YN != null  ">
+		   		AND A.JUMIN_SHEET_YN = #{V_JUMIN_SHEET_YN}
+		   </if>
+		   <if test="V_JEJUK_SHEET_YN != '' and V_JEJUK_SHEET_YN != null  ">
+		   		AND A.JEJUK_SHEET_YN = #{V_JEJUK_SHEET_YN}
+		   </if>
+		   <if test="V_YOUNG_MEMO != '' and V_JEJUK_SHEET_YN != null  ">
+		   		AND A.REMARK LIKE '%'|| #{V_YOUNG_MEMO} || '%'
+		   </if>
+		   <if test="V_CNTR_NMBR != '' and V_CNTR_NMBR != null  ">
+		   		AND A.CNTR_NMBR LIKE '%'|| #{V_CNTR_NMBR} || '%'
+		   </if>
+		   <if test="V_CANCEL_YN != '' and V_CANCEL_YN != null  ">
+		   		AND NVL(A.CANCEL_YN, 'F') = #{V_CANCEL_YN}
+		   </if>
+		   <if test="V_EXPORT_YN != '' and V_EXPORT_YN != null  ">
+		   		AND NVL(A.EXPORT_YN, 'F') = #{V_EXPORT_YN}
+		   </if>
+   		   <choose>
+				<when test="V_DATE_GBN != '' and V_DATE_GBN != null ">
+					ORDER BY A.TEMPLE_CD DESC, A.ACCEPT_SEQ DESC ,A.SEQ DESC 
+				</when>
+				<otherwise>					
+					ORDER BY A.TEMPLE_CD, A.JUNGAK_CD, A.LIGHT_NO, A.BUD_NO
+				</otherwise>
+		   </choose>
+	</select>
+	
+	<select id="SELECT_YOUNGTOP_PRINT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT A.TEMPLE_CD
+		      ,A.ACCEPT_SEQ
+		      ,A.SEQ
+		      ,A.BUD_NO
+		      ,A.ACCEPT_GBN
+		      ,A.JUNGAK_CD
+		      ,A.LIGHT_NO
+		      ,A.PAYMENT_PLAN_AMT
+		      ,A.PAYMENT_AMT
+		      ,A.ACCEPT_DT
+		      ,A.BULSA_DT
+		      ,A.BONGAN_DT
+		      ,A.REBONG_DT
+		      ,A.AGREE_SHEET_YN
+		      ,A.FAMILY_SHEET_YN
+		      ,A.HOJUK_SHEET_YN
+		      ,A.JUMIN_SHEET_YN
+		      ,A.JEJUK_SHEET_YN
+		      ,A.TOP_MNG_NM
+		      ,A.ACENST_YN
+		      ,A.NAMELESS_YN
+		      ,A.HYO_BON
+		      ,A.HYO_REL
+		      ,A.CLOSE_YN
+		      ,A.DEL_YN
+		      ,A.REMARK YOUNGTOP_MEMO
+		      ,(SELECT Z.JUNGAK_NM
+		          FROM ASP_JUNGAK_MGT Z
+		         WHERE Z.TEMPLE_CD  = A.TEMPLE_CD
+		           AND Z.ACCEPT_GBN = '14'
+		           AND Z.JUNGAK_CD = A.JUNGAK_CD
+		           AND ROWNUM = 1) JUNGAK_NM
+		      ,B.NAME_KOR
+		      ,B.JUMIN_NO
+		      ,B.ZIP_CD
+		      ,B.ADDR1
+		      ,B.ADDR2 || ' ' || FN_ADDR_BLDG2(B.BLDG_NUM) as ADDR2
+		      ,FN_MERGE_TEL_NO(B.TELNO1,B.TELNO2,B.TELNO3) TEL_NO
+		      ,FN_MERGE_TEL_NO(B.MOBILE_TELNO1,B.MOBILE_TELNO2,B.MOBILE_TELNO3) MOBILE_TELNO
+		      ,B.SEX_GBN
+		      ,FN_SINDO_INFO('NAME_KOR',A.TEMPLE_CD,A.BUD_NO) BUD_NM
+		      ,FN_PAYMENT_AMT(A.TEMPLE_CD,A.ACCEPT_SEQ,A.SEQ) PAYMENT_AMT_RESULT
+		      ,A.PAYMENT_PLAN_AMT - FN_PAYMENT_AMT(A.TEMPLE_CD,A.ACCEPT_SEQ,A.SEQ) MISU_AMT_RESULT
+		      ,FN_CODE_NAME('REC','14') ACCEPT_NM
+		      ,C.PROPOSAL_BUD_NO
+		      ,FN_SINDO_INFO('NAME_KOR',C.TEMPLE_CD,C.PROPOSAL_BUD_NO) PROPOSAL_BUD_NM
+		      ,C.MEMO REC_MEMO
+		       ,(SELECT COUNT(1)
+		          FROM REC_YOUNGTOP_YOUNGGA S1
+		         WHERE S1.TEMPLE_CD = A.TEMPLE_CD
+		          AND S1.ACCEPT_SEQ = A.ACCEPT_SEQ
+		          AND S1.SEQ = A.SEQ) AS BONGTOP_COUNT          
+		      ,NVL(E.BONGTOP_SEQ,0) BONGTOP_SEQ
+		      ,E.BONGTOP_DT
+		      ,E.BONGTOP_GBN
+		      ,E.YOUNGGA_BUD_NO
+		      ,E.YOUNGGA_REL
+		      ,E.YOUNGGA_BON
+		      ,E.YOUNGGA_GENDER
+		      ,E.YOUNGGA_EQUAL
+		      ,FN_CODE_NAME('DEATH_EQUAL',E.YOUNGGA_EQUAL) YOUNGGA_EQUAL_NM
+		      ,E.YOUNGGA_SPIRITUAL
+		      ,FN_CODE_NAME('SPIRITUAL_GBN',E.YOUNGGA_SPIRITUAL) YOUNGGA_SPIRITUAL_NM
+		      ,DECODE(E.YOUNGGA_EQUAL,'2','동일') || FN_CODE_NAME('SPIRITUAL_GBN',E.YOUNGGA_SPIRITUAL) YOUNGGA_EQUAL_SPIRITUAL_NM
+		      ,E.YOUNGGA_BUD_NM
+		      ,FN_CODE_NAME('DEATH_SEXGBN',E.YOUNGGA_GENDER) YOUNGGA_GENDER_NM
+		      ,FN_CODE_NAME('SEXGBN',B.SEX_GBN) SEX_GBN_NM
+		      ,B.BUD_CODE
+		      ,FN_CODE_NAME('BON',A.HYO_BON) HYO_BON_NAME
+		      ,DECODE(A.HYO_BON,NULL,'',FN_CODE_REMARK('BON',A.HYO_BON)) HYO_LAST_NAME
+		      ,FN_CODE_NAME('BON',A.HYO_BON)||DECODE(A.HYO_BON,NULL,'',FN_CODE_REMARK('BON',A.HYO_BON)||'씨') HYO_FULL_NAME
+		      ,'' SUB_DATE
+		      ,0 AMOUNT
+		      ,SUVILA.FN_TEMPLE_INFO(A.TEMPLE_CD,'PRINT_FORM_YN') PRINT_FORM_YN
+		      ,DECODE(A.AGREE_SHEET_YN,'T','제출') AGREE_SHEET_YN_NM
+		      ,DECODE(A.FAMILY_SHEET_YN,'T','제출') FAMILY_SHEET_YN_NM
+		      ,DECODE(A.HOJUK_SHEET_YN,'T','제출') HOJUK_SHEET_YN_NM
+		      ,DECODE(A.JUMIN_SHEET_YN,'T','제출') JUMIN_SHEET_YN_NM
+		      ,DECODE(A.JEJUK_SHEET_YN,'T','제출') JEJUK_SHEET_YN_NM
+		      ,B.ADDR1||' '||B.ADDR2  || ' ' || FN_ADDR_BLDG2(B.BLDG_NUM) AS ADDR
+		      ,'../com/img/bg/report_chonhon_bg.gif' BACK_IMAGE
+		      ,'default' BAND
+		      ,'T' CHECKED
+		      ,A.ACCEPT_SEQ||A.SEQ PAGESKIP
+		  FROM REC_YOUNGTOP_DETAIL A
+		      ,SIN_CARD_MASTER B
+		      ,REC_MASTER C
+		      ,REC_SUB D
+		      ,REC_YOUNGTOP_YOUNGGA E
+		 WHERE A.TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND A.DEL_YN = 'F'
+		   AND B.TEMPLE_CD = A.TEMPLE_CD
+		   AND B.BUD_NO = A.BUD_NO
+		   AND C.TEMPLE_CD(+) = A.TEMPLE_CD
+		   AND C.ACCEPT_SEQ(+) = A.ACCEPT_SEQ
+		   AND D.TEMPLE_CD(+) = A.TEMPLE_CD
+		   AND D.ACCEPT_SEQ(+) = A.ACCEPT_SEQ
+		   AND D.SEQ(+) = A.SEQ
+		   AND E.TEMPLE_CD(+) = A.TEMPLE_CD
+		   AND E.ACCEPT_SEQ(+) = A.ACCEPT_SEQ
+		   AND E.SEQ(+) = A.SEQ
+		   <if test="V_CHONHON_YOUNGGA_DETAIL != '' and V_CHONHON_YOUNGGA_DETAIL != null and V_PRINT_TYPE == 'CHONHON' ">
+		   		AND (SELECT DEATH_YN 
+		   		       FROM SIN_DEATH_BOKWI_INFO 
+		   		      WHERE TEMPLE_CD = A.TEMPLE_CD 
+		   		        AND DECE_BUD_NO = E.YOUNGGA_BUD_NO )  =  #{V_CHONHON_YOUNGGA_DETAIL}
+		   </if>
+		   <if test="V_PRINT_TYPE == 'PAPER'">
+		   		AND (SELECT COUNT(1) 
+		   			  FROM REC_YOUNGTOP_YOUNGGA S1 
+		   			 WHERE S1.TEMPLE_CD = A.TEMPLE_CD 
+		   			   AND S1.ACCEPT_SEQ = A.ACCEPT_SEQ 
+		   			   AND S1.SEQ = A.SEQ)  != 0
+		   </if>
+		   <if test="V_BUD_NO != '' and V_BUD_NO != null  ">
+				AND A.BUD_NO     = #{V_BUD_NO}
+		   </if>
+		   <if test="V_JUNGAK_CD != '' and V_JUNGAK_CD != null  ">
+		   		AND A.JUNGAK_CD     = #{V_JUNGAK_CD}
+		   </if>
+		   <choose>
+		   		<when test="V_DATE_GBN == '1'">
+		   			AND NVL(C.ACCEPT_DATE,'00000000') BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		   		</when>
+		   		<when test="V_DATE_GBN == '2'">
+		   			AND NVL(A.BULSA_DT,'00000000')    BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE} 
+		   		</when>
+		   		<when test="V_DATE_GBN == '3'">
+		   			AND NVL(A.BONGAN_DT,'00000000')   BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		   		</when>
+		   		<when test="V_DATE_GBN == '4'">
+		   			AND NVL(A.REBONG_DT,'00000000')   BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		   		</when>
+		   </choose>
+		   <if test="V_SEARCH_BUD_NO != '' and V_SEARCH_BUD_NO != null  ">
+		   		AND A.BUD_NO LIKE SUBSTR(#{V_SEARCH_BUD_NO},1,10) || '%'
+		   </if>
+		   <if test="V_REC_USER_ID != '' and V_REC_USER_ID != null  ">
+		   		AND C.CRT_USER = #{V_REC_USER_ID}
+		   </if>
+		   <if test="V_CLASS_CD != '' and V_CLASS_CD != null  and V_CLASS_CD != 0 ">
+		   		AND C.PROPOSAL_BUD_NO IN (SELECT BUD_NO 
+		   									FROM SIN_CLASS_INFO 
+		   								   WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   								      AND CLASS_CD = #{V_CLASS_CD})
+		   </if>
+		   <choose>
+		   		<when test="V_PAY_STATE == '1'">
+		   			AND A.PAYMENT_PLAN_AMT &lt;= FN_PAYMENT_AMT(A.TEMPLE_CD,A.ACCEPT_SEQ,A.SEQ)
+		   		</when>
+		   		<when test="V_PAY_STATE == '2'">
+		   			AND A.PAYMENT_PLAN_AMT >  FN_PAYMENT_AMT(A.TEMPLE_CD,A.ACCEPT_SEQ,A.SEQ)
+		   		</when>
+		   </choose>
+		   <if test="V_ACCEPT_SEQ1 != '' and V_ACCEPT_SEQ1 != null  ">
+		   		AND ( A.ACCEPT_SEQ IN (${V_ACCEPT_SEQ1})
+		   </if>
+		   <if test="V_ACCEPT_SEQ2 != '' and V_ACCEPT_SEQ2 != null  ">
+		   		OR  A.ACCEPT_SEQ IN (${V_ACCEPT_SEQ2})
+		   </if>
+		   <if test="V_ACCEPT_SEQ3 != '' and V_ACCEPT_SEQ3 != null  ">
+		   		OR  A.ACCEPT_SEQ IN (${V_ACCEPT_SEQ3})
+		   </if>
+		   <if test="V_ACCEPT_SEQ4 != '' and V_ACCEPT_SEQ4 != null  ">
+		   		OR  A.ACCEPT_SEQ IN (${V_ACCEPT_SEQ4})
+		   </if>
+		   <if test="V_ACCEPT_SEQ5 != '' and V_ACCEPT_SEQ5 != null  ">
+		   		OR  A.ACCEPT_SEQ IN (${V_ACCEPT_SEQ5})
+		   </if>
+		   <if test="V_ACCEPT_SEQ6 != '' and V_ACCEPT_SEQ6 != null  ">
+		   		OR  A.ACCEPT_SEQ IN (${V_ACCEPT_SEQ6})
+		   </if>
+		   <if test="V_ACCEPT_SEQ7 != '' and V_ACCEPT_SEQ7 != null  ">
+		   		OR  A.ACCEPT_SEQ IN (${V_ACCEPT_SEQ7})
+		   </if>
+		   <if test="V_ACCEPT_SEQ8 != '' and V_ACCEPT_SEQ8 != null  ">
+		   		OR  A.ACCEPT_SEQ IN (${V_ACCEPT_SEQ8})
+		   </if>
+		   <if test="V_ACCEPT_SEQ9 != '' and V_ACCEPT_SEQ9 != null  ">
+		   		OR  A.ACCEPT_SEQ IN (${V_ACCEPT_SEQ9})
+		   </if>
+		   <if test="V_ACCEPT_SEQ10 != '' and V_ACCEPT_SEQ10 != null  ">
+		   		OR  A.ACCEPT_SEQ IN (${V_ACCEPT_SEQ10})
+		   </if>
+		   <if test="V_ACCEPT_SEQ1 != '' and V_ACCEPT_SEQ1 != null  ">
+		   		)
+		   </if>
+		UNION ALL
+		SELECT A.TEMPLE_CD
+		      ,A.ACCEPT_SEQ
+		      ,A.SEQ
+		      ,A.BUD_NO
+		      ,A.ACCEPT_GBN
+		      ,A.JUNGAK_CD
+		      ,A.LIGHT_NO
+		      ,A.PAYMENT_PLAN_AMT
+		      ,A.PAYMENT_AMT
+		      ,A.ACCEPT_DT
+		      ,A.BULSA_DT
+		      ,A.BONGAN_DT
+		      ,A.REBONG_DT
+		      ,A.AGREE_SHEET_YN
+		      ,A.FAMILY_SHEET_YN
+		      ,A.HOJUK_SHEET_YN
+		      ,A.JUMIN_SHEET_YN
+		      ,A.JEJUK_SHEET_YN
+		      ,A.TOP_MNG_NM
+		      ,A.ACENST_YN
+		      ,A.NAMELESS_YN
+		      ,A.HYO_BON
+		      ,A.HYO_REL
+		      ,A.CLOSE_YN
+		      ,A.DEL_YN
+		      ,A.REMARK YOUNGTOP_MEMO
+		      ,(SELECT Z.JUNGAK_NM
+		          FROM ASP_JUNGAK_MGT Z
+		         WHERE Z.TEMPLE_CD  = A.TEMPLE_CD
+		           AND Z.ACCEPT_GBN = '14'
+		           AND Z.JUNGAK_CD = A.JUNGAK_CD
+		           AND ROWNUM = 1) JUNGAK_NM
+		      ,B.NAME_KOR
+		      ,B.JUMIN_NO
+		      ,B.ZIP_CD
+		      ,B.ADDR1
+		      ,B.ADDR2
+		      ,FN_MERGE_TEL_NO(B.TELNO1,B.TELNO2,B.TELNO3) TEL_NO
+		      ,FN_MERGE_TEL_NO(B.MOBILE_TELNO1,B.MOBILE_TELNO2,B.MOBILE_TELNO3) MOBILE_TELNO
+		      ,B.SEX_GBN
+		      ,FN_SINDO_INFO('NAME_KOR',A.TEMPLE_CD,A.BUD_NO) BUD_NM
+		      ,FN_PAYMENT_AMT(A.TEMPLE_CD,A.ACCEPT_SEQ,A.SEQ) PAYMENT_AMT_RESULT
+		      ,A.PAYMENT_PLAN_AMT - FN_PAYMENT_AMT(A.TEMPLE_CD,A.ACCEPT_SEQ,A.SEQ) MISU_AMT_RESULT
+		      ,FN_CODE_NAME('REC','14') ACCEPT_NM
+		      ,C.PROPOSAL_BUD_NO
+		      ,FN_SINDO_INFO('NAME_KOR',C.TEMPLE_CD,C.PROPOSAL_BUD_NO) PROPOSAL_BUD_NM
+		      ,C.MEMO REC_MEMO
+		      ,(SELECT COUNT(1)
+		          FROM REC_YOUNGTOP_YOUNGGA S1
+		         WHERE S1.TEMPLE_CD = A.TEMPLE_CD
+		           AND S1.ACCEPT_SEQ = A.ACCEPT_SEQ
+		           AND S1.SEQ = A.SEQ) AS BONGTOP_COUNT      
+		      ,9999 BONGTOP_SEQ
+		      ,'' BONGTOP_DT
+		      ,'' BONGTOP_GBN
+		      ,'' YOUNGGA_BUD_NO
+		      ,'' YOUNGGA_REL
+		      ,'' YOUNGGA_BON
+		      ,'' YOUNGGA_GENDER
+		      ,'' YOUNGGA_EQUAL
+		      ,'' YOUNGGA_EQUAL_NM
+		      ,'' YOUNGGA_SPIRITUAL
+		      ,'' YOUNGGA_SPIRITUAL_NM
+		      ,'' YOUNGGA_EQUAL_SPIRITUAL_NM
+		      ,'' YOUNGGA_BUD_NM
+		      ,'' YOUNGGA_GENDER_NM
+		      ,FN_CODE_NAME('SEXGBN',B.SEX_GBN) SEX_GBN_NM
+		      ,B.BUD_CODE
+		      ,FN_CODE_NAME('BON',A.HYO_BON) HYO_BON_NAME
+		      ,DECODE(A.HYO_BON,NULL,'',FN_CODE_REMARK('BON',A.HYO_BON)) HYO_LAST_NAME
+		      ,FN_CODE_NAME('BON',A.HYO_BON)||DECODE(A.HYO_BON,NULL,'',FN_CODE_REMARK('BON',A.HYO_BON)||'씨') HYO_FULL_NAME
+		      ,SUBSTR(F.SUB_DATE,1,8) SUB_DATE
+		      ,F.AMOUNT
+		      ,SUVILA.FN_TEMPLE_INFO(A.TEMPLE_CD,'PRINT_FORM_YN') PRINT_FORM_YN
+		      ,DECODE(A.AGREE_SHEET_YN,'T','제출') AGREE_SHEET_YN_NM
+		      ,DECODE(A.FAMILY_SHEET_YN,'T','제출') FAMILY_SHEET_YN_NM
+		      ,DECODE(A.HOJUK_SHEET_YN,'T','제출') HOJUK_SHEET_YN_NM
+		      ,DECODE(A.JUMIN_SHEET_YN,'T','제출') JUMIN_SHEET_YN_NM
+		      ,DECODE(A.JEJUK_SHEET_YN,'T','제출') JEJUK_SHEET_YN_NM
+		      ,B.ADDR1||' '||B.ADDR2 ADDR
+		      ,'../com/img/bg/report_chonhon_bg.gif' BACK_IMAGE
+		      ,'band1' BAND
+		      ,'T' CHECKED
+		      ,A.ACCEPT_SEQ||A.SEQ PAGESKIP
+		  FROM REC_YOUNGTOP_DETAIL A
+		      ,SIN_CARD_MASTER B
+		      ,REC_MASTER C
+		      ,REC_SUB D
+		      ,REC_PAYMENT_HIS F
+		 WHERE A.TEMPLE_CD   = #{V_TEMPLE_CD}
+		   AND A.DEL_YN      = 'F'
+		   AND B.TEMPLE_CD   = A.TEMPLE_CD
+		   AND B.BUD_NO 	 = A.BUD_NO
+		   AND C.TEMPLE_CD   = A.TEMPLE_CD
+		   AND C.ACCEPT_SEQ  = A.ACCEPT_SEQ
+		   AND D.TEMPLE_CD   = A.TEMPLE_CD
+		   AND D.ACCEPT_SEQ  = A.ACCEPT_SEQ
+		   AND D.SEQ 		 = A.SEQ
+		   AND F.TEMPLE_CD 	 = A.TEMPLE_CD
+		   AND F.ACCEPT_SEQ  = A.ACCEPT_SEQ
+		   AND F.SEQ 		 = A.SEQ
+		   AND F.AMOUNT 	!= 0
+		   AND F.PAYMENT_STATE_CD = '0'
+		   <if test="V_PRINT_TYPE == 'PAPER' ">
+		   		AND (SELECT COUNT(1) FROM REC_YOUNGTOP_YOUNGGA S1 
+		   			  WHERE S1.TEMPLE_CD  = A.TEMPLE_CD 
+		   			    AND S1.ACCEPT_SEQ = A.ACCEPT_SEQ 
+		   			    AND S1.SEQ        = A.SEQ) != 0 
+		   </if>
+		   <if test="V_BUD_NO != '' and V_BUD_NO != null  ">
+		   		AND A.BUD_NO     = #{V_BUD_NO}
+		   </if>
+		   <if test="V_JUNGAK_CD != '' and V_JUNGAK_CD != null  and V_JUNGAK_CD != 0 ">
+		   		AND A.JUNGAK_CD     = #{V_JUNGAK_CD}
+		   </if>
+		   <choose>
+		   		<when test="V_DATE_GBN == '1'">
+		   			AND NVL(C.ACCEPT_DATE,'00000000') BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		   		</when>
+		   		<when test="V_DATE_GBN == '2'">
+		   			AND NVL(A.BULSA_DT,'00000000') BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		   		</when>
+		   		<when test="V_DATE_GBN == '3'">
+		   			AND NVL(A.BONGAN_DT,'00000000') BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		   		</when>
+		   		<when test="V_DATE_GBN == '4'">
+		   			AND NVL(A.REBONG_DT,'00000000') BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		   		</when>
+		   	</choose>
+		   	<if test="V_SEARCH_BUD_NO != '' and V_SEARCH_BUD_NO != null  ">
+		   		AND A.BUD_NO LIKE SUBSTR(#{V_SEARCH_BUD_NO},1,10) || '%'
+		   	</if>
+		   	<if test="V_REC_USER_ID != '' and V_REC_USER_ID != null  ">
+		   		AND C.CRT_USER = #{V_REC_USER_ID}
+		   	</if>
+		   	<if test="V_CLASS_CD != '' and V_CLASS_CD != null  and V_CLASS_CD != 0 ">
+		   		AND C.PROPOSAL_BUD_NO IN (SELECT BUD_NO 
+		   								    FROM SIN_CLASS_INFO 
+		   								   WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   								     AND CLASS_CD  = #{V_CLASS_CD})
+		   	</if>
+			<choose>
+				<when test="V_PAY_STATE == '1'">
+					AND A.PAYMENT_PLAN_AMT &lt;= FN_PAYMENT_AMT(A.TEMPLE_CD,A.ACCEPT_SEQ,A.SEQ)
+				</when>
+				<when test="V_PAY_STATE == '2'">
+					AND A.PAYMENT_PLAN_AMT >  FN_PAYMENT_AMT(A.TEMPLE_CD,A.ACCEPT_SEQ,A.SEQ)
+				</when>
+			</choose>
+			<if test="V_ACCEPT_SEQ1 != '' and V_ACCEPT_SEQ1 != null  ">
+				AND ( A.ACCEPT_SEQ IN (${V_ACCEPT_SEQ1})
+			</if>
+			<if test="V_ACCEPT_SEQ2 != '' and V_ACCEPT_SEQ2 != null  ">
+				OR A.ACCEPT_SEQ IN (${V_ACCEPT_SEQ2})
+			</if>
+			<if test="V_ACCEPT_SEQ3 != '' and V_ACCEPT_SEQ3 != null  ">
+				OR A.ACCEPT_SEQ IN (${V_ACCEPT_SEQ3})
+			</if>
+			<if test="V_ACCEPT_SEQ4 != '' and V_ACCEPT_SEQ4 != null  ">
+				OR A.ACCEPT_SEQ IN (${V_ACCEPT_SEQ4})
+			</if>
+			<if test="V_ACCEPT_SEQ5 != '' and V_ACCEPT_SEQ5 != null  ">
+				OR A.ACCEPT_SEQ IN (${V_ACCEPT_SEQ5})
+			</if>
+			<if test="V_ACCEPT_SEQ1 != '' and V_ACCEPT_SEQ1 != null  ">
+				)
+			</if>
+		ORDER BY TEMPLE_CD DESC
+			    ,ACCEPT_SEQ DESC 
+			    ,SEQ DESC
+			    ,BONGTOP_SEQ
+			    ,SUB_DATE
+	</select>
+	
+	
+	<select id="SELECT_YOUNGTOP_YOUNGGA" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT A.TEMPLE_CD
+		      ,A.ACCEPT_SEQ
+		      ,A.SEQ
+		      ,A.BUD_NO
+		      ,A.JUNGAK_CD
+		      ,A.LIGHT_NO
+		      ,FN_SINDO_INFO('NAME_KOR',A.TEMPLE_CD,A.BUD_NO) BUD_NM
+		      ,B.BONGTOP_SEQ
+		      ,B.BONGTOP_DT
+		      ,B.BONGTOP_GBN
+		      ,B.YOUNGGA_BUD_NO
+		      <choose>
+		      		<when test="V_CHUMO_YN != 'T'">
+		      			,(SELECT DECE_REL FROM SIN_DEATH_BOKWI_INFO 
+				      	   WHERE TEMPLE_CD    = #{V_TEMPLE_CD} 
+				      		 AND BUD_NO 	  = #{V_BUD_NO} 
+				      		 AND DECE_BUD_NO = B.YOUNGGA_BUD_NO) AS YOUNGGA_REL
+		      		</when>
+		      		<otherwise>
+		      			,B.YOUNGGA_REL
+		      		</otherwise>
+		      </choose>
+		      ,B.YOUNGGA_BON
+		      ,B.YOUNGGA_GENDER
+		      ,B.YOUNGGA_EQUAL
+		      ,FN_CODE_NAME('DEATH_EQUAL',B.YOUNGGA_EQUAL) YOUNGGA_EQUAL_NM
+		      ,B.YOUNGGA_SPIRITUAL
+		      ,FN_CODE_NAME('SPIRITUAL_GBN',B.YOUNGGA_SPIRITUAL) YOUNGGA_SPIRITUAL_NM
+		      ,B.YOUNGGA_BUD_NM
+		      ,FN_CODE_NAME('DEATH_SEXGBN',B.YOUNGGA_GENDER) YOUNGGA_GENDER_NM
+		      ,NULL BOKWIJA_NO
+		      ,NVL(B.POSITION_SEQ, '1') as POSITION_SEQ
+		      ,(SELECT DEATH_DAY FROM SIN_DEATH_INFO WHERE TEMPLE_CD = A.TEMPLE_CD AND BUD_NO = B.YOUNGGA_BUD_NO ) AS DEATH_DAY
+		  FROM REC_YOUNGTOP_DETAIL A
+		      ,REC_YOUNGTOP_YOUNGGA B
+		 WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND A.DEL_YN    = 'F'
+		   <choose>
+		   		<when test="V_SEARCH_ACCEPT_SEQ != '' and V_SEARCH_ACCEPT_SEQ != null ">
+		   			AND A.ACCEPT_SEQ = #{V_SEARCH_ACCEPT_SEQ}
+		   		</when>
+		   		<otherwise>
+		   			AND A.BUD_NO = #{V_BUD_NO}
+		   		</otherwise>
+		   </choose>
+		   <if test="V_DUMMY_YN == 'PAPER' ">
+		   		AND 1=0 
+		   </if>
+		   AND B.TEMPLE_CD 	= A.TEMPLE_CD
+		   AND B.ACCEPT_SEQ = A.ACCEPT_SEQ
+		   AND B.SEQ 		= A.SEQ
+		 ORDER BY A.TEMPLE_CD
+		 		 ,A.JUNGAK_CD
+		 		 ,A.LIGHT_NO
+		 		 ,B.BONGTOP_SEQ 
+	</select>
+	
+	<insert id="INSERT_YOUNGTOP_DETAIL" parameterType="java.util.Map">
+		INSERT INTO REC_YOUNGTOP_DETAIL (
+		     TEMPLE_CD
+		   , ACCEPT_SEQ
+		   , SEQ
+		   , BUD_NO
+		   , ACCEPT_GBN
+		   , JUNGAK_CD
+		   , LIGHT_NO
+		   , PAYMENT_PLAN_AMT
+		   , PAYMENT_AMT
+		   , ACCEPT_DT
+		   , BULSA_DT
+		   , BONGAN_DT
+		   , REBONG_DT
+		   , AGREE_SHEET_YN
+		   , FAMILY_SHEET_YN
+		   , HOJUK_SHEET_YN
+		   , JUMIN_SHEET_YN
+		   , JEJUK_SHEET_YN
+		   , ACENST_YN
+		   , NAMELESS_YN
+		   , HYO_BON
+		   , HYO_REL
+		   , TOP_MNG_NM
+		   , CLOSE_YN
+		   , DEL_YN
+		   , REMARK
+		   , CRT_USER
+		   , CRT_DATE
+		   , UPT_DATE
+		   , UPT_USER
+		   , REMOTE
+		   , CNTR_NMBR
+		) VALUES ( 
+			 #{TEMPLE_CD},
+			 #{ACCEPT_SEQ},
+			 #{SEQ},
+			 #{BUD_NO},
+			 14,
+			 #{JUNGAK_CD},
+			 #{LIGHT_NO},
+			 #{PAYMENT_PLAN_AMT},
+			 #{PAYMENT_AMT},
+			 #{ACCEPT_DT},
+			 #{BULSA_DT  ,jdbcType=VARCHAR},
+			 #{BONGAN_DT ,jdbcType=VARCHAR},
+			 #{REBONG_DT ,jdbcType=VARCHAR},
+			 DECODE(#{AGREE_SHEET_YN},'T','T','F'),
+			 DECODE(#{FAMILY_SHEET_YN},'T','T','F'),
+			 DECODE(#{HOJUK_SHEET_YN},'T','T','F'),
+			 DECODE(#{JUMIN_SHEET_YN},'T','T','F'),
+			 DECODE(#{JEJUK_SHEET_YN},'T','T','F'),
+			 DECODE(#{ACENST_YN},'T','T','F'),
+			 DECODE(#{NAMELESS_YN},'T','T','F'),
+			 #{HYO_BON ,jdbcType=VARCHAR},
+			 #{HYO_REL ,jdbcType=VARCHAR},
+			 #{TOP_MNG_NM},
+			 'F',
+			 'F',
+			 #{YOUNGTOP_MEMO ,jdbcType=VARCHAR},
+			 #{V_USER_ID},
+			 SYSDATE,
+			 SYSDATE,
+			 #{V_USER_ID},
+			 #{REMOTE},
+			 #{CNTR_NMBR ,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<insert id="INSERT_REC_PAYMENT_HIS" parameterType="java.util.Map">
+		INSERT INTO REC_PAYMENT_HIS (
+		       TEMPLE_CD,
+		       ACCEPT_SEQ,
+		       SEQ,
+		       SUB_DATE,
+		       AMOUNT,
+		       CRT_USER,
+		       REMOTE,
+		       REMARK,
+		       APPROVAL_GBN,
+		       PGCODE,
+		       AUTHCODE   
+		) VALUES (
+		       #{TEMPLE_CD},
+		       #{ACCEPT_SEQ},
+		       #{SEQ},
+		       TO_CHAR(CURRENT_TIMESTAMP,'YYYYMMDDHH24MISSFF'),
+		       #{PAYMENT_AMT},
+		       #{V_USER_ID},
+		       #{REMOTE},
+		       #{REMARK    ,jdbcType=VARCHAR},
+		       #{V_CASH_TYPE},
+		       #{V_PGCODE   ,jdbcType=VARCHAR},
+		       #{V_AUTHCODE  ,jdbcType=VARCHAR} 
+		)
+	</insert>
+	
+	<update id="UPDATE_YOUNGTOP_DETAIL" parameterType="java.util.Map">
+		UPDATE REC_YOUNGTOP_DETAIL
+		   SET ACCEPT_DT 		= #{ACCEPT_DT}
+		      ,BUD_NO 			= #{BUD_NO}
+		      ,JUNGAK_CD 		= #{JUNGAK_CD}
+		      ,LIGHT_NO 		= #{LIGHT_NO}
+		      ,BULSA_DT 		= #{BULSA_DT  ,jdbcType=VARCHAR}
+		      ,BONGAN_DT 		= #{BONGAN_DT ,jdbcType=VARCHAR}
+		      ,REBONG_DT 		= #{REBONG_DT ,jdbcType=VARCHAR}
+		      ,AGREE_SHEET_YN   = DECODE(#{AGREE_SHEET_YN  ,jdbcType=VARCHAR},'T','T','F')
+		      ,FAMILY_SHEET_YN 	= DECODE(#{FAMILY_SHEET_YN ,jdbcType=VARCHAR},'T','T','F')
+		      ,HOJUK_SHEET_YN 	= DECODE(#{HOJUK_SHEET_YN  ,jdbcType=VARCHAR},'T','T','F')
+		      ,JUMIN_SHEET_YN 	= DECODE(#{JUMIN_SHEET_YN  ,jdbcType=VARCHAR},'T','T','F')
+		      ,JEJUK_SHEET_YN 	= DECODE(#{JEJUK_SHEET_YN  ,jdbcType=VARCHAR},'T','T','F')
+		      ,ACENST_YN 		= DECODE(#{ACENST_YN       ,jdbcType=VARCHAR},'T','T','F')
+		      ,NAMELESS_YN 		= DECODE(#{NAMELESS_YN     ,jdbcType=VARCHAR},'T','T','F')
+		      ,HYO_BON 			= #{HYO_BON    ,jdbcType=VARCHAR}
+		      ,HYO_REL			= #{HYO_REL    ,jdbcType=VARCHAR}
+		      ,TOP_MNG_NM 		= #{TOP_MNG_NM ,jdbcType=VARCHAR}
+		      ,CLOSE_YN 		= DECODE(#{CLOSE_YN ,jdbcType=VARCHAR},'F','F','T')
+		      ,DEL_YN 			= DECODE(#{DEL_YN   ,jdbcType=VARCHAR},'F','F','T')
+		      ,UPT_USER 		= #{V_USER_ID}
+		      ,UPT_DATE 		= SYSDATE
+		      ,REMARK 			= #{YOUNGTOP_MEMO,jdbcType=VARCHAR}
+		      ,CANCEL_YN        = #{CANCEL_YN    ,jdbcType=VARCHAR}
+		      ,EXPORT_YN        = #{EXPORT_YN    ,jdbcType=VARCHAR}
+		      ,CNTR_NMBR        = #{CNTR_NMBR    ,jdbcType=VARCHAR}
+		      ,MYU_NMBR         = #{MYU_NMBR     ,jdbcType=VARCHAR}
+		      ,TEL_ETC1         = #{TEL_ETC1     ,jdbcType=VARCHAR}
+		      ,TEL_ETC2         = #{TEL_ETC2     ,jdbcType=VARCHAR}
+		      ,ADDR_HIS         = #{ADDR_HIS     ,jdbcType=VARCHAR}
+		      ,JANGJI_TYPE      = #{JANGJI_TYPE  ,jdbcType=VARCHAR}
+		 WHERE TEMPLE_CD 		= #{TEMPLE_CD}
+		   AND ACCEPT_SEQ 		= #{ACCEPT_SEQ}
+		   AND SEQ 				= #{SEQ}
+	</update>
+	
+	<insert id="INSERT_YOUNGTOP_YOUNGGA" parameterType="java.util.Map">
+		INSERT INTO REC_YOUNGTOP_YOUNGGA(
+		    TEMPLE_CD
+		   ,ACCEPT_SEQ, SEQ
+		   ,BONGTOP_SEQ
+		   ,BONGTOP_DT
+		   ,BONGTOP_GBN
+		   ,YOUNGGA_BUD_NO
+		   ,YOUNGGA_REL
+		   ,YOUNGGA_BON
+		   ,YOUNGGA_GENDER
+		   ,YOUNGGA_EQUAL
+		   ,YOUNGGA_SPIRITUAL
+		   ,YOUNGGA_BUD_NM
+		   ,CRT_USER
+		   ,CRT_DATE
+		   ,UPT_USER
+		   ,UPT_DATE
+		   ,POSITION_SEQ
+		) VALUES ( 
+		 	#{TEMPLE_CD},
+		 	#{ACCEPT_SEQ},
+		 	#{SEQ},
+		 	#{BONGTOP_SEQ},
+		 	#{BONGTOP_DT},
+		 	#{BONGTOP_GBN    ,jdbcType=VARCHAR},
+		 	#{YOUNGGA_BUD_NO},
+		 	#{YOUNGGA_REL     ,jdbcType=VARCHAR},
+		 	#{YOUNGGA_BON     ,jdbcType=VARCHAR},
+		 	#{YOUNGGA_GENDER  ,jdbcType=VARCHAR},
+		 	#{YOUNGGA_EQUAL   ,jdbcType=VARCHAR},
+		 	#{YOUNGGA_SPIRITUAL  ,jdbcType=VARCHAR},
+		 	#{YOUNGGA_BUD_NM},
+		 	#{V_USER_ID},
+		 	SYSDATE,
+		 	#{V_USER_ID},
+		 	SYSDATE,
+		 	NVL(#{POSITION_SEQ ,jdbcType=VARCHAR} , decode(#{YOUNGGA_GENDER ,jdbcType=VARCHAR}, 'F','1' , '2'))
+		)
+	</insert>
+	
+	<delete id="DELETE_YOUNGTOP_YOUNGGA" parameterType="java.util.Map">
+		DELETE REC_YOUNGTOP_YOUNGGA
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		   AND ACCEPT_SEQ = #{ACCEPT_SEQ}
+		   AND SEQ        = #{SEQ}
+	</delete>
+	
+	<select id="SELECT_JUNGAK" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD,
+		       ACCEPT_GBN,
+		       JUNGAK_CD,
+		       JUNGAK_GBN,
+		       JUNGAK_NM,
+		       USE_YN,
+		       REMARK,
+		       CRT_USER,
+		       CRT_DATE,
+		       UPT_DATE,
+		       UPT_USER,
+		       REMOTE
+		  FROM ASP_JUNGAK_MGT
+		WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+		  AND ACCEPT_GBN = #{V_ACCEPT_GBN}
+		  <if test="V_USE_YN != '' and V_USE_YN != null  ">
+		  	AND USE_YN     = #{V_USE_YN} 
+		  </if>
+		UNION
+		SELECT #{V_TEMPLE_CD}
+		      ,#{V_ACCEPT_GBN}
+		      ,0
+		      ,''
+		      ,'전체'
+		      ,''
+		      ,''
+		      ,''
+		      ,NULL
+		      ,NULL
+		      ,''
+		      ,''
+		  FROM DUAL
+		 WHERE #{V_JUNGAK_ALL_YN} = 'Y'
+		ORDER BY USE_YN DESC 
+			, JUNGAK_CD ASC
+	</select>
+	
+	<insert id="INSERT_JUNGAK" parameterType="java.util.Map">
+		INSERT INTO ASP_JUNGAK_MGT (
+		       TEMPLE_CD,
+		       ACCEPT_GBN,
+		       JUNGAK_CD,
+		       JUNGAK_NM,
+		       USE_YN,
+		       REMARK,
+		       CRT_USER,
+		       CRT_DATE,
+		       UPT_DATE,
+		       UPT_USER,
+		       REMOTE,
+		       JUNGAK_GBN
+		) VALUES (
+		       #{TEMPLE_CD},
+		       #{ACCEPT_GBN},
+		       #{JUNGAK_CD},
+		       #{JUNGAK_NM},
+		       #{USE_YN},
+		       #{REMARK},
+		       #{CRT_USER},
+		       sysdate,
+		       sysdate,
+		       #{UPT_USER},
+		       #{REMOTE},
+		       #{JUNGAK_GBN}
+		)
+	</insert>
+	
+	<update id="UPDATE_JUNGAK" parameterType="java.util.Map">
+		UPDATE ASP_JUNGAK_MGT 
+		   SET JUNGAK_NM  = #JUNGAK_NM#,
+		       USE_YN     = #USE_YN#,
+		       REMARK     = #REMARK#,
+		       UPT_DATE   = sysdate,
+		       UPT_USER   = #UPT_USER#,
+		       REMOTE     = #REMOTE#,
+		       JUNGAK_GBN = #JUNGAK_GBN#
+		WHERE TEMPLE_CD   = #TEMPLE_CD#
+		  AND ACCEPT_GBN  = #ACCEPT_GBN#
+		  AND JUNGAK_CD   = #JUNGAK_CD#
+	</update>
+	
+	<delete id="DELETE_JUNGAK" parameterType="java.util.Map">
+		DELETE FROM ASP_JUNGAK_MGT
+		WHERE TEMPLE_CD   = #TEMPLE_CD#
+		  AND ACCEPT_GBN  = #ACCEPT_GBN#
+		  AND JUNGAK_CD   = #JUNGAK_CD#
+	</delete>
+	
+	<select id="SELECT_FAMILYINFO" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT CAD.TEMPLE_CD       <!-- 사찰코드 -->
+		      ,CAD.BUD_NO          <!-- 개인번호 -->
+		      ,CAD.BUD_CODE        <!-- 가족코드 -->
+		      ,CAD.SORT_SEQ        <!-- 정렬순서 -->
+		      ,CAD.DAEJU_BUD_NO    <!-- 대주신도번호 -->
+		      ,CAD.REPRESEN_REL    <!-- 관계 -->
+		      ,CAD.NAME_KOR        <!-- 성명(한글) -->
+		      ,CAD.ADDR1           <!-- 주소1 -->
+		      ,CAD.ADDR2  || ' ' || FN_ADDR_BLDG2(CAD.BLDG_NUM) as ADDR2         <!-- 주소2 -->
+		      ,CAD.BIRTHDAY        <!-- 생년월일 -->
+		      ,(SELECT COUNT(1)
+		          FROM SIN_CARD_MASTER Y
+		         WHERE Y.TEMPLE_CD = CAD.TEMPLE_CD
+		           AND Y.DAEJU_BUD_NO = CAD.DAEJU_BUD_NO
+		           AND Y.DEL_YN = 'F'
+						   AND Y.BUD_NO  NOT IN (SELECT BUD_NO
+						                             FROM SIN_DEATH_INFO DEA
+						                            WHERE DEA.TEMPLE_CD  = Y.TEMPLE_CD
+						                              AND DEA.BUD_NO     = Y.BUD_NO)
+					 ) FAMILY_COUNT
+		      ,SUVILA.FN_TEMPLE_INFO(#{V_TEMPLE_CD},'PRINT_FORM_YN') PRINT_FORM_YN
+		      ,'../com/img/bg/report_chonhon_bg.gif' BACK_IMAGE
+		      ,REC.ACCEPT_SEQ
+		      ,CAD.ZIP_CD
+		  FROM SIN_CARD_MASTER CAD
+		      ,(
+		        SELECT A.ACCEPT_SEQ, B.DAEJU_BUD_NO
+		          FROM REC_MASTER A
+		              ,SIN_CARD_MASTER B
+		         WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+		         <choose>
+		         	<when test="V_ACCEPT_SEQ1 != '' and V_ACCEPT_SEQ1 != null">
+		         		AND A.ACCEPT_SEQ IN ( ${V_ACCEPT_SEQ1} )
+		         	</when>
+		         </choose>		            
+		           AND B.TEMPLE_CD = A.TEMPLE_CD
+		           AND B.BUD_NO    = A.PROPOSAL_BUD_NO
+		           <if test="V_ACCEPT_SEQ2 != '' and V_ACCEPT_SEQ2 != null">
+		           		UNION ALL 
+		           		SELECT A.ACCEPT_SEQ
+		           			  ,B.DAEJU_BUD_NO 
+		           		  FROM REC_MASTER A 
+		           		  	  ,SIN_CARD_MASTER B 
+		           		 WHERE A.TEMPLE_CD = #{V_TEMPLE_CD} 		           		   
+		           		   AND B.TEMPLE_CD = A.TEMPLE_CD 
+		           		   AND B.BUD_NO    = A.PROPOSAL_BUD_NO
+		           		   AND A.ACCEPT_SEQ IN  ( ${V_ACCEPT_SEQ2} )
+		           </if>
+		           <if test="V_ACCEPT_SEQ3 != '' and V_ACCEPT_SEQ3 != null">
+		           		UNION ALL 
+		           		SELECT A.ACCEPT_SEQ
+		           			  ,B.DAEJU_BUD_NO 
+		           		  FROM REC_MASTER A 
+		           		  	  ,SIN_CARD_MASTER B 
+		           		 WHERE A.TEMPLE_CD = #{V_TEMPLE_CD} 		           		   
+		           		   AND B.TEMPLE_CD = A.TEMPLE_CD 
+		           		   AND B.BUD_NO    = A.PROPOSAL_BUD_NO
+		           		   AND A.ACCEPT_SEQ IN  ( ${V_ACCEPT_SEQ3} )
+		           </if>
+		            <if test="V_ACCEPT_SEQ4 != '' and V_ACCEPT_SEQ4 != null">
+		           		UNION ALL 
+		           		SELECT A.ACCEPT_SEQ
+		           			  ,B.DAEJU_BUD_NO 
+		           		  FROM REC_MASTER A 
+		           		  	  ,SIN_CARD_MASTER B 
+		           		 WHERE A.TEMPLE_CD = #{V_TEMPLE_CD} 		           		   
+		           		   AND B.TEMPLE_CD = A.TEMPLE_CD 
+		           		   AND B.BUD_NO    = A.PROPOSAL_BUD_NO
+		           		   AND A.ACCEPT_SEQ IN  ( ${V_ACCEPT_SEQ4} )
+		           </if>
+		           <if test="V_ACCEPT_SEQ5 != '' and V_ACCEPT_SEQ5 != null">
+		           		UNION ALL 
+		           		SELECT A.ACCEPT_SEQ
+		           			  ,B.DAEJU_BUD_NO 
+		           		  FROM REC_MASTER A 
+		           		  	  ,SIN_CARD_MASTER B 
+		           		 WHERE A.TEMPLE_CD = #{V_TEMPLE_CD} 		           		   
+		           		   AND B.TEMPLE_CD = A.TEMPLE_CD 
+		           		   AND B.BUD_NO    = A.PROPOSAL_BUD_NO
+		           		   AND A.ACCEPT_SEQ IN  ( ${V_ACCEPT_SEQ5} )
+		           </if>
+		           <if test="V_ACCEPT_SEQ6 != '' and V_ACCEPT_SEQ6 != null">
+		           		UNION ALL 
+		           		SELECT A.ACCEPT_SEQ
+		           			  ,B.DAEJU_BUD_NO 
+		           		  FROM REC_MASTER A 
+		           		  	  ,SIN_CARD_MASTER B 
+		           		 WHERE A.TEMPLE_CD = #{V_TEMPLE_CD} 		           		   
+		           		   AND B.TEMPLE_CD = A.TEMPLE_CD 
+		           		   AND B.BUD_NO    = A.PROPOSAL_BUD_NO
+		           		   AND A.ACCEPT_SEQ IN  ( ${V_ACCEPT_SEQ6} )
+		           </if>
+		           <if test="V_ACCEPT_SEQ7 != '' and V_ACCEPT_SEQ7 != null">
+		           		UNION ALL 
+		           		SELECT A.ACCEPT_SEQ
+		           			  ,B.DAEJU_BUD_NO 
+		           		  FROM REC_MASTER A 
+		           		  	  ,SIN_CARD_MASTER B 
+		           		 WHERE A.TEMPLE_CD = #{V_TEMPLE_CD} 		           		   
+		           		   AND B.TEMPLE_CD = A.TEMPLE_CD 
+		           		   AND B.BUD_NO    = A.PROPOSAL_BUD_NO
+		           		   AND A.ACCEPT_SEQ IN  ( ${V_ACCEPT_SEQ7} )
+		           </if>
+		           <if test="V_ACCEPT_SEQ8 != '' and V_ACCEPT_SEQ8 != null">
+		           		UNION ALL 
+		           		SELECT A.ACCEPT_SEQ
+		           			  ,B.DAEJU_BUD_NO 
+		           		  FROM REC_MASTER A 
+		           		  	  ,SIN_CARD_MASTER B 
+		           		 WHERE A.TEMPLE_CD = #{V_TEMPLE_CD} 		           		   
+		           		   AND B.TEMPLE_CD = A.TEMPLE_CD 
+		           		   AND B.BUD_NO    = A.PROPOSAL_BUD_NO
+		           		   AND A.ACCEPT_SEQ IN  ( ${V_ACCEPT_SEQ8} )
+		           </if>
+		           <if test="V_ACCEPT_SEQ9 != '' and V_ACCEPT_SEQ9 != null">
+		           		UNION ALL 
+		           		SELECT A.ACCEPT_SEQ
+		           			  ,B.DAEJU_BUD_NO 
+		           		  FROM REC_MASTER A 
+		           		  	  ,SIN_CARD_MASTER B 
+		           		 WHERE A.TEMPLE_CD = #{V_TEMPLE_CD} 		           		   
+		           		   AND B.TEMPLE_CD = A.TEMPLE_CD 
+		           		   AND B.BUD_NO    = A.PROPOSAL_BUD_NO
+		           		   AND A.ACCEPT_SEQ IN  ( ${V_ACCEPT_SEQ9} )
+		           </if>
+		           <if test="V_ACCEPT_SEQ10 != '' and V_ACCEPT_SEQ10 != null">
+		           		UNION ALL 
+		           		SELECT A.ACCEPT_SEQ
+		           			  ,B.DAEJU_BUD_NO 
+		           		  FROM REC_MASTER A 
+		           		  	  ,SIN_CARD_MASTER B 
+		           		 WHERE A.TEMPLE_CD = #{V_TEMPLE_CD} 		           		   
+		           		   AND B.TEMPLE_CD = A.TEMPLE_CD 
+		           		   AND B.BUD_NO    = A.PROPOSAL_BUD_NO
+		           		   AND A.ACCEPT_SEQ IN  ( ${V_ACCEPT_SEQ10} )
+		           </if>					
+		       ) REC
+		 WHERE CAD.TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND CAD.DEL_YN     = 'F'
+		   AND CAD.BUD_NO  NOT IN (SELECT BUD_NO
+		                             FROM SIN_DEATH_INFO DEA
+		                            WHERE DEA.TEMPLE_CD  = CAD.TEMPLE_CD
+		                              AND DEA.BUD_NO     = CAD.BUD_NO)
+		   AND CAD.DAEJU_BUD_NO = REC.DAEJU_BUD_NO
+		 ORDER BY REC.DAEJU_BUD_NO
+		 	     ,REC.ACCEPT_SEQ
+		 	     ,CAD.SORT_SEQ
+	</select>
+	
+	<select id="SELECT_REC_PAYMENT_HIS" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+		      ,ACCEPT_SEQ
+		      ,SEQ
+		      ,SUB_DATE
+		      ,AMOUNT
+		      ,CRT_USER
+		      ,REMARK
+		  FROM REC_PAYMENT_HIS
+		 WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND ACCEPT_SEQ = #{V_SEARCH_ACCEPT_SEQ}
+		   AND SEQ 		  = #{V_SEARCH_SEQ}
+		 ORDER BY SUB_DATE
+	</select>
+	
+	<update id="UPDATE_YOUNGGA_SIN_CARD_MASTER" parameterType="java.util.Map">
+		UPDATE SIN_CARD_MASTER
+		   SET SEX_GBN   = #{YOUNGGA_GENDER}
+		      ,NAME_KOR  = #{YOUNGGA_BUD_NM}
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND BUD_NO    = #{YOUNGGA_BUD_NO}
+	</update>
+	
+	<update id="UPDATE_YOUNGGA_SIN_DEATH_BOKWI_INFO" parameterType="java.util.Map">
+		UPDATE SIN_DEATH_BOKWI_INFO
+		   SET DECE_REL      = #{YOUNGGA_REL}
+		      ,EQUAL_GBN     = #{YOUNGGA_EQUAL}
+		      ,SPIRITUAL_GBN = #{YOUNGGA_SPIRITUAL}
+		 WHERE BUD_NO      = #{BOKWIJA_NO}
+		   AND TEMPLE_CD   = #{V_TEMPLE_CD}
+		   AND DECE_BUD_NO = #{YOUNGGA_BUD_NO}
+	</update>
+	
+	<update id="UPDATE_YOUNGGA_SIN_DEATH_INFO" parameterType="java.util.Map">
+		UPDATE SIN_DEATH_INFO
+		   SET BON 		 = #{YOUNGGA_BON}
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND BUD_NO    = #{YOUNGGA_BUD_NO}
+	</update>
+	
+	<update id="UPDATE_LIGHT" parameterType="java.util.Map">
+		UPDATE REC_DEUNG_MGT
+		   SET UPT_USER         = #{V_USER_ID}
+		   	  ,UPT_DATE         = SYSDATE
+		   	  ,RESERVATION_YN   = 'F'
+		   	  ,RESERVATION_TIME = (SELECT TO_CHAR(CURRENT_TIMESTAMP,'YYYYMMDDHH24MISS') FROM DUAL)
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		   AND ACCEPT_GBN = '14'
+		   AND JUNGAK_CD  = TO_NUMBER(#{JUNGAK_CD})
+		   AND LIGHT_NO   = TO_NUMBER(#{LIGHT_NO})
+	</update>
+	
+	<select id="SELECT_YOUNGTOP_PRINT_YOUNGGA" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT A.TEMPLE_CD
+		      ,A.ACCEPT_SEQ
+		      ,A.SEQ
+		      ,A.BUD_NO
+		      ,A.ACCEPT_GBN
+		      ,A.JUNGAK_CD
+		      ,A.LIGHT_NO
+		      ,A.PAYMENT_PLAN_AMT
+		      ,A.PAYMENT_AMT
+		      ,A.ACCEPT_DT
+		      ,A.BULSA_DT
+		      ,A.BONGAN_DT
+		      ,A.REBONG_DT
+		      ,A.AGREE_SHEET_YN
+		      ,A.FAMILY_SHEET_YN
+		      ,A.HOJUK_SHEET_YN
+		      ,A.JUMIN_SHEET_YN
+		      ,A.JEJUK_SHEET_YN
+		      ,A.TOP_MNG_NM
+		      ,A.ACENST_YN
+		      ,A.NAMELESS_YN
+		      ,A.HYO_BON
+		      ,A.HYO_REL
+		      ,A.CLOSE_YN
+		      ,A.DEL_YN
+		      ,A.REMARK YOUNGTOP_MEMO
+		      ,(SELECT Z.JUNGAK_NM
+		          FROM ASP_JUNGAK_MGT Z
+		         WHERE Z.TEMPLE_CD  = A.TEMPLE_CD
+		           AND Z.ACCEPT_GBN = '14'
+		           AND Z.JUNGAK_CD = A.JUNGAK_CD
+		           AND ROWNUM = 1) JUNGAK_NM
+		      ,B.NAME_KOR
+		      ,B.JUMIN_NO 
+		      ,B.ZIP_CD
+		      ,B.ADDR1
+		      ,B.ADDR2 || ' ' || FN_ADDR_BLDG2(B.BLDG_NUM) as ADDR2
+		      ,FN_MERGE_TEL_NO(B.TELNO1,B.TELNO2,B.TELNO3) TEL_NO
+		      ,FN_MERGE_TEL_NO(B.MOBILE_TELNO1,B.MOBILE_TELNO2,B.MOBILE_TELNO3) MOBILE_TELNO
+		      ,B.SEX_GBN
+		      ,FN_SINDO_INFO('NAME_KOR',A.TEMPLE_CD,A.BUD_NO) BUD_NM
+		      ,FN_PAYMENT_AMT(A.TEMPLE_CD,A.ACCEPT_SEQ,A.SEQ) PAYMENT_AMT_RESULT
+		      ,A.PAYMENT_PLAN_AMT - FN_PAYMENT_AMT(A.TEMPLE_CD,A.ACCEPT_SEQ,A.SEQ) MISU_AMT_RESULT
+		      ,FN_CODE_NAME('REC','14') ACCEPT_NM
+		      ,C.PROPOSAL_BUD_NO
+		      ,FN_SINDO_INFO('NAME_KOR',A.TEMPLE_CD,C.PROPOSAL_BUD_NO) PROPOSAL_BUD_NM
+		      ,C.MEMO REC_MEMO
+		      ,(SELECT count(1) 
+		      	  FROM SIN_DEATH_BOKWI_INFO 
+		      	 WHERE temple_cd = #{V_TEMPLE_CD} 
+		      	   AND BUD_NO    = A.BUD_NO 
+		      	   AND DEL_YN    = 'F' ) BONGTOP_COUNT
+		      ,NVL(D.SORT_SEQ,0) BONGTOP_SEQ
+		      ,'' BONGTOP_DT
+		      ,'' BONGTOP_GBN
+		      ,D.DECE_BUD_NO YOUNGGA_BUD_NO
+		      ,D.DECE_REL YOUNGGA_REL
+		      ,SUVILA.FN_CODE_NAME('BON',E.BON) YOUNGGA_BON
+		      ,F.SEX_GBN YOUNGGA_GENDER
+		      ,D.EQUAL_GBN YOUNGGA_EQUAL
+		      ,FN_CODE_NAME('DEATH_EQUAL',D.EQUAL_GBN) YOUNGGA_EQUAL_NM
+		      ,D.SPIRITUAL_GBN YOUNGGA_SPIRITUAL
+		      ,FN_CODE_NAME('SPIRITUAL_GBN',D.SPIRITUAL_GBN) YOUNGGA_SPIRITUAL_NM
+		      ,DECODE(D.EQUAL_GBN,'2','동일') || FN_CODE_NAME('SPIRITUAL_GBN',D.SPIRITUAL_GBN) YOUNGGA_EQUAL_SPIRITUAL_NM
+		      ,F.NAME_KOR YOUNGGA_BUD_NM
+		      ,FN_CODE_NAME('DEATH_SEXGBN',F.SEX_GBN) YOUNGGA_GENDER_NM
+		      ,FN_CODE_NAME('SEXGBN',B.SEX_GBN) SEX_GBN_NM
+		      ,B.BUD_CODE
+		      ,FN_CODE_NAME('BON',A.HYO_BON) HYO_BON_NAME
+		      ,DECODE(A.HYO_BON,NULL,'',FN_CODE_REMARK('BON',A.HYO_BON)) HYO_LAST_NAME
+		      ,FN_CODE_NAME('BON',A.HYO_BON)||DECODE(A.HYO_BON,NULL,'',FN_CODE_REMARK('BON',A.HYO_BON)||'씨') HYO_FULL_NAME
+		      ,'' SUB_DATE
+		      ,0 AMOUNT
+		      ,SUVILA.FN_TEMPLE_INFO(A.TEMPLE_CD,'PRINT_FORM_YN') PRINT_FORM_YN
+		      ,DECODE(A.AGREE_SHEET_YN,'T','제출') AGREE_SHEET_YN_NM
+		      ,DECODE(A.FAMILY_SHEET_YN,'T','제출') FAMILY_SHEET_YN_NM
+		      ,DECODE(A.HOJUK_SHEET_YN,'T','제출') HOJUK_SHEET_YN_NM
+		      ,DECODE(A.JUMIN_SHEET_YN,'T','제출') JUMIN_SHEET_YN_NM
+		      ,DECODE(A.JEJUK_SHEET_YN,'T','제출') JEJUK_SHEET_YN_NM
+		      ,B.ADDR1||' '||B.ADDR2 ADDR
+		      ,'../com/img/bg/report_chonhon_bg.gif' BACK_IMAGE
+		      ,'default' BAND
+		      ,'T' CHECKED
+		      ,A.ACCEPT_SEQ||A.SEQ PAGESKIP
+		      ,D.DEATH_YN
+		  FROM REC_YOUNGTOP_DETAIL A
+		      ,SIN_CARD_MASTER B
+		      ,REC_MASTER C
+		      ,SIN_DEATH_BOKWI_INFO D
+		      ,SIN_DEATH_INFO E
+		      ,SIN_CARD_MASTER F
+		 WHERE A.TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND A.DEL_YN     = 'F'
+		   AND B.TEMPLE_CD  = #{V_TEMPLE_CD}		
+		   AND B.BUD_NO     = A.BUD_NO
+		   AND C.TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND C.ACCEPT_SEQ = A.ACCEPT_SEQ
+		   AND D.TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND D.BUD_NO     = B.BUD_NO
+		   AND D.DEL_YN     = 'F'
+		   AND E.TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND E.BUD_NO     = D.DECE_BUD_NO
+		   AND F.TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND F.BUD_NO     = E.BUD_NO
+		   AND F.DEL_YN      = 'F'
+		   <if test="V_PRINT_TYPE == 'CHONHON_YOUNGGA' or V_PRINT_TYPE == 'DEUNG'">
+		   	<if test="V_CHONHON_YOUNGGA_DETAIL != '' and V_CHONHON_YOUNGGA_DETAIL != null and V_CHONHON_YOUNGGA_DETAIL != 0">
+		   		AND D.DEATH_YN  =  #{V_CHONHON_YOUNGGA_DETAIL}
+		   </if></if>
+		   <if test="V_ACCEPT_SEQ1 != '' and V_ACCEPT_SEQ1 != null">
+		   	 	AND ( C.ACCEPT_SEQ IN (${V_ACCEPT_SEQ1})
+		   </if>
+		   <if test="V_ACCEPT_SEQ2 != '' and V_ACCEPT_SEQ2 != null">
+		   		  OR C.ACCEPT_SEQ IN (${V_ACCEPT_SEQ2})
+		   </if>
+		   <if test="V_ACCEPT_SEQ3 != '' and V_ACCEPT_SEQ3 != null">
+		   		  OR C.ACCEPT_SEQ IN (${V_ACCEPT_SEQ3})
+		   </if>
+		   <if test="V_ACCEPT_SEQ4 != '' and V_ACCEPT_SEQ4 != null">
+		   		  OR C.ACCEPT_SEQ IN (${V_ACCEPT_SEQ4})
+		   </if>
+		   <if test="V_ACCEPT_SEQ5 != '' and V_ACCEPT_SEQ5 != null">
+		   		  OR C.ACCEPT_SEQ IN (${V_ACCEPT_SEQ5})
+		   </if>
+		   <if test="V_ACCEPT_SEQ6 != '' and V_ACCEPT_SEQ6 != null">
+		   		  OR C.ACCEPT_SEQ IN (${V_ACCEPT_SEQ6})
+		   </if>
+		   <if test="V_ACCEPT_SEQ7 != '' and V_ACCEPT_SEQ7 != null">
+		   		  OR C.ACCEPT_SEQ IN (${V_ACCEPT_SEQ7})
+		   </if>
+		   <if test="V_ACCEPT_SEQ8 != '' and V_ACCEPT_SEQ8 != null">
+		   		  OR C.ACCEPT_SEQ IN (${V_ACCEPT_SEQ8})
+		   </if>
+		   <if test="V_ACCEPT_SEQ9 != '' and V_ACCEPT_SEQ9 != null">
+		   		  OR C.ACCEPT_SEQ IN (${V_ACCEPT_SEQ9})
+		   </if>		   
+		   <if test="V_ACCEPT_SEQ1 != '' and V_ACCEPT_SEQ1 != null">
+		   	)
+		   </if>
+		ORDER BY TEMPLE_CD DESC
+				,ACCEPT_SEQ DESC
+				,SEQ DESC
+				,D.DEATH_YN
+				,BONGTOP_SEQ
+				,SUB_DATE
+	</select>
+	
+</mapper>

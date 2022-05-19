@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SIN001p_08DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+		
+	<select id="SELECT_BUDNO" parameterType="kr.co.o2i.util.CommonMap" resultType="java.util.Map">
+		SELECT BUD_CODE
+  	      FROM (SELECT VTL.BUD_CODE, NVL(CAD.BUD_CODE,'NOT') AS USING_FLAG
+          		FROM (SELECT '01-' || LPAD(NUM,5,'0') AS BUD_CODE
+                  	    FROM (SELECT ROWNUM AS NUM
+                          	    FROM ASP_POST_MGT
+                         	    WHERE ROWNUM   &lt;= #{V_END_NO})
+                 	   WHERE NUM >= #{V_START_NO}) VTL,
+		               (SELECT DISTINCT SUBSTR(BUD_CODE,0,8) AS BUD_CODE
+		                  FROM SIN_CARD_MASTER
+		                 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		                ) CAD
+         		 WHERE VTL.BUD_CODE = CAD.BUD_CODE(+)
+         	    )
+ 		   WHERE USING_FLAG = 'NOT'
+		   ORDER BY BUD_CODE
+	</select>
+	
+	
+	<insert id="insertBudCodeChangeHis" parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO SIN_BUD_CODE_CHANGE_HIS (             											 
+			TEMPLE_CD			  ,BUD_CODE       	   ,SEQ_NO			 																		 
+		   ,BUD_CODE_BEFORE	  	  ,UPT_DATE       	   ,UPT_USER			 								 
+		   ,CRT_DATE	          ,CRT_USER			   ,REMOTE												 
+		 )VALUES(           																		 
+			#{V_TEMPLE_CD}		  ,#{V_BUD_CODE_AFTER} ,(SELECT NVL(MAX(SEQ_NO),0)+1 AS SEQ_NO FROM SIN_BUD_CODE_CHANGE_HIS WHERE TEMPLE_CD = #{V_TEMPLE_CD} AND BUD_CODE = #{V_BUD_CODE_AFTER})	 
+		   ,#{V_BUD_CODE_BEFORE}  ,SYSDATE       	   ,#{V_USER_ID}			 										 
+		   ,SYSDATE	          	  ,#{V_USER_ID}		   ,#{V_REMOTE}												 
+		)           																				
+	</insert>
+	
+	
+	<update id="updateRecMasterProposal1" parameterType="kr.co.o2i.util.CommonMap">
+		UPDATE REC_MASTER 
+		   SET PROPOSAL_BUD_NO = (SELECT BUD_NO 																			
+									FROM SIN_CARD_MASTER 																	
+								   WHERE TEMPLE_CD= #{V_TEMPLE_CD}
+								     AND BUD_NO LIKE #{V_SLAVE_BUD_CODE} || '%' 
+								     AND BUD_NO = DAEJU_BUD_NO )
+			  ,UPT_DATE        = SYSDATE
+			  ,UPT_USER 	   = #{V_USER_ID}
+			  ,REMOTE          = #{V_REMOTE}																						
+		 WHERE TEMPLE_CD       = #{V_TEMPLE_CD}																							
+		   AND PROPOSAL_BUD_NO LIKE #{V_SLAVE_BUD_CODE} || '%'																			
+		   AND PROPOSAL_BUD_NO NOT IN ( SELECT	BUD_NO 
+		   							 	  FROM SIN_CARD_MASTER 
+		     					         WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		     					           AND BUD_NO LIKE #{V_SLAVE_BUD_CODE} || '%'	
+										 MINUS																				
+										SELECT BUD_NO 
+										  FROM SIN_DEATH_INFO 
+										 WHERE TEMPLE_CD = #{V_TEMPLE_CD} )																					
+	</update>
+	
+	<update id="updateRecMasterProposal2" parameterType="kr.co.o2i.util.CommonMap">
+		UPDATE SIN_DONATION_BILL_YEAR 
+		   SET BUD_NO = ( SELECT BUD_NO 																					
+						    FROM SIN_CARD_MASTER 																			
+						   WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+						     AND BUD_NO LIKE #{V_SLAVE_BUD_CODE} || '%' 
+						     AND BUD_NO = DAEJU_BUD_NO )
+			  ,UPT_DATE = SYSDATE
+			  ,UPT_USER = #{V_USER_ID}
+			  ,REMOTE   = #{V_REMOTE}																							
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}																					
+		   AND BUD_NO LIKE #{V_SLAVE_BUD_CODE} || '%'																					
+		   AND BUD_NO NOT IN ( SELECT BUD_NO 
+		   						 FROM SIN_CARD_MASTER 
+		   						WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   						  AND BUD_NO LIKE #{V_SLAVE_BUD_CODE} || '%'		
+								MINUS																					
+							   SELECT BUD_NO 
+							     FROM SIN_DEATH_INFO 
+							    WHERE TEMPLE_CD = #{V_TEMPLE_CD} )																						
+	</update>
+	
+	<select id="SELECT_SAVE_BUDNO" parameterType="kr.co.o2i.util.CommonMap" resultType="java.util.Map">
+		SELECT TEMPLE_CD AS V_TEMPLE_CD
+			  ,BUD_NO AS V_BUD_NO, #{new_budCd} || SUBSTR(BUD_NO,9,5) AS NEW_BUD_NO 
+	      FROM SIN_CARD_MASTER 
+	     WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+	       AND BUD_NO LIKE #{old_budCd_substring} || '%'
+	</select>
+	
+	<select id="selectImage" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT PICTURE , to_char(length(picture)) as len  
+		  FROM SIN_CARD_MASTER                                       	
+		 WHERE TEMPLE_CD    = #{V_TEMPLE_CD}		
+		   AND BUD_NO 		= #{V_BUD_NO}     
+	</select>
+	
+	<insert id="insertSinCardMaster" parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO SIN_CARD_MASTER(                                                                                     
+		       TEMPLE_CD,     BUD_NO,        BUD_CODE,                                        
+		       SORT_SEQ,      DAEJU_BUD_NO,  REPRESEN_REL,                                    
+		       NAME_KOR,      NAME_HAN,      SACRED_KOR,      SACRED_HAN,     JUMIN_NO,       
+		       ZIP_CD,        ADDR1,         ADDR2,           TELNO1,         TELNO2,         
+		       TELNO3,        MOBILE_TELNO1, MOBILE_TELNO2,   MOBILE_TELNO3,  EMAIL,          
+		       LAST_SCHOLA,   INTEREST,      SKILL,           COMPANY_NAME,   COMPANY_POS,    
+		       COMPANY_TEL1,  COMPANY_TEL2,  COMPANY_TEL3,    ENTRANCE_CD,    NEWS_YN,        
+		       QUALIFICATION, SACHAL_NAME,   POST_TRANS,      EMAIL_TRANS,    SMS_TRANS,      
+		       MEMO,          SEXAGENARY,    LEAP_MONTH,      LUNAR_SOLAR,    BIRTHTIME,      
+		       ISSUE_DATE,    BIRTHDAY,      SEX_GBN,         PICTURE,        SINDO_GBN,      
+		       HWAJU_YN,      HWAJU_BUD_NO,  CARD_ISSUE_DATE, CARD_ISSUE_CNT, CRT_USER,       
+		       CRT_DATE,      UPT_USER,      UPT_DATE,        REMOTE,         DEL_YN          
+		)                                                                                     
+		SELECT                                                                                
+		       TEMPLE_CD, #{new_budCd} || SUBSTR(BUD_NO,9,5), #{new_budCd} || SUBSTR(BUD_CODE,9,2),
+		       SORT_SEQ, #{new_budCd} || SUBSTR(DAEJU_BUD_NO,9,5),  REPRESEN_REL,          
+		       NAME_KOR,      NAME_HAN,      SACRED_KOR,      SACRED_HAN,     JUMIN_NO,       
+		       ZIP_CD,        ADDR1,         ADDR2,           TELNO1,         TELNO2,         
+		       TELNO3,        MOBILE_TELNO1, MOBILE_TELNO2,   MOBILE_TELNO3,  EMAIL,          
+		       LAST_SCHOLA,   INTEREST,      SKILL,           COMPANY_NAME,   COMPANY_POS,    
+		       COMPANY_TEL1,  COMPANY_TEL2,  COMPANY_TEL3,    ENTRANCE_CD,    NEWS_YN,        
+		       QUALIFICATION, SACHAL_NAME,   POST_TRANS,      EMAIL_TRANS,    SMS_TRANS,      
+		       MEMO,          SEXAGENARY,    LEAP_MONTH,      LUNAR_SOLAR,    BIRTHTIME,      
+		       ISSUE_DATE,    BIRTHDAY,      SEX_GBN,         PICTURE,        SINDO_GBN,      
+		       HWAJU_YN,      HWAJU_BUD_NO,  CARD_ISSUE_DATE, CARD_ISSUE_CNT, CRT_USER,       
+		       CRT_DATE,      UPT_USER,      UPT_DATE,        REMOTE,         DEL_YN          
+		  FROM SIN_CARD_MASTER                                                                
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}                                                     
+		   AND BUD_NO    = #{old_budCd}                                                        
+	</insert>
+	
+	<update id="updatePicture" parameterType="java.util.Map">
+		UPDATE SIN_CARD_MASTER             
+		   SET PICTURE    = #{filebyte}
+		 WHERE TEMPLE_CD  = #{V_TEMPLE_CD} 
+		   AND BUD_NO     = #{V_BUD_NO}
+	</update>
+	
+	
+	<delete id="deleteSinCardMaster" parameterType="java.util.Map">
+		DELETE FROM SIN_CARD_MASTER       
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{V_BUD_NO}    
+	</delete>
+	
+</mapper>

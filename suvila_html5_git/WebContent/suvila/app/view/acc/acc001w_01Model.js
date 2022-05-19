@@ -1,0 +1,57 @@
+Ext.define('ExFrm.view.acc.acc001w_01Model', {
+    extend:'Ext.app.ViewModel', 
+    alias: 'viewmodel.acc001w_01', 
+    stores:{ 
+    	ds_main:{
+        	fields:['REMARK'],
+        	proxy:{
+                type:'ajax',
+                url:'/acc/ACC001W_01/select.suvila',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'
+                }
+            }
+            ,autoLoad:false
+        },
+        ds_iegbn:{
+        	fields:['CODE'],
+        	proxy:{
+                type:'ajax',
+                //url:'/asp/CodeSearch/ComCode.suvila?group_cd=IEGBN',
+                url:'/asp/CodeSearch/ComCode.suvila',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'
+                }
+            }
+            ,autoLoad:false
+        },
+        ds_templeUser:{
+        	fields:['CODE'],
+        	proxy:{
+                type:'ajax',
+                url:'/asp/CodeSearch/templeuser.suvila?SearchGbn=sel&use_yn=T',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'
+                }
+            }
+            ,autoLoad:true
+        },
+        ds_Change:{
+        	fields:['CODE'],
+        	proxy:{
+                type:'ajax',
+                url:'/acc/ACC001W_01/selectRemain.suvila',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'
+                }
+            }
+            ,autoLoad:false
+        },
+        
+        
+    }
+});

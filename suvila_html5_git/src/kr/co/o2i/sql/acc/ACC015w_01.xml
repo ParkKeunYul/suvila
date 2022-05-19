@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ACC015w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+<!--
+	<resultMap id="acc006w_01a" type="java.util.Map"> 
+		<result  property="CHECK_P" column="CHECK_P"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+	</resultMap>
+-->
+	<select id="SELECT_ACC" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT AMM.TEMPLE_CD
+		      ,AMM.ACT_DATE
+		      ,substr(AMM.ACT_DATE, 0 , 6) as ACT_MONTH
+		      ,AMM.ACT_YEAR
+		      ,AMM.ACT_YEAR||AMM.ACT_MONTH as ACT_MONTH
+		      ,1 ROW_CNT
+		      ,AMM.ACCT_GBN
+		      <!-- ,AMM.IE_GBN -->
+		      ,( CASE
+		      		WHEN AMM.IE_GBN = 'I' THEN '세입'
+		      		ELSE '세출'
+		      	 END ) IE_GBN
+		      ,AMM.KWAN
+		      ,AMM.HANG
+		      ,AMM.MOK
+		      ,AMM.ACCT_NM
+		      ,AMM.KWAN_NAME
+		      ,AMM.HANG_NAME
+		      ,AMM.MOK_NAME
+		      ,AMM.I_AMOUNT
+		      ,AMM.O_AMOUNT
+		      ,NVL(SUM(AMM.I_AMOUNT + O_AMOUNT) OVER (ORDER BY AMM.ACT_DATE,AMM.MOK RANGE UNBOUNDED PRECEDING),0) +
+		   	  (SELECT NVL(SUM(AMOUNT),0)
+		         FROM ACC_MONEY_MGT 
+		        WHERE TEMPLE_CD 	= AMM.TEMPLE_CD
+				  AND ACT_DATE     >= SUBSTR(#{V_SDATE},1,4) || '0101'
+		          AND ACT_DATE   &lt; #{V_SDATE} || '01'
+		          AND ACCT_GBN		= AMM.ACCT_GBN
+				  AND IE_GBN	    = AMM.IE_GBN
+				  AND KWAN			= AMM.KWAN
+				  AND HANG			= AMM.HANG
+				  <if test='V_MOK != 0  and V_MOK != "0" '>
+				  	AND MOK = AMM.MOK
+				  </if>
+		      )  AS TOTAL
+		FROM (  
+				SELECT AMM.TEMPLE_CD
+			          ,AMM.ACT_DATE
+			          ,SUBSTR(AMM.ACT_DATE,1,4) AS ACT_YEAR
+			          ,SUBSTR(AMM.ACT_DATE,5,2) AS ACT_MONTH
+			          ,AMM.ACCT_GBN
+			          ,AMM.IE_GBN
+			          ,AMM.KWAN
+			          ,AMM.HANG
+			          ,AMM.MOK
+			          ,AAC.ACCT_NM
+			          ,AAC.KWAN_NAME
+			          ,AAC.HANG_NAME
+			          ,AAC.MOK_NAME
+			          ,DECODE(AMM.IE_GBN,'I',SUM(AMM.AMOUNT),0) AS I_AMOUNT
+			          ,DECODE(AMM.IE_GBN,'O',SUM(AMM.AMOUNT),0) AS O_AMOUNT
+			     FROM ACC_MONEY_MGT  AMM
+			         ,ACC_ACCOUNTS	AAC
+			    WHERE 1=1
+			      AND AMM.TEMPLE_CD 	= AAC.TEMPLE_CD
+			      AND AMM.ACCT_GBN 		= AAC.ACCT_GBN
+			      AND AMM.IE_GBN		= AAC.IE_GBN
+			      AND AMM.KWAN			= AAC.KWAN
+			      AND AMM.HANG			= AAC.HANG
+			      AND AMM.MOK			= AAC.MOK
+			      AND AMM.TEMPLE_CD 	= #{V_TEMPLE_CD}
+			      AND AMM.ACCT_GBN		= #{V_ACCT_GBN}
+			      AND AMM.IE_GBN		= #{V_IE_GBN}
+			      AND AMM.ACT_DATE	BETWEEN #{V_SDATE} || '01' AND #{V_EDATE} || '31'
+			      <if test='V_KWAN != 0  and V_KWAN != "0" '>
+			      	AND AMM.KWAN = #{V_KWAN} 
+			      </if>
+			      <if test='V_HANG != 0  and V_HANG != "0" '>
+			      	AND AMM.HANG = #{V_HANG} 
+			      </if>
+			  	  <if test='V_MOK != 0  and V_MOK != "0" '>
+			      	AND AMM.MOK = #{V_MOK} 
+			      </if>
+			    GROUP BY AMM.TEMPLE_CD
+			            ,AMM.ACT_DATE
+			            ,SUBSTR(AMM.ACT_DATE,1,4)
+			            ,SUBSTR(AMM.ACT_DATE,5,2)
+			            ,AMM.ACCT_GBN
+			            ,AMM.IE_GBN
+			            ,AMM.KWAN
+			            ,AMM.HANG
+			            ,AMM.MOK
+			            ,AAC.ACCT_NM
+			            ,AAC.KWAN_NAME
+			            ,AAC.HANG_NAME
+			            ,AAC.MOK_NAME
+			) AMM
+		ORDER BY ACT_DATE
+		        ,MOK
+	</select>
+</mapper>

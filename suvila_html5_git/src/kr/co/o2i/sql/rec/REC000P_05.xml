@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC000p_05DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+	
+	
+	<select id="SELECT_REC_PAYMENT_HIS" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		  SELECT RPH.TEMPLE_CD
+		  		,RPH.ACCEPT_SEQ
+		  		,RPH.SEQ
+		  		,RPH.SUB_DATE
+		  		,SUBSTR(RPH.SUB_DATE,1,8) AS SUNAB_DATE
+		  		,RPH.AMOUNT
+		  		,RPH.REMARK
+		  		,RPH.APPROVAL_GBN
+		  		,RPH.AUTHCODE
+		  		,RPH.PGCODE
+		  		,APP.NAME AS APPROVAL_NM
+		  		,RS.ACCEPT_GBN
+		  		,ACC.NAME AS ACCPET_NM
+		  		,RM.PROPOSAL_BUD_NO
+		  		,ACCEPT_DATE
+		  		,SIN.NAME_KOR
+		  		,FN_GET_REC_MGT_NM (RPH.TEMPLE_CD, RPH.ACCEPT_SEQ, RPH.SEQ) AS REC_DETAIL_NM
+		  		,SIN.REPRESEN_REL
+		  		,DECODE(RPH.PAYMENT_YYYYMM,'0','','000000','',RPH.PAYMENT_YYYYMM) AS PAYMENT_YYYYMM
+			FROM REC_PAYMENT_HIS    RPH
+			    ,REC_SUB 	        RS
+			    ,REC_MASTER	        RM
+			    ,SIN_CARD_MASTER    SIN
+			    ,ASP_CODE_MGT       APP
+			    ,ASP_CODE_MGT       ACC
+			    ,ASP_TEMPLE_PG_INFO ATP
+		   WHERE RPH.TEMPLE_CD        = RS.TEMPLE_CD
+			 AND RPH.ACCEPT_SEQ       = RS.ACCEPT_SEQ
+			 AND RPH.SEQ              = RS.SEQ
+			 AND RS.TEMPLE_CD         = RM.TEMPLE_CD
+			 AND RS.ACCEPT_SEQ        = RM.ACCEPT_SEQ
+			 AND RM.TEMPLE_CD         = SIN.TEMPLE_CD(+)
+			 AND RM.PROPOSAL_BUD_NO   = SIN.BUD_NO(+)
+			 AND RPH.APPROVAL_GBN     = APP.CODE
+			 AND APP.GROUP_CD         = 'APPROV'
+			 AND RS.ACCEPT_GBN        = ACC.CODE
+			 AND ACC.GROUP_CD         = 'REC'
+			 AND RPH.TEMPLE_CD        = #{V_TEMPLE_CD}
+			 AND RPH.PAYMENT_STATE_CD = '0'
+			 AND RPH.AMOUNT          != '0'
+			 AND RPH.TEMPLE_CD        = ATP.TEMPLE_CD(+)
+			 AND RPH.PGCODE           = ATP.PGCODE(+)
+			 AND SUBSTR(RPH.SUB_DATE,1,8) BETWEEN #{V_SDATE} AND #{V_EDATE}
+			 AND RM.PROPOSAL_BUD_NO LIKE #{V_BUD_NO} || '%'
+			 <if test='V_APPROVAL_GBN != "" and V_APPROVAL_GBN != null '>
+			 	AND RPH.APPROVAL_GBN = #{V_APPROVAL_GBN}
+			 </if>
+			 <if test='V_ACCEPT_GBN != 0'>
+			 	AND RS.ACCEPT_GBN    = #{V_ACCEPT_GBN}
+			 </if>
+			ORDER BY SUBSTR(RPH.SUB_DATE,1,8) DESC
+			        ,RS.ACCEPT_GBN
+			        ,RPH.SUB_DATE
+	</select>
+	
+	
+</mapper>

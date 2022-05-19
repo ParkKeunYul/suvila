@@ -1,0 +1,615 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ASP001w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+
+	<!--  사찰계정 조회  -->
+	<select id="SELECT_ASP_TEMPLE_MASTER" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT
+		    TEMPLE_CD,
+			TEMPLE_CD		AS TEMPLE_CD_TEMP,	
+		    TEMPLE_NM,
+		 	SECT_CD,
+		    REG_NUMBER,
+		    REP_NAME,
+		    REP_JUMINNO,
+		    POSTNO,
+		    SOJE_ADDR1,
+		    SOJE_ADDR2,
+		    REP_POSTNO,
+		    DEPU_ADDR1,
+		    DEPU_ADDR2,
+		    SVC_DATE,
+		    ADMIN_ID,
+			ADMIN_ID 		AS ADMIN_ID_TEMP,
+		    PASSWD,
+		    EMAIL,
+		    MOBILE_TELNO1,
+		    MOBILE_TELNO2,
+		    MOBILE_TELNO3,
+		    TELNO1,
+		    TELNO2,
+		    TELNO3,
+		    SMS_YN,
+			USE_YN,
+			( CASE 
+				WHEN USE_YN = 'T' THEN '예'
+			    ELSE '아니오'
+			  END) AS USE_YN_NM,
+		    USER_LIMIT,
+		    ACT_LIMIT,
+		    REMARK,
+		    SDATE,
+		    JUMIN_NO,
+		    CRT_USER,
+		    TO_CHAR(CRT_DATE, 'YYYY-MM-DD') as CRT_DATE,
+		    UPT_DATE,
+		    UPT_USER,
+		    REMOTE,
+			DEATH_TYPE,
+			REC_RESULT_TYPE,
+			SEARCH_GBN,
+		    DEPU_BLDG_NUM,
+		    FN_ADDR_BLDG(DEPU_BLDG_NUM) DEPU_ADDR3,
+		    SOJE_BLDG_NUM,
+		    FN_ADDR_BLDG(SOJE_BLDG_NUM) SOJE_ADDR3,
+		    PRINT_AGE_YN,
+		    PRINT_YEONDEUNG_YN,
+		    PRINT_FORM_YN,
+		    SIN_SMS_YN,
+		    PRICE_CARD_TEMPLE,
+		    (SELECT count(TEMPLE_CD) FROM ASP_TEMPLE_MASTER_FILE WHERE TEMPLE_CD = T1.TEMPLE_CD AND DEL_YN = 'F' ) as FILE_CNT,
+		    'UPDATE' AS SQL_MODE 
+		FROM ASP_TEMPLE_MASTER T1
+		<if test='V_TEMPLE_NM != nul and  V_TEMPLE_NM != "" '>
+			WHERE TEMPLE_NM  like #{PARAM_TEMPLE_NM}  || '%'	
+		</if>
+		ORDER BY  TEMPLE_CD ASC
+	</select>
+	
+	
+	
+	<select id="ISEXIT_TEMPLEID" parameterType="kr.co.o2i.util.CommonMap" resultType="Integer" >
+		SELECT COUNT(*) AS CNT FROM ASP_TEMPLE_USER WHERE USER_ID = #{ADMIN_ID}
+	</select>
+	
+	
+	<select id="SELECT_NEW_TEMPLE_CD" parameterType="kr.co.o2i.util.CommonMap" resultType="String" >
+		SELECT LPAD(TO_NUMBER(max(TEMPLE_CD)) +1 , 6, '0') AS TEMPLE_CD FROM ASP_TEMPLE_MASTER	
+	</select>
+	
+	
+	
+	<insert id="INSERT_ASP_TEMPLE_MASTER"   parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO ASP_TEMPLE_MASTER (
+		   TEMPLE_CD,
+		   TEMPLE_NM,
+		   SECT_CD,
+		   REG_NUMBER,
+		   REP_NAME,
+		   REP_JUMINNO,
+		   POSTNO,
+		   SOJE_ADDR1,
+		   SOJE_ADDR2,
+		   REP_POSTNO,
+		   DEPU_ADDR1,
+		   DEPU_ADDR2,
+		   SVC_DATE,
+		   ADMIN_ID,
+		   PASSWD,
+		   EMAIL,
+		   MOBILE_TELNO1,
+		   MOBILE_TELNO2,
+		   MOBILE_TELNO3,
+		   TELNO1,
+		   TELNO2,
+		   TELNO3,
+		   SMS_YN,
+		   USE_YN,
+		   USER_LIMIT,
+		   ACT_LIMIT,
+		   REMARK,
+		   SDATE,
+		   JUMIN_NO,
+		   CRT_USER,
+		   CRT_DATE,
+		   UPT_DATE,
+		   UPT_USER,
+		   REMOTE,
+		   DEATH_TYPE,
+		   REC_RESULT_TYPE,
+		   SEARCH_GBN,
+		   DEPU_BLDG_NUM,
+		   SOJE_BLDG_NUM,
+		   PRINT_AGE_YN,
+		   PRINT_YEONDEUNG_YN,
+		   PRINT_FORM_YN,
+		   SIN_SMS_YN,
+		   PRICE_CARD_TEMPLE
+		 )VALUES(
+		   #{TEMPLE_CD},
+		   #{TEMPLE_NM        ,jdbcType=VARCHAR},
+		   #{SECT_CD          ,jdbcType=VARCHAR},
+		   #{REG_NUMBER       ,jdbcType=VARCHAR},
+		   #{REP_NAME         ,jdbcType=VARCHAR},
+		   #{REP_JUMINNO      ,jdbcType=VARCHAR},     
+		   #{POSTNO           ,jdbcType=VARCHAR},
+		   #{SOJE_ADDR1       ,jdbcType=VARCHAR},
+		   #{SOJE_ADDR2       ,jdbcType=VARCHAR},
+		   #{REP_POSTNO       ,jdbcType=VARCHAR},
+		   #{DEPU_ADDR1       ,jdbcType=VARCHAR},
+		   #{DEPU_ADDR2       ,jdbcType=VARCHAR},
+		   #{SVC_DATE         ,jdbcType=VARCHAR},
+		   #{ADMIN_ID         ,jdbcType=VARCHAR},
+		   #{PASSWD           ,jdbcType=VARCHAR},
+		   #{EMAIL            ,jdbcType=VARCHAR},
+		   #{MOBILE_TELNO1    ,jdbcType=VARCHAR},
+		   #{MOBILE_TELNO2    ,jdbcType=VARCHAR},
+		   #{MOBILE_TELNO3    ,jdbcType=VARCHAR},
+		   #{TELNO1           ,jdbcType=VARCHAR},
+		   #{TELNO2           ,jdbcType=VARCHAR},
+		   #{TELNO3           ,jdbcType=VARCHAR},
+		   #{SMS_YN           ,jdbcType=VARCHAR},
+		   #{USE_YN           ,jdbcType=VARCHAR},	
+		   #{USER_LIMIT       ,jdbcType=VARCHAR},
+		   #{ACT_LIMIT        ,jdbcType=VARCHAR},
+		   #{REMARK           ,jdbcType=VARCHAR},
+		   #{SDATE            ,jdbcType=VARCHAR},
+		   #{JUMIN_NO         ,jdbcType=VARCHAR},
+		   #{CRT_USER         ,jdbcType=VARCHAR},
+		   SYSDATE,
+		   SYSDATE,
+		   #{UPT_USER          ,jdbcType=VARCHAR},
+		   #{V_REMOTE          ,jdbcType=VARCHAR},
+		   #{DEATH_TYPE        ,jdbcType=VARCHAR},
+		   #{REC_RESULT_TYPE   ,jdbcType=VARCHAR},
+		   #{SEARCH_GBN        ,jdbcType=VARCHAR},
+		   #{DEPU_BLDG_NUM     ,jdbcType=VARCHAR},
+		   #{SOJE_BLDG_NUM     ,jdbcType=VARCHAR},
+		   #{PRINT_AGE_YN      ,jdbcType=VARCHAR},
+		   #{PRINT_YEONDEUNG_YN,jdbcType=VARCHAR},
+		   #{PRINT_FORM_YN     ,jdbcType=VARCHAR},
+		   #{SIN_SMS_YN        ,jdbcType=VARCHAR},
+	       #{PRICE_CARD_TEMPLE ,jdbcType=VARCHAR}
+		)
+	</insert>
+	<!-- 111!-->
+	<insert id="ASP_TEMPLE_USER_INSERT"   parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO ASP_TEMPLE_USER (
+		        USER_ID				<!--사용자ID-->
+		       ,PASSWD				<!--비밀번호-->
+			   ,TEMPLE_CD			<!--사찰코드-->
+			   ,USER_NM				<!--사용자명-->
+		       ,JUMIN_NO			<!--주민등록번호-->
+		       ,EMP_GBN				<!--직원구분-->
+			   ,AUTH_GROUP			<!--권한그룹-->
+		       ,ZIP_CD				<!--우편번호-->
+		       ,ADDR1				<!--주소1-->
+		       ,ADDR2				<!--주소2-->
+		       ,MOBILE_TELNO1		<!--휴대전화1-->
+		       ,MOBILE_TELNO2		<!--휴대전화2-->
+		       ,MOBILE_TELNO3		<!--휴대전화3-->
+		       ,TELNO1				<!--전화번호1-->
+		       ,TELNO2				<!--전화번호2-->
+		       ,TELNO3				<!--전화번호3-->
+		       ,USE_YN				<!--사용유무-->
+		       ,CRT_USER			<!--등록자-->
+		       ,CRT_DATE			<!--등록일-->
+		       ,UPT_USER			<!--수정자-->
+		       ,UPT_DATE			<!--수정일-->
+		       ,REMOTE				<!--IP-->
+		) VALUES (
+		        #{ADMIN_ID 		,jdbcType=VARCHAR}			
+		       ,#{PASSWD 		,jdbcType=VARCHAR}			
+			   ,#{TEMPLE_CD 	,jdbcType=VARCHAR}		
+			   ,#{REP_NAME 		,jdbcType=VARCHAR}		
+		       ,#{REP_JUMINNO 	,jdbcType=VARCHAR}	    
+		       ,'T'					
+			   ,'6S'				
+		       ,#{POSTNO 		,jdbcType=VARCHAR}			
+		       ,#{SOJE_ADDR1 	,jdbcType=VARCHAR}		
+		       ,#{SOJE_ADDR2 	,jdbcType=VARCHAR}		
+		       ,#{MOBILE_TELNO1 ,jdbcType=VARCHAR}		
+		       ,#{MOBILE_TELNO2 ,jdbcType=VARCHAR}		
+		       ,#{MOBILE_TELNO3 ,jdbcType=VARCHAR}			
+		       ,#{TELNO1 		,jdbcType=VARCHAR}			
+		       ,#{TELNO2 		,jdbcType=VARCHAR}			
+		       ,#{TELNO3 		,jdbcType=VARCHAR}			
+		       ,'T'					
+		       ,#{CRT_USER 		,jdbcType=VARCHAR}			
+		       ,sysdate				
+		       ,#{UPT_USER 		,jdbcType=VARCHAR}			
+		       ,sysdate				
+		       ,#{V_REMOTE 		,jdbcType=VARCHAR}			
+		)
+	</insert>
+	
+	<insert id="ASP_TEMPLE_MENU_INSERT"   parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO ASP_TEMPLE_MENU (
+			TEMPLE_CD, 
+			PGM_ID, 
+			CRT_USER, 
+			CRT_DATE, 
+			UPT_DATE, 
+			UPT_USER, 
+			REMOTE
+		)(
+		  SELECT   #{TEMPLE_CD ,jdbcType=VARCHAR}
+			      ,A.PGM_ID
+			      ,#{CRT_USER  ,jdbcType=VARCHAR}
+			      ,sysdate
+			      ,sysdate
+				  ,#{UPT_USER  ,jdbcType=VARCHAR}
+			      ,#{V_REMOTE  ,jdbcType=VARCHAR}
+			FROM  ASP_MENU  A
+			WHERE A.USE_YN    = 'Y'
+			AND A.PGM_ID NOT IN (SELECT PGM_ID FROM ASP_MENU WHERE PGM_ID LIKE 'asp%')
+		)
+	</insert>
+	
+	
+	<insert id="ASP_AUTH_MENU_INSERT"   parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO ASP_AUTH_MENU(
+		    TEMPLE_CD
+		   ,AUTH_GROUP
+		   ,PGM_ID
+		   ,CRT_USER
+		   ,CRT_DATE
+		   ,UPT_USER
+		   ,UPT_DATE
+		   ,REMOTE
+		)( SELECT  #{TEMPLE_CD  ,jdbcType=VARCHAR},
+				   A.AUTH_GROUP,
+			       A.PGM_ID,
+			       #{CRT_USER   ,jdbcType=VARCHAR},
+			       sysdate,
+			       #{UPT_USER   ,jdbcType=VARCHAR},
+			       sysdate,
+			       #{REMOTE     ,jdbcType=VARCHAR}
+			  FROM ASP_AUTH_MENU A,
+			       ASP_MENU      B
+			 WHERE A.PGM_ID    = B.PGM_ID
+			   AND A.TEMPLE_CD = trim('000000')
+			   AND A.PGM_ID NOT IN (SELECT DISTINCT PGM_ID FROM ASP_MENU WHERE PGM_ID LIKE 'asp%')
+			   AND B.USE_YN     = 'Y'
+			   AND A.AUTH_GROUP = '6S'
+		)
+	</insert>
+	
+	
+	<insert id="ASP_PERSON_MENU_INSERT"   parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO ASP_PERSON_MENU
+		(
+		    TEMPLE_CD		
+		   ,PGM_ID			
+		   ,USER_ID			
+		   ,AUTH_GRADE		
+		   ,CRT_USER		
+		   ,CRT_DATE		
+		   ,UPT_USER		
+		   ,UPT_DATE		
+		   ,REMOTE			
+		)( SELECT #{TEMPLE_CD ,jdbcType=VARCHAR}
+				,PGM_ID
+				,#{ADMIN_ID   ,jdbcType=VARCHAR}
+				,'S'
+				,#{CRT_USER   ,jdbcType=VARCHAR}
+				,sysdate
+				,#{UPT_USER   ,jdbcType=VARCHAR}
+				,sysdate
+				,#{V_REMOTE   ,jdbcType=VARCHAR}
+		  FROM ASP_AUTH_MENU
+		  WHERE TEMPLE_CD = #{TEMPLE_CD ,jdbcType=VARCHAR}
+		  AND AUTH_GROUP = '6S'
+		)
+	</insert>
+	
+	<insert id="ACC_ACCOUNTS"   parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO ACC_ACCOUNTS
+		(
+		   TEMPLE_CD
+		   ,KWAN
+		   ,HANG
+		   ,MOK
+		   ,KWAN_NAME
+		   ,HANG_NAME
+		   ,MOK_NAME
+		   ,ACCT_GBN
+		   ,REMARK
+		   ,IE_GBN
+		   ,ETC1
+		   ,ETC2
+		   ,ETC3
+		   ,UPT_USER
+		   ,UPT_DATE
+		   ,REMOTE
+		   ,ACCT_NM
+		)(
+		  SELECT  #{TEMPLE_CD ,jdbcType=VARCHAR}
+			     ,KWAN
+			     ,HANG
+			     ,MOK
+			     ,KWAN_NAME
+			     ,HANG_NAME
+			     ,MOK_NAME
+			     ,ACCT_GBN
+			     ,REMARK
+			     ,IE_GBN
+			     ,ETC1
+			     ,null
+			     ,null
+			     ,#{CRT_USER  ,jdbcType=VARCHAR}
+			     ,sysdate
+			     ,#{V_REMOTE  ,jdbcType=VARCHAR}
+			     ,ACCT_NM	     
+		FROM  ACC_ACCOUNTS
+		WHERE TEMPLE_CD	= trim('000000')
+		AND ACCT_GBN != '5'
+	   )
+	</insert>
+	
+	<insert id="ASP_TEMPLE_DONATION_PRINT_MGT"   parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO ASP_TEMPLE_DONATION_PRINT_MGT
+		(
+			 TEMPLE_CD
+			,ACCEPT_GBN
+			,DONATION_NM
+			,REMARK
+			,CRT_DATE
+			,CRT_USER
+			,UPT_DATE
+			,UPT_USER
+			,REMOTE
+		)(
+			SELECT #{TEMPLE_CD ,jdbcType=VARCHAR} AS TEMPLE_CD
+				  ,ACM.CODE
+				  ,DPM.DONATION_NM
+				  ,DPM.REMARK
+				  ,SYSDATE
+				  ,#{CRT_USER  ,jdbcType=VARCHAR}
+				  ,SYSDATE
+				  ,#{CRT_USER  ,jdbcType=VARCHAR}
+				  ,#{V_REMOTE  ,jdbcType=VARCHAR}
+			 FROM ASP_TEMPLE_DONATION_PRINT_MGT DPM
+			     ,ASP_CODE_MGT ACM
+			WHERE DPM.TEMPLE_CD(+) = '000000'
+			  AND ACM.GROUP_CD = 'REC'
+			  AND ACM.CODE != '-1'
+			  AND ACM.USE_YN = 'Y'
+			  AND ACM.CODE = DPM.ACCEPT_GBN(+)
+		)
+	</insert>
+	
+	<insert id="ASP_TEMPLE_APPROVAL_MGT"   parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO ASP_TEMPLE_APPROVAL_MGT
+		(
+			TEMPLE_CD, SORT_SEQ, APPROVAL_TITLE
+		)(
+		  SELECT  
+		     #{TEMPLE_CD ,jdbcType=VARCHAR}
+			,SORT_SEQ
+			,APPROVAL_TITLE
+		FROM  ASP_TEMPLE_APPROVAL_MGT
+		WHERE TEMPLE_CD	= trim('000000')
+		)
+	</insert>
+	
+	
+	<insert id="ASP_TEMPLE_EVENT_ALARM_MGT"   parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO ASP_TEMPLE_EVENT_ALARM_MGT
+		(TEMPLE_CD, 
+		 GROUP_CD, 
+		 CODE, 
+		 ALARM_DAY, 
+		 ALARM_TIME, 
+		 USE_YN, 
+		 CRT_USER, 
+		 CRT_DATE, 
+		 UPT_DATE, 
+		 UPT_USER, 
+		 REMOTE
+		 )(
+			SELECT 
+				#{TEMPLE_CD  ,jdbcType=VARCHAR}, 
+				GROUP_CD, 
+				CODE, 
+				ALARM_DAY, 
+				ALARM_TIME, 
+				USE_YN, 
+				#{CRT_USER   ,jdbcType=VARCHAR}, 
+				SYSDATE, 
+				SYSDATE, 
+				#{CRT_USER   ,jdbcType=VARCHAR}, 
+				#{V_REMOTE   ,jdbcType=VARCHAR}
+			FROM ASP_TEMPLE_EVENT_ALARM_MGT
+			WHERE TEMPLE_CD = trim('000000')
+			AND USE_YN = 'T'
+		)
+	</insert>
+	
+	<insert id="ASP_TEMPLE_EVENT_ALARM_DOC"   parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO ASP_TEMPLE_EVENT_ALARM_DOC
+		(
+			TEMPLE_CD, 
+			SEQ_NO, 
+			CONTENTS, 
+			REMARK, 
+			CRT_USER, 
+			CHECK_YN, 
+			UPT_USER, 
+			REMOTE, 
+			GROUP_CD, 
+			CRT_DATE, 
+			CODE, 
+			UPT_DATE
+		)(
+			SELECT
+				#{TEMPLE_CD  ,jdbcType=VARCHAR}, 
+				SEQ_NO, 
+				CONTENTS, 
+				REMARK, 
+				#{CRT_USER   ,jdbcType=VARCHAR}, 
+				CHECK_YN, 
+				#{CRT_USER   ,jdbcType=VARCHAR}, 
+				#{REMOTE     ,jdbcType=VARCHAR}, 
+				GROUP_CD, 
+				SYSDATE, 
+				CODE, 
+				SYSDATE 
+			FROM ASP_TEMPLE_EVENT_ALARM_DOC
+			WHERE TEMPLE_CD = trim('000000')
+		    AND CHECK_YN = 'T'
+		)
+	</insert>
+	
+	
+	<update id="UPDATE_ASP_TEMPLE_MASTER" parameterType="kr.co.o2i.util.CommonMap">
+		 UPDATE ASP_TEMPLE_MASTER 
+		    SET TEMPLE_NM     	   = #{TEMPLE_NM 	  	  ,jdbcType=VARCHAR},
+	   		    SECT_CD		 	   = #{SECT_CD 	  	  	  ,jdbcType=VARCHAR},
+		  	    REG_NUMBER    	   = #{REG_NUMBER 	  	  ,jdbcType=VARCHAR},
+			    REP_NAME      	   = #{REP_NAME 	  	  ,jdbcType=VARCHAR},
+			    REP_JUMINNO   	   = #{REP_JUMINNO 	  	  ,jdbcType=VARCHAR},
+			    POSTNO        	   = #{POSTNO 	  	  	  ,jdbcType=VARCHAR},
+			    SOJE_ADDR1    	   = #{SOJE_ADDR1 	  	  ,jdbcType=VARCHAR},
+			    SOJE_ADDR2    	   = #{SOJE_ADDR2 	  	  ,jdbcType=VARCHAR},
+			    REP_POSTNO    	   = #{REP_POSTNO 	  	  ,jdbcType=VARCHAR},
+			    DEPU_ADDR1    	   = #{DEPU_ADDR1 	  	  ,jdbcType=VARCHAR},
+			    DEPU_ADDR2    	   = #{DEPU_ADDR2 	  	  ,jdbcType=VARCHAR},
+			    SVC_DATE      	   = #{SVC_DATE 	  	  ,jdbcType=VARCHAR},
+			    ADMIN_ID      	   = #{ADMIN_ID 	  	  ,jdbcType=VARCHAR},
+			    PASSWD        	   = #{PASSWD 	  	  	  ,jdbcType=VARCHAR},
+			    EMAIL         	   = #{EMAIL 	  	  	  ,jdbcType=VARCHAR},
+			    MOBILE_TELNO1 	   = #{MOBILE_TELNO1 	  ,jdbcType=VARCHAR},
+			    MOBILE_TELNO2 	   = #{MOBILE_TELNO2 	  ,jdbcType=VARCHAR},
+			    MOBILE_TELNO3 	   = #{MOBILE_TELNO3 	  ,jdbcType=VARCHAR},
+			    TELNO1        	   = #{TELNO1 	  	  	  ,jdbcType=VARCHAR},
+			    TELNO2        	   = #{TELNO2 	  	  	  ,jdbcType=VARCHAR},
+			    TELNO3        	   = #{TELNO3 	  	  	  ,jdbcType=VARCHAR},
+			    SMS_YN        	   = #{SMS_YN 	  	  	  ,jdbcType=VARCHAR},
+				USE_YN        	   = #{USE_YN 	  	  	  ,jdbcType=VARCHAR},
+			    USER_LIMIT    	   = #{USER_LIMIT 	  	  ,jdbcType=VARCHAR},
+			    ACT_LIMIT     	   = #{ACT_LIMIT	      ,jdbcType=VARCHAR},
+			    REMARK        	   = #{REMARK 	   	  	  ,jdbcType=VARCHAR},
+			    SDATE         	   = #{SDATE 			  ,jdbcType=VARCHAR},
+			    JUMIN_NO      	   = #{JUMIN_NO 		  ,jdbcType=VARCHAR},
+			    UPT_DATE      	   = SYSDATE,
+			    UPT_USER           = #{UPT_USER 		  ,jdbcType=VARCHAR},
+			    REMOTE             = #{V_REMOTE 		  ,jdbcType=VARCHAR},
+				DEATH_TYPE		   = #{DEATH_TYPE 		  ,jdbcType=VARCHAR},
+				REC_RESULT_TYPE	   = #{REC_RESULT_TYPE 	  ,jdbcType=VARCHAR},
+				SEARCH_GBN		   = #{SEARCH_GBN 		  ,jdbcType=VARCHAR},
+				DEPU_BLDG_NUM      = #{DEPU_BLDG_NUM 	  ,jdbcType=VARCHAR},
+				SOJE_BLDG_NUM      = #{SOJE_BLDG_NUM 	  ,jdbcType=VARCHAR},
+				PRINT_AGE_YN       = #{PRINT_AGE_YN 	  ,jdbcType=VARCHAR},
+				PRINT_YEONDEUNG_YN = #{PRINT_YEONDEUNG_YN ,jdbcType=VARCHAR},
+				PRINT_FORM_YN      = #{PRINT_FORM_YN 	  ,jdbcType=VARCHAR},
+				SIN_SMS_YN         = #{SIN_SMS_YN 		  ,jdbcType=VARCHAR},
+				PRICE_CARD_TEMPLE  = #{PRICE_CARD_TEMPLE  ,jdbcType=VARCHAR}
+		  WHERE TEMPLE_CD          = #{TEMPLE_CD 		  ,jdbcType=VARCHAR}
+	</update>
+	
+	<select  id="INSERT_ASP_TEMPLE_FILE" parameterType="kr.co.o2i.util.CommonMap" >
+		INSERT INTO ASP_TEMPLE_MASTER_FILE(
+			 SEQ 
+			,TEMPLE_CD 
+			,FILE_NAME 
+			,FILE_SIZE 
+			,ATTACH_FILE 
+			,CRT_USER 
+			,CRT_DATE 
+			,REMOTE 
+			,DEL_YN)
+		VALUES(
+			(SELECT NVL(MAX(SEQ),1)+1 FROM ASP_TEMPLE_MASTER_FILE) 
+			,#{TEMPLE_CD}
+			,#{FILE_NAME}
+			,#{FILE_SIZE}
+			,#{V_ATTACH_FILE}
+			,#{CRT_USER}
+			,sysdate
+			,#{V_REMOTE}
+			,'F'
+		)
+	</select>
+	
+	<select  id="ASP_TEMPLE_FILE_CNT" parameterType="kr.co.o2i.util.CommonMap" resultType="Integer">
+		SELECT count(TEMPLE_CD) as CNT
+		  FROM ASP_TEMPLE_MASTER_FILE
+		 WHERE TEMPLE_CD = #{V_FILE_TEMPLE_CD}  
+		   AND DEL_YN = 'F'	
+	</select>
+	
+	<update id="DELETE_ASP_TEMPLE_FILE" parameterType="kr.co.o2i.util.CommonMap">
+		UPDATE ASP_TEMPLE_MASTER_FILE
+	       SET DEL_YN     = 'T'
+	          ,UPT_USER    = #{UPT_USER,jdbcType=VARCHAR}
+	          ,UPT_DATE    = sysdate
+	          ,REMOTE      = #{V_REMOTE,jdbcType=VARCHAR}
+	          ,ATTACH_FILE = ''
+	     WHERE TEMPLE_CD = #{V_FILE_TEMPLE_CD,jdbcType=VARCHAR}
+	</update>
+	
+	<select id="SELECT_ASP_TEMPLE_MASTER_FILE" parameterType="String" resultMap="boardMap" >
+		SELECT  																				
+		    SEQ,  																			
+			TEMPLE_CD,	  															
+		    FILE_NAME,  																
+		 	FILE_SIZE,   																
+		    ATTACH_FILE,	<!--  blob -->														
+		    CRT_USER,   																
+		    CRT_DATE,   																
+		    UPT_USER,   												 	 			
+		    UPT_DATE,   												 		 		
+		    REMOTE   												 		 			
+		 FROM ASP_TEMPLE_MASTER_FILE   									
+		WHERE TEMPLE_CD = ${V_FILE_TEMPLE_CD}  
+		  AND DEL_YN    = 'F'  												 		
+		  AND ROWNUM    = 1  												 		 	
+		ORDER by SEQ   desc																
+	</select>
+	
+	
+	<select id="SELECT_ASP_TEMPLE_APPROVAL_MGT" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT
+		       TEMPLE_CD,
+		       SORT_SEQ,
+		       APPROVAL_TITLE
+		 FROM ASP_TEMPLE_APPROVAL_MGT
+		WHERE TEMPLE_CD = #{V_NEW_TEMPLE_CD}
+	</select>
+	
+	<insert id="INSERT_ASP_TEMPLE_APPROVAL_MGT" parameterType="java.util.Map">
+		INSERT INTO ASP_TEMPLE_APPROVAL_MGT (
+		       TEMPLE_CD,
+		       SORT_SEQ,
+		       APPROVAL_TITLE
+		) VALUES (
+		       #{TEMPLE_CD},
+		       #{SORT_SEQ},
+		       #{APPROVAL_TITLE}
+		)
+	</insert>
+	<update id="UPDATE_ASP_TEMPLE_APPROVAL_MGT" parameterType="java.util.Map">
+		UPDATE ASP_TEMPLE_APPROVAL_MGT 
+		   SET APPROVAL_TITLE = #{APPROVAL_TITLE}
+		 WHERE TEMPLE_CD      = #{TEMPLE_CD}
+	       AND SORT_SEQ       = #{SORT_SEQ}
+	</update>
+	
+	<delete id="DELETE_ASP_TEMPLE_APPROVAL_MGT"  parameterType="kr.co.o2i.util.CommonMap">
+		DELETE FROM ASP_TEMPLE_APPROVAL_MGT
+		 WHERE TEMPLE_CD      = #{V_TEMPLE_CD}
+  		   AND SORT_SEQ       = #{V_SORT_SEQ}
+  		   AND APPROVAL_TITLE = #{V_APPROVAL_TITLE}
+	</delete>
+	
+
+
+
+</mapper>

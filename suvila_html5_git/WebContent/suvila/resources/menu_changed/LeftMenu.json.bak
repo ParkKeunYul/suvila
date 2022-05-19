@@ -1,0 +1,26 @@
+{
+    children:[
+    {
+        name:"사용자",
+        url:"",
+        leaf: false,
+        children:[
+        {
+        	name:'테스트1',
+        	url:'ExtIde.view.test.Test1',
+        	path:'test\\Test1',
+        	leaf:true
+        },
+        {
+        	name:'사용자목록',
+        	url:'ExtIde.view.user.UserShowList',
+        	path:'user\\UserShowList',
+        	leaf:true
+        },{
+        	name:'드래그앤등롭',
+        	url:'ExtIde.view.user.DragAndDrop',
+        	path:'user\\DragAndDrop',
+        	leaf:true
+        }]
+    }]      
+}

@@ -1,0 +1,124 @@
+Ext.define('ExFrm.view.rec.rec015w_01Model', {
+    extend:'Ext.app.ViewModel', 
+    alias: 'viewmodel.rec015w_01', 
+    stores:{
+    	ds_year :{
+         	fields:['field1'],
+         	proxy:{
+                 type:'ajax',
+                 url:'/rec/REC015W_01/Year.suvila?',
+                 reader:{
+                     type:'json',
+                     rootProperty:'data.list'                    
+                 }
+             },
+             autoLoad:false
+        },
+        ds_temple_info :{
+         	fields:['field1'],
+         	proxy:{
+                 type:'ajax',
+                 url:'/rec/REC015W_01/TempleInfo.suvila?',
+                 reader:{
+                     type:'json',
+                     rootProperty:'data.list'                    
+                 }
+             },
+             autoLoad:false
+        },
+        ds_img :{
+         	fields:['field1'],
+         	proxy:{
+                 type:'ajax',
+                 url:'/rec/REC015W_01/selectImage.suvila?',
+                 reader:{
+                     type:'json',
+                     rootProperty:'data.list'                    
+                 }
+             },
+             autoLoad:false
+        },
+        ds_print_detail :{
+         	fields:['field1'],
+         	proxy:{
+                 type:'ajax',
+                 url:'/rec/REC015W_01/Print.suvila?',
+                 reader:{
+                     type:'json',
+                     rootProperty:'data.list'                    
+                 }
+             },
+             autoLoad:false
+        },
+        ds_daejuInfo:{
+            fields:['field1'],
+            proxy:{
+                type:'ajax',
+                url:'/rec/REC000W_02/selectDaeju.suvila',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list',                    
+                }
+            },
+            autoLoad:false,            
+        },
+        ds_recHisInfo:{
+            fields:['field1'],
+            proxy:{
+                type:'ajax',
+                url:'/rec/REC015W_01/bill_select.suvila',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list',                    
+                }
+        		,timeout : 1000 * 60 * 30
+            },
+            autoLoad:false,            
+        },
+        ds_print_master :{
+           	fields:['field1'],
+           	proxy:{
+                   type:'ajax',
+                   reader:{
+                       type:'json',
+                       rootProperty:'data.list'                    
+                   }
+               },
+               autoLoad:false
+        },
+        ds_Detail :{
+           	fields:['field1'],
+           	proxy:{
+                   type:'ajax',
+                   reader:{
+                       type:'json',
+                       rootProperty:'data.list'                    
+                   }
+        		   ,timeout : 1000 * 60 * 30
+               },
+               autoLoad:false
+        },
+        ds_General :{
+           	fields:['field1'],
+           	proxy:{
+                   type:'ajax',
+                   reader:{
+                       type:'json',
+                       rootProperty:'data.list'                    
+                   }
+               },
+               autoLoad:false
+        },
+        ds_type_gbn:{
+            fields:['field1'],
+            data:[{
+                 CODE:'F'
+                ,NAME:'사업자등록번호'
+            },{
+            	 CODE:'T'
+                ,NAME:'주민번호앞6자리'
+            }],
+            autoLoad:true
+        },
+    }
+});

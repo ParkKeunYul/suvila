@@ -1,0 +1,728 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ASP008w_02DAO">
+
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+	</resultMap>
+	
+	
+	<select id="SELECT_ACCT_GBN" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT 
+		       ACCT_GBN AS CODE, 
+		       ACCT_NM  AS NAME
+		  FROM ACC_ACCOUNTS
+		GROUP BY ACCT_GBN,ACCT_NM
+		ORDER BY ACCT_GBN,ACCT_NM
+	</select>
+	
+	
+	<update id="UPDATE_ACCT_GBN" parameterType="kr.co.o2i.util.CommonMap">
+		UPDATE ACC_ACCOUNTS
+		   SET ACCT_NM  = #{NAME}
+		 WHERE ACCT_GBN = #{CODE}
+	</update>
+	
+	<select id="SELECT_KWAN" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT 
+			KWAN,
+			KWAN_NAME,
+			COUNT(1) CNT,
+			MAX(DECODE(TEMPLE_CD,'000000','Y')) SUVILA_YN
+		 FROM ACC_ACCOUNTS
+		WHERE ACCT_GBN  = #{V_ACCT_GBN}
+		  AND  IE_GBN    = #{V_IE_GBN}
+		  AND  KWAN     != 0
+		  AND  HANG      = 0
+		  AND  MOK       = 0
+		GROUP BY  KWAN, KWAN_NAME
+		ORDER BY  KWAN, MAX(DECODE(TEMPLE_CD,'000000','Y')), KWAN_NAME
+	</select>
+	
+	<select id="SELECT_KWAN_DETAIL" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+	  SELECT 
+			TEMPLE_CD,
+			FN_TEMPLE_INFO(TEMPLE_CD) TEMPLE_NM,
+	    	KWAN,
+			KWAN_NAME
+		FROM ACC_ACCOUNTS
+	   WHERE ACCT_GBN   = #{V_ACCT_GBN}
+		 AND  IE_GBN    = #{V_IE_GBN}
+		 AND  KWAN      = #{V_KWAN}
+		 AND  HANG      = 0
+		 AND  MOK       = 0
+		ORDER BY  TEMPLE_CD, KWAN, KWAN_NAME
+	</select>
+	
+	
+	<select id="SELECT_HANG" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		 SELECT KWAN
+		       ,KWAN_NAME
+		       ,HANG
+		       ,HANG_NAME
+		       ,COUNT(1) CNT
+		       ,MAX(DECODE(TEMPLE_CD,'000000','Y')) SUVILA_YN
+		  FROM ACC_ACCOUNTS
+		 WHERE ACCT_GBN  = #{V_ACCT_GBN}
+		   AND IE_GBN    = #{V_IE_GBN}
+		   AND KWAN      = #{V_KWAN}
+		   AND HANG     != 0
+		   AND MOK       = 0
+		 GROUP BY KWAN, KWAN_NAME, HANG, HANG_NAME
+		 ORDER BY KWAN, HANG, MAX(DECODE(TEMPLE_CD,'000000','Y')), HANG_NAME
+	</select>
+	
+	<select id="SELECT_HANG_DETAIL" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT 	TEMPLE_CD
+			   ,FN_TEMPLE_INFO(TEMPLE_CD) TEMPLE_NM
+		       ,HANG
+		       ,HANG_NAME
+		  FROM ACC_ACCOUNTS
+		 WHERE ACCT_GBN  = #{V_ACCT_GBN}
+		   AND IE_GBN    = #{V_IE_GBN}
+		   AND KWAN      = #{V_KWAN}
+		   AND HANG      = #{V_HANG}
+		   AND HANG_NAME = #{V_HANG_NM}
+		   AND MOK       = 0
+		 ORDER BY TEMPLE_CD, HANG, HANG_NAME
+	</select>
+	
+	<select id="SELECT_MOK" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		 SELECT KWAN
+		       ,KWAN_NAME
+		       ,HANG
+		       ,HANG_NAME
+		       ,MOK
+		       ,MOK_NAME
+		       ,COUNT(1) CNT
+		       ,MAX(DECODE(TEMPLE_CD,'000000','Y')) SUVILA_YN
+		       ,DECODE(MAX(DECODE(TEMPLE_CD,'000000','Y')),'Y','이동','') CHANGE
+		       ,' ' REMARK
+		  FROM ACC_ACCOUNTS
+		 WHERE ACCT_GBN  = #{V_ACCT_GBN}
+		   AND IE_GBN    = #{V_IE_GBN}
+		   AND KWAN      = #{V_KWAN}
+		   AND HANG      = #{V_HANG}
+		   AND MOK      != 0
+		 GROUP BY KWAN, KWAN_NAME, HANG, HANG_NAME, MOK, MOK_NAME
+		 ORDER BY KWAN, HANG, MOK, MAX(DECODE(TEMPLE_CD,'000000','Y')), MOK_NAME
+	</select>
+	
+	<select id="SELECT_MOK_DETAIL" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		 SELECT TEMPLE_CD
+			   ,FN_TEMPLE_INFO(TEMPLE_CD) TEMPLE_NM
+		       ,KWAN
+		       ,KWAN_NAME
+		       ,HANG
+		       ,HANG_NAME
+		       ,MOK
+		       ,MOK_NAME
+		       ,REMARK
+		       ,NVL(#{V_SUVILA_YN} ,'N') AS SUVILA_YN 
+		  FROM ACC_ACCOUNTS
+		 WHERE ACCT_GBN  = #{V_ACCT_GBN}
+		   AND IE_GBN    = #{V_IE_GBN}
+		   AND KWAN      = #{V_KWAN}
+		   AND HANG      = #{V_HANG}
+		   AND MOK       = #{V_MOK}
+		   AND MOK_NAME  = #{V_MOK_NM}
+		 ORDER BY TEMPLE_CD, MOK, MOK_NAME
+	</select>
+	
+	<select id="SELECT_MOK_USE" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT TEMPLE_CD
+		       ,FN_TEMPLE_INFO(TEMPLE_CD) TEMPLE_NM
+		       ,'ACC_BUDGET' TABLE_NAME
+			   ,FN_FMT_DATE(MAX(YEAR)) LAST_DATE
+			   ,COUNT(1) CNT
+		  FROM ACC_BUDGET
+		 WHERE ACCT_GBN  = #{V_ACCT_GBN}
+		   AND IE_GBN    = #{V_IE_GBN}
+		   AND KWAN      = #{V_KWAN}
+		   AND HANG      = #{V_HANG}
+		   AND MOK       = #{V_MOK}
+		 GROUP BY TEMPLE_CD
+		UNION ALL
+		SELECT TEMPLE_CD
+		       ,FN_TEMPLE_INFO(TEMPLE_CD) TEMPLE_NM
+		       ,'ACC_CHONGMU_MONEY_MGT' TABLE_NAME
+			   ,FN_FMT_DATE(MAX(ACT_DATE)) LAST_DATE
+			   ,COUNT(1) CNT
+		  FROM ACC_CHONGMU_MONEY_MGT
+		 WHERE ACCT_GBN  = #{V_ACCT_GBN}
+		   AND IE_GBN    = #{V_IE_GBN}
+		   AND KWAN      = #{V_KWAN}
+		   AND HANG      = #{V_HANG}
+		   AND MOK       = #{V_MOK}
+		 GROUP BY TEMPLE_CD
+		UNION ALL
+		SELECT TEMPLE_CD
+		       ,FN_TEMPLE_INFO(TEMPLE_CD) TEMPLE_NM
+		       ,'ACC_MONEY_MGT' TABLE_NAME
+			   ,FN_FMT_DATE(MAX(ACT_DATE)) LAST_DATE
+			   ,COUNT(1) CNT
+		  FROM ACC_MONEY_MGT
+		 WHERE ACCT_GBN  = #{V_ACCT_GBN}
+		   AND IE_GBN    = #{V_IE_GBN}
+		   AND KWAN      = #{V_KWAN}
+		   AND HANG      = #{V_HANG}
+		   AND MOK       = #{V_MOK}
+		 GROUP BY TEMPLE_CD
+		UNION ALL
+		SELECT TEMPLE_CD
+		       ,FN_TEMPLE_INFO(TEMPLE_CD) TEMPLE_NM
+		       ,'ACC_MONEY_TEMP_MGT' TABLE_NAME
+			   ,FN_FMT_DATE(MAX(ACT_DATE)) LAST_DATE
+			   ,COUNT(1) CNT
+		  FROM ACC_MONEY_TEMP_MGT
+		 WHERE ACCT_GBN  = #{V_ACCT_GBN}
+		   AND IE_GBN    = #{V_IE_GBN}
+		   AND KWAN      = #{V_KWAN}
+		   AND HANG      = #{V_HANG}
+		   AND MOK       = #{V_MOK}
+		 GROUP BY TEMPLE_CD
+		UNION ALL
+		SELECT TEMPLE_CD
+		       ,FN_TEMPLE_INFO(TEMPLE_CD) TEMPLE_NM
+		       ,'ASP_TEMPLE_CMS_INFO' TABLE_NAME
+			   ,MAX(TO_CHAR(CRT_DATE,'YYYY-MM-DD')) LAST_DATE
+			   ,COUNT(1) CNT
+		  FROM ASP_TEMPLE_CMS_INFO
+		 WHERE ACCT_GBN  = #{V_ACCT_GBN}
+		   AND IE_GBN    = #{V_IE_GBN}
+		   AND KWAN      = #{V_KWAN}
+		   AND HANG      = #{V_HANG}
+		   AND MOK       = #{V_MOK}
+		 GROUP BY TEMPLE_CD
+		UNION ALL
+		SELECT TEMPLE_CD
+		       ,FN_TEMPLE_INFO(TEMPLE_CD) TEMPLE_NM
+		       ,'REC_ALWAYS_PRAY_MGT' TABLE_NAME
+			   ,MAX(TO_CHAR(CRT_DATE,'YYYY-MM-DD')) LAST_DATE
+			   ,COUNT(1) CNT
+		  FROM REC_ALWAYS_PRAY_MGT
+		 WHERE ACCT_GBN  = #{V_ACCT_GBN}
+		   AND IE_GBN    = #{V_IE_GBN}
+		   AND KWAN      = #{V_KWAN}
+		   AND HANG      = #{V_HANG}
+		   AND MOK       = #{V_MOK}
+		 GROUP BY TEMPLE_CD
+		UNION ALL
+		SELECT TEMPLE_CD
+		       ,FN_TEMPLE_INFO(TEMPLE_CD) TEMPLE_NM
+		       ,'REC_BULSA_MGT' TABLE_NAME
+			   ,MAX(TO_CHAR(CRT_DATE,'YYYY-MM-DD')) LAST_DATE
+			   ,COUNT(1) CNT
+		  FROM REC_BULSA_MGT
+		 WHERE ACCT_GBN  = #{V_ACCT_GBN}
+		   AND IE_GBN    = #{V_IE_GBN}
+		   AND KWAN      = #{V_KWAN}
+		   AND HANG      = #{V_HANG}
+		   AND MOK       = #{V_MOK}
+		 GROUP BY TEMPLE_CD
+		UNION ALL
+		SELECT TEMPLE_CD
+		       ,FN_TEMPLE_INFO(TEMPLE_CD) TEMPLE_NM
+		       ,'REC_DEUNG_CLASS_MGT' TABLE_NAME
+			   ,MAX(TO_CHAR(CRT_DATE,'YYYY-MM-DD')) LAST_DATE
+			   ,COUNT(1) CNT
+		  FROM REC_DEUNG_CLASS_MGT
+		 WHERE ACCT_GBN  = #{V_ACCT_GBN}
+		   AND IE_GBN    = #{V_IE_GBN}
+		   AND KWAN      = #{V_KWAN}
+		   AND HANG      = #{V_HANG}
+		   AND MOK       = #{V_MOK}
+		 GROUP BY TEMPLE_CD
+		UNION ALL
+		SELECT TEMPLE_CD
+		       ,FN_TEMPLE_INFO(TEMPLE_CD) TEMPLE_NM
+		       ,'REC_PRAY_MGT' TABLE_NAME
+			   ,MAX(TO_CHAR(CRT_DATE,'YYYY-MM-DD')) LAST_DATE
+			   ,COUNT(1) CNT
+		  FROM REC_PRAY_MGT
+		 WHERE ACCT_GBN  = #{V_ACCT_GBN}
+		   AND IE_GBN    = #{V_IE_GBN}
+		   AND KWAN      = #{V_KWAN}
+		   AND HANG      = #{V_HANG}
+		   AND MOK       = #{V_MOK}
+		 GROUP BY TEMPLE_CD
+		UNION ALL
+		SELECT TEMPLE_CD
+		       ,FN_TEMPLE_INFO(TEMPLE_CD) TEMPLE_NM
+		       ,'REC_SUPPORT_MGT' TABLE_NAME
+			   ,MAX(TO_CHAR(CRT_DATE,'YYYY-MM-DD')) LAST_DATE
+			   ,COUNT(1) CNT
+		  FROM REC_SUPPORT_MGT
+		 WHERE ACCT_GBN  = #{V_ACCT_GBN}
+		   AND IE_GBN    = #{V_IE_GBN}
+		   AND KWAN      = #{V_KWAN}
+		   AND HANG      = #{V_HANG}
+		   AND MOK       = #{V_MOK}
+		 GROUP BY TEMPLE_CD
+		UNION ALL
+		SELECT TEMPLE_CD
+		       ,FN_TEMPLE_INFO(TEMPLE_CD) TEMPLE_NM
+		       ,'REC_TEMPLE_STAY_MGT' TABLE_NAME
+			   ,MAX(TO_CHAR(CRT_DATE,'YYYY-MM-DD')) LAST_DATE
+			   ,COUNT(1) CNT
+		  FROM REC_TEMPLE_STAY_MGT
+		 WHERE ACCT_GBN  = #{V_ACCT_GBN}
+		   AND IE_GBN    = #{V_IE_GBN}
+		   AND KWAN      = #{V_KWAN}
+		   AND HANG      = #{V_HANG}
+		   AND MOK       = #{V_MOK}
+		 GROUP BY TEMPLE_CD
+		UNION ALL
+		SELECT TEMPLE_CD
+		       ,FN_TEMPLE_INFO(TEMPLE_CD) TEMPLE_NM
+		       ,'REC_WEPAE_CHONHON_MGT' TABLE_NAME
+			   ,MAX(TO_CHAR(CRT_DATE,'YYYY-MM-DD')) LAST_DATE
+			   ,COUNT(1) CNT
+		  FROM REC_WEPAE_CHONHON_MGT
+		 WHERE ACCT_GBN  = #{V_ACCT_GBN}
+		   AND IE_GBN    = #{V_IE_GBN}
+		   AND KWAN      = #{V_KWAN}
+		   AND HANG      = #{V_HANG}
+		   AND MOK       = #{V_MOK}
+		 GROUP BY TEMPLE_CD
+		UNION ALL
+		SELECT TEMPLE_CD
+		       ,FN_TEMPLE_INFO(TEMPLE_CD) TEMPLE_NM
+		       ,'SIN_GROUP_MGT' TABLE_NAME
+			   ,MAX(TO_CHAR(CRT_DATE,'YYYY-MM-DD')) LAST_DATE
+			   ,COUNT(1) CNT
+		  FROM SIN_GROUP_MGT
+		 WHERE ACCT_GBN  = #{V_ACCT_GBN}
+		   AND IE_GBN    = #{V_IE_GBN}
+		   AND KWAN      = #{V_KWAN}
+		   AND HANG      = #{V_HANG}
+		   AND MOK       = #{V_MOK}
+		 GROUP BY TEMPLE_CD
+		UNION ALL
+		SELECT TEMPLE_CD
+		       ,FN_TEMPLE_INFO(TEMPLE_CD) TEMPLE_NM
+		       ,'REC_MANAGE_MGT' TABLE_NAME
+		       ,MAX(TO_CHAR(CRT_DATE,'YYYY-MM-DD')) LAST_DATE
+		       ,COUNT(1) CNT
+		  FROM REC_MANAGE_MGT
+		 WHERE ACCT_GBN  = #{V_ACCT_GBN}
+		   AND IE_GBN    = #{V_IE_GBN}
+		   AND KWAN      = #{V_KWAN}
+		   AND HANG      = #{V_HANG}
+		   AND MOK       = #{V_MOK}
+		 GROUP BY TEMPLE_CD
+		ORDER BY 1,2,3
+	</select>
+	
+	
+	
+	<insert id="INSERT_KWAN" parameterType="java.util.Map" >
+		INSERT INTO ACC_ACCOUNTS(
+			 TEMPLE_CD
+			,IE_GBN
+			,ACCT_GBN
+			,KWAN
+			,HANG
+			,MOK
+			,KWAN_NAME
+			,HANG_NAME
+			,MOK_NAME
+			,REMARK
+			,ETC1
+			,ETC2
+			,ETC3
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+			,ACCT_NM)
+			SELECT TEMPLE_CD
+			       ,#{V_IE_GBN}
+			       ,#{V_ACCT_GBN}
+			       ,#{KWAN}
+			       ,0
+			       ,0
+			       ,#{KWAN_NAME}
+			       ,NULL
+			       ,NULL
+			       ,NULL
+			       ,NULL
+			       ,NULL
+			       ,NULL
+			       ,#{V_USER_ID}
+			       ,SYSDATE
+			       ,#{V_REMOTE}
+			       ,#{V_ACCT_GBN_NM}
+			  FROM ASP_TEMPLE_MASTER
+	</insert>
+	
+	<update id="UPDATE_KWAN" parameterType="java.util.Map" >
+		UPDATE ACC_ACCOUNTS
+		   SET KWAN_NAME = #{KWAN_NAME}
+		      ,UPT_USER  = #{V_USER_ID}
+		      ,UPT_DATE  = SYSDATE
+		      ,REMOTE    = #{V_REMOTE}
+		 WHERE IE_GBN    = #{V_IE_GBN}
+		   AND ACCT_GBN  = #{V_ACCT_GBN}
+		   AND KWAN      = #{KWAN}
+		   AND HANG      = 0
+		   AND MOK       = 0
+	</update>
+	
+	<delete id="DELETE_KWAN"  parameterType="java.util.Map" >
+		DELETE ACC_ACCOUNTS
+		 WHERE IE_GBN    = #{V_IE_GBN}
+		   AND ACCT_GBN  = #{V_ACCT_GBN}
+		   AND KWAN      = #{KWAN}
+		   AND KWAN_NAME = #{KWAN_NAME}
+		   AND HANG      = 0
+		   AND MOK       = 0
+	</delete>
+	
+	<insert id="INSERT_HANG" parameterType="java.util.Map" >
+		INSERT INTO ACC_ACCOUNTS(
+				 TEMPLE_CD
+				,IE_GBN
+				,ACCT_GBN
+				,KWAN
+				,HANG
+				,MOK
+				,KWAN_NAME
+				,HANG_NAME
+				,MOK_NAME
+				,REMARK
+				,ETC1
+				,ETC2
+				,ETC3
+				,UPT_USER
+				,UPT_DATE
+				,REMOTE
+				,ACCT_NM
+		)  SELECT TEMPLE_CD
+			      ,#{V_IE_GBN}
+			      ,#{V_ACCT_GBN}
+			      ,#{KWAN}
+			      ,#{HANG}
+			      ,0
+			      ,#{KWAN_NAME}
+			      ,#{HANG_NAME}
+			      ,NULL
+			      ,NULL
+			      ,NULL
+			      ,NULL
+			      ,NULL
+			      ,#{V_USER_ID}
+			      ,SYSDATE
+			      ,#{V_REMOTE}
+			      ,#{V_ACCT_GBN_NM}
+			  FROM ASP_TEMPLE_MASTER
+	</insert>
+	
+	
+	<update id="UPDATE_HANG" parameterType="java.util.Map" >
+		UPDATE ACC_ACCOUNTS
+		   SET HANG_NAME = #{HANG_NAME}
+		      ,UPT_USER  = #{V_USER_ID}
+		      ,UPT_DATE  = SYSDATE
+		      ,REMOTE    = #{V_REMOTE}
+		 WHERE IE_GBN    = #{V_IE_GBN}
+		   AND ACCT_GBN  = #{V_ACCT_GBN}
+		   AND KWAN      = #{KWAN}
+		   AND HANG      = #{HANG}
+		   AND MOK       = 0
+	</update>
+	
+	<delete id="DELETE_HANG"  parameterType="java.util.Map" >
+		DELETE ACC_ACCOUNTS
+		 WHERE IE_GBN    = #{V_IE_GBN}
+		   AND ACCT_GBN  = #{V_ACCT_GBN}
+		   AND KWAN      = #{KWAN}
+		   AND HANG      = #{HANG}
+		   AND HANG_NAME = #{HANG_NAME}
+		   AND MOK       = 0
+	</delete>
+	
+	
+	<insert id="INSERT_MOK" parameterType="java.util.Map" >
+		INSERT INTO ACC_ACCOUNTS(
+				 TEMPLE_CD
+				,IE_GBN
+				,ACCT_GBN
+				,KWAN
+				,HANG
+				,MOK
+				,KWAN_NAME
+				,HANG_NAME
+				,MOK_NAME
+				,REMARK
+				,ETC1
+				,ETC2
+				,ETC3
+				,UPT_USER
+				,UPT_DATE
+				,REMOTE
+				,ACCT_NM
+		)SELECT TEMPLE_CD
+		       ,#{V_IE_GBN}
+		       ,#{V_ACCT_GBN}
+		       ,#{KWAN}
+		       ,#{HANG}
+		       ,#{MOK}
+		       ,#{KWAN_NAME}
+		       ,#{HANG_NAME}
+		       ,#{MOK_NAME}
+		       ,#{REMARK ,jdbcType=VARCHAR}
+		       ,NULL
+		       ,NULL
+		       ,NULL
+		       ,#{V_USER_ID}
+		       ,SYSDATE
+		       ,#{V_REMOTE}
+		       ,#{V_ACCT_GBN_NM}
+		  FROM ASP_TEMPLE_MASTER
+	</insert>
+	
+	
+	<update id="UPDATE_MOK" parameterType="java.util.Map" >
+		UPDATE ACC_ACCOUNTS
+		   SET MOK_NAME = #{MOK_NAME}
+		      ,REMARK   = NVL(#{REMARK,jdbcType=VARCHAR},REMARK)
+		      ,UPT_USER = #{V_USER_ID}
+		      ,UPT_DATE = SYSDATE
+		      ,REMOTE   = #{V_REMOTE}
+		 WHERE IE_GBN   = #{V_IE_GBN}
+		   AND ACCT_GBN = #{V_ACCT_GBN}
+		   AND KWAN     = #{KWAN}
+		   AND HANG     = #{HANG}
+		   AND MOK      = #{MOK}
+	</update>
+	
+	
+	<update id="DELETE_MOK_DETAIL" parameterType="java.util.Map" >
+		DELETE ACC_ACCOUNTS
+		 WHERE IE_GBN    = #{V_IE_GBN}
+		   AND ACCT_GBN  = #{V_ACCT_GBN}
+		   AND KWAN      = #{KWAN}
+		   AND HANG      = #{HANG}
+		   AND MOK       = #{MOK}
+		   AND TEMPLE_CD = #{TEMPLE_CD}
+	</update>
+	
+	
+	<update id="CHANGE_MOK_CODE_ACC_BUDGET" parameterType="java.util.Map" >
+		UPDATE ACC_BUDGET
+		   SET KWAN 	= #{V_KWAN}
+		      ,HANG 	= #{V_HANG}
+		      ,MOK  	= #{V_MOK}
+		      ,UPT_USER = #{V_USER_ID}
+		      ,UPT_DATE = SYSDATE
+		      ,REMOTE 	= #{V_REMOTE}
+		 WHERE IE_GBN 	= #{V_IE_GBN}
+		   AND ACCT_GBN = #{V_ACCT_GBN}
+		   AND KWAN 	= #{KWAN}
+		   AND HANG 	= #{HANG}
+		   AND MOK 		= #{MOK}
+	</update>
+	
+	<update id="CHANGE_MOK_CODE_ACC_CHONGMU_MONEY_MGT" parameterType="java.util.Map" >
+		UPDATE ACC_CHONGMU_MONEY_MGT
+		   SET KWAN 	= #{V_KWAN}
+		      ,HANG 	= #{V_HANG}
+		      ,MOK  	= #{V_MOK}
+		      ,UPT_USER = #{V_USER_ID}
+		      ,UPT_DATE = SYSDATE
+		      ,REMOTE 	= #{V_REMOTE}
+		 WHERE IE_GBN 	= #{V_IE_GBN}
+		   AND ACCT_GBN = #{V_ACCT_GBN}
+		   AND KWAN 	= #{KWAN}
+		   AND HANG 	= #{HANG}
+		   AND MOK 		= #{MOK}
+	</update>
+	
+	<update id="CHANGE_MOK_CODE_ACC_MONEY_MGT" parameterType="java.util.Map" >
+		UPDATE ACC_MONEY_MGT
+		   SET KWAN 	= #{V_KWAN}
+		      ,HANG 	= #{V_HANG}
+		      ,MOK  	= #{V_MOK}
+		      ,UPT_USER = #{V_USER_ID}
+		      ,UPT_DATE = SYSDATE
+		      ,REMOTE 	= #{V_REMOTE}
+		 WHERE IE_GBN 	= #{V_IE_GBN}
+		   AND ACCT_GBN = #{V_ACCT_GBN}
+		   AND KWAN 	= #{KWAN}
+		   AND HANG 	= #{HANG}
+		   AND MOK 		= #{MOK}
+	</update>
+	
+	<update id="CHANGE_MOK_CODE_ACC_MONEY_TEMP_MGT" parameterType="java.util.Map" >
+		UPDATE ACC_MONEY_TEMP_MGT
+		   SET KWAN 	= #{V_KWAN}
+		      ,HANG 	= #{V_HANG}
+		      ,MOK  	= #{V_MOK}
+		      ,UPT_USER = #{V_USER_ID}
+		      ,UPT_DATE = SYSDATE
+		      ,REMOTE 	= #{V_REMOTE}
+		 WHERE IE_GBN 	= #{V_IE_GBN}
+		   AND ACCT_GBN = #{V_ACCT_GBN}
+		   AND KWAN 	= #{KWAN}
+		   AND HANG 	= #{HANG}
+		   AND MOK 		= #{MOK}
+	</update>
+	
+	<update id="CHANGE_MOK_CODE_ASP_TEMPLE_CMS_INFO" parameterType="java.util.Map" >
+		UPDATE ASP_TEMPLE_CMS_INFO
+		   SET KWAN 	= #{V_KWAN}
+		      ,HANG 	= #{V_HANG}
+		      ,MOK  	= #{V_MOK}
+		      ,UPT_USER = #{V_USER_ID}
+		      ,UPT_DATE = SYSDATE
+		      ,REMOTE 	= #{V_REMOTE}
+		 WHERE IE_GBN 	= #{V_IE_GBN}
+		   AND ACCT_GBN = #{V_ACCT_GBN}
+		   AND KWAN 	= #{KWAN}
+		   AND HANG 	= #{HANG}
+		   AND MOK 		= #{MOK}
+	</update>
+	
+	
+	<update id="CHANGE_MOK_CODE_REC_ALWAYS_PRAY_MGT" parameterType="java.util.Map" >
+		UPDATE REC_ALWAYS_PRAY_MGT
+		   SET KWAN 	= #{V_KWAN}
+		      ,HANG 	= #{V_HANG}
+		      ,MOK  	= #{V_MOK}
+		      ,UPT_USER = #{V_USER_ID}
+		      ,UPT_DATE = SYSDATE
+		      ,REMOTE 	= #{V_REMOTE}
+		 WHERE IE_GBN 	= #{V_IE_GBN}
+		   AND ACCT_GBN = #{V_ACCT_GBN}
+		   AND KWAN 	= #{KWAN}
+		   AND HANG 	= #{HANG}
+		   AND MOK 		= #{MOK}
+	</update>
+
+	<update id="CHANGE_MOK_CODE_REC_BULSA_MGT" parameterType="java.util.Map" >
+		UPDATE REC_BULSA_MGT
+		   SET KWAN 	= #{V_KWAN}
+		      ,HANG 	= #{V_HANG}
+		      ,MOK  	= #{V_MOK}
+		      ,UPT_USER = #{V_USER_ID}
+		      ,UPT_DATE = SYSDATE
+		      ,REMOTE 	= #{V_REMOTE}
+		 WHERE IE_GBN 	= #{V_IE_GBN}
+		   AND ACCT_GBN = #{V_ACCT_GBN}
+		   AND KWAN 	= #{KWAN}
+		   AND HANG 	= #{HANG}
+		   AND MOK 		= #{MOK}
+	</update>
+
+	<update id="CHANGE_MOK_CODE_REC_DEUNG_CLASS_MGT" parameterType="java.util.Map" >
+		UPDATE REC_DEUNG_CLASS_MGT
+		   SET KWAN 	= #{V_KWAN}
+		      ,HANG 	= #{V_HANG}
+		      ,MOK  	= #{V_MOK}
+		      ,UPT_USER = #{V_USER_ID}
+		      ,UPT_DATE = SYSDATE
+		      ,REMOTE 	= #{V_REMOTE}
+		 WHERE IE_GBN 	= #{V_IE_GBN}
+		   AND ACCT_GBN = #{V_ACCT_GBN}
+		   AND KWAN 	= #{KWAN}
+		   AND HANG 	= #{HANG}
+		   AND MOK 		= #{MOK}
+	</update>
+
+	<update id="CHANGE_MOK_CODE_REC_PRAY_MGT" parameterType="java.util.Map" >
+		UPDATE REC_PRAY_MGT
+		   SET KWAN 	= #{V_KWAN}
+		      ,HANG 	= #{V_HANG}
+		      ,MOK  	= #{V_MOK}
+		      ,UPT_USER = #{V_USER_ID}
+		      ,UPT_DATE = SYSDATE
+		      ,REMOTE 	= #{V_REMOTE}
+		 WHERE IE_GBN 	= #{V_IE_GBN}
+		   AND ACCT_GBN = #{V_ACCT_GBN}
+		   AND KWAN 	= #{KWAN}
+		   AND HANG 	= #{HANG}
+		   AND MOK 		= #{MOK}
+	</update>
+
+	<update id="CHANGE_MOK_CODE_REC_SUPPORT_MGT" parameterType="java.util.Map" >
+		UPDATE REC_SUPPORT_MGT
+		   SET KWAN 	= #{V_KWAN}
+		      ,HANG 	= #{V_HANG}
+		      ,MOK  	= #{V_MOK}
+		      ,UPT_USER = #{V_USER_ID}
+		      ,UPT_DATE = SYSDATE
+		      ,REMOTE 	= #{V_REMOTE}
+		 WHERE IE_GBN 	= #{V_IE_GBN}
+		   AND ACCT_GBN = #{V_ACCT_GBN}
+		   AND KWAN 	= #{KWAN}
+		   AND HANG 	= #{HANG}
+		   AND MOK 		= #{MOK}
+	</update>
+
+	<update id="CHANGE_MOK_CODE_REC_TEMPLE_STAY_MGT" parameterType="java.util.Map" >
+		UPDATE REC_TEMPLE_STAY_MGT
+		   SET KWAN 	= #{V_KWAN}
+		      ,HANG 	= #{V_HANG}
+		      ,MOK  	= #{V_MOK}
+		      ,UPT_USER = #{V_USER_ID}
+		      ,UPT_DATE = SYSDATE
+		      ,REMOTE 	= #{V_REMOTE}
+		 WHERE IE_GBN 	= #{V_IE_GBN}
+		   AND ACCT_GBN = #{V_ACCT_GBN}
+		   AND KWAN 	= #{KWAN}
+		   AND HANG 	= #{HANG}
+		   AND MOK 		= #{MOK}
+	</update>
+
+	<update id="CHANGE_MOK_CODE_REC_WEPAE_CHONHON_MGT" parameterType="java.util.Map" >
+		UPDATE REC_WEPAE_CHONHON_MGT
+		   SET 
+		       KWAN 	= #{V_KWAN}
+		      ,HANG 	= #{V_HANG}
+		      ,MOK  	= #{V_MOK}
+		      ,UPT_USER = #{V_USER_ID}
+		      ,UPT_DATE = SYSDATE
+		      ,REMOTE 	= #{V_REMOTE}
+		 WHERE IE_GBN 	= #{V_IE_GBN}
+		   AND ACCT_GBN = #{V_ACCT_GBN}
+		   AND KWAN 	= #{KWAN}
+		   AND HANG 	= #{HANG}
+		   AND MOK 		= #{MOK}
+	</update>
+
+	<update id="CHANGE_MOK_CODE_SIN_GROUP_MGT" parameterType="java.util.Map" > 
+		UPDATE SIN_GROUP_MGT
+		   SET KWAN 	= #{V_KWAN}
+		      ,HANG 	= #{V_HANG}
+		      ,MOK  	= #{V_MOK}
+		      ,UPT_USER = #{V_USER_ID}
+		      ,UPT_DATE = SYSDATE
+		      ,REMOTE 	= #{V_REMOTE}
+		 WHERE IE_GBN 	= #{V_IE_GBN}
+		   AND ACCT_GBN = #{V_ACCT_GBN}
+		   AND KWAN 	= #{KWAN}
+		   AND HANG 	= #{HANG}
+		   AND MOK 		= #{MOK}
+	</update>
+	
+	
+	<update id="UPDATE_MOK_DETAIL" parameterType="java.util.Map" >
+		UPDATE ACC_ACCOUNTS
+		   SET MOK_NAME = #{MOK_NAME}
+		      ,UPT_USER = #{V_USER_ID}
+		      ,UPT_DATE = SYSDATE
+		      ,REMOTE   = #{V_REMOTE}
+		 WHERE IE_GBN   = #{V_IE_GBN}
+		   AND ACCT_GBN = #{V_ACCT_GBN}
+		   AND KWAN     = #{KWAN}
+		   AND HANG     = #{HANG}
+		   AND MOK      = #{MOK}
+		   AND TEMPLE_CD= #{TEMPLE_CD}
+	
+	</update>
+	
+	
+	
+</mapper>

@@ -1,0 +1,1344 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC010w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+	<select id="SELECT_REC_USER"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+			  ,USER_ID
+			  ,USER_NM 
+		  FROM ASP_TEMPLE_USER
+		 WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND USE_YN = 'T'
+		 ORDER BY USER_NM
+	</select>
+	
+	<select id="SELECT_SELECT_BREAKDOWN"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">	
+				SELECT RD.TEMPLE_CD
+					  ,RD.SEQ
+					  ,RM.PROPOSAL_BUD_NO
+					  ,FN_GET_NM('BUD',RM.TEMPLE_CD,RM.PROPOSAL_BUD_NO) AS NAME_KOR
+					  ,( SELECT TELNO1 || '-' || TELNO2 || '-' || TELNO3 FROM SIN_CARD_MASTER WHERE TEMPLE_CD = RM.TEMPLE_CD AND BUD_NO = RM.PROPOSAL_BUD_NO) AS TELNO
+					  ,RD.ACCEPT_SEQ
+					  ,RD.SUB_DATE
+					  ,RD.AMOUNT
+					  ,DECODE(RD.SUB_DATE,RD.MIN_DATE,1,0) AS CNT
+					  ,RD.CRT_USER
+					  ,RD.REMOTE
+					  ,RD.REMARK
+					  ,RD.CRT_DATE
+					  ,RD.ACCEPT_GBN
+					  ,ACM.NAME
+					  ,RD.DETAIL_NAME
+					  ,RD.DETAIL_CODE
+					  ,RD.APPROVAL_GBN
+					  ,( CASE WHEN TO_NUMBER(RD.AMOUNT) > 0 THEN TO_NUMBER(RD.AMOUNT) ELSE 0 END ) as P_AMOUNT
+		      		  ,( CASE WHEN TO_NUMBER(RD.AMOUNT) &lt; 0 THEN ABS( TO_NUMBER(RD.AMOUNT) ) ELSE 0 END  ) as M_AMOUNT
+				 FROM (
+					SELECT RPH.TEMPLE_CD
+						  ,RPH.SEQ
+						  ,RPH.ACCEPT_SEQ
+						  ,RPH.SUB_DATE
+						  ,RPH.AMOUNT
+						  ,(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RPH.TEMPLE_CD AND ACCEPT_SEQ = RPH.ACCEPT_SEQ  AND SEQ = RPH.SEQ ) AS MIN_DATE
+						  ,RPH.CRT_USER
+						  ,RPH.REMOTE
+						  ,(CASE
+					        	WHEN RPD.DEL_YN = 'T' THEN  TO_CHAR(RPD.UPT_DATE , 'YYYY/MM/DD') ||' 접수취소 ' || RPH.REMARK
+					        	ELSE RPH.REMARK
+					      	END ) REMARK
+					      ,TO_CHAR(RPD.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+					      ,1 AS ACCEPT_GBN
+					      ,RPM.PRAY_NM AS DETAIL_NAME
+					      ,RPD.PRAY_CODE AS DETAIL_CODE
+					      ,RPH.APPROVAL_GBN 
+					FROM REC_PRAY_DETAIL RPD
+						,(SELECT TEMPLE_CD 
+								,SEQ 
+								,ACCEPT_SEQ 
+								,SUB_DATE 
+								,AMOUNT 
+								,CRT_USER
+								,REMOTE
+								,REMARK
+			                    ,APPROVAL_GBN  
+						    FROM REC_PAYMENT_HIS
+						   WHERE TEMPLE_CD = '${V_TEMPLE_CD}'
+							 AND SUB_DATE LIKE '${V_DATE}' || '%'
+							 AND CRT_USER = '${V_USER_ID}' 
+						  ) RPH
+						,REC_PRAY_MGT RPM
+				   WHERE RPD.TEMPLE_CD  = RPH.TEMPLE_CD
+					 AND RPD.ACCEPT_SEQ = RPH.ACCEPT_SEQ
+					 AND RPD.SEQ        = RPH.SEQ
+					 AND RPD.TEMPLE_CD  = RPM.TEMPLE_CD
+					 AND RPD.PRAY_GBN   = RPM.PRAY_GBN
+					 AND RPD.PRAY_CODE  = RPM.PRAY_CODE
+					 AND RPD.FDATE      = RPM.FDATE
+					 AND RPD.TEMPLE_CD  = '${V_TEMPLE_CD}'
+				   UNION ALL
+				  SELECT RPH.TEMPLE_CD
+					    ,RPH.SEQ
+					    ,RPH.ACCEPT_SEQ
+						,RPH.SUB_DATE
+						,RPH.AMOUNT
+						,(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RPH.TEMPLE_CD AND ACCEPT_SEQ = RPH.ACCEPT_SEQ  AND SEQ = RPH.SEQ ) AS MIN_DATE
+						,RPH.CRT_USER
+						,RPH.REMOTE
+						,(CASE
+				        	WHEN RID.DEL_YN = 'T' THEN  TO_CHAR(RID.UPT_DATE , 'YYYY/MM/DD') ||' 접수취소 ' || RPH.REMARK
+				        	ELSE RPH.REMARK
+				     	 END ) REMARK
+				     	,TO_CHAR(RID.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+				     	,2 AS ACCEPT_GBN
+				     	,AJM.JUNGAK_NM AS DETAIL_NAME
+				     	,TO_CHAR(RID.JUNGAK_CD) AS DETAIL_CODE
+				     	,RPH.APPROVAL_GBN 
+					FROM REC_INDEUNG_DETAIL RID
+						,(SELECT TEMPLE_CD 
+								,SEQ 
+								,ACCEPT_SEQ 
+								,SUB_DATE 
+								,AMOUNT 
+								,CRT_USER
+								,REMOTE
+								,REMARK
+			                    ,APPROVAL_GBN   
+						    FROM REC_PAYMENT_HIS
+						   WHERE TEMPLE_CD = '${V_TEMPLE_CD}'
+							 AND SUB_DATE LIKE '${V_DATE}' || '%'
+							 <if test="V_USER_ID != '' and V_USER_ID != null  ">
+							 AND CRT_USER = '${V_USER_ID}'
+							 </if>
+						  ) RPH
+						  , ASP_JUNGAK_MGT AJM
+				    WHERE RID.TEMPLE_CD = RPH.TEMPLE_CD
+					  AND RID.SEQ = RPH.SEQ
+					  AND RID.ACCEPT_SEQ  = RPH.ACCEPT_SEQ
+					  AND RID.TEMPLE_CD   = AJM.TEMPLE_CD
+					  AND RID.JUNGAK_CD   = AJM.JUNGAK_CD
+					  AND RID.ACCEPT_GBN  = AJM.ACCEPT_GBN
+					  AND RPH.TEMPLE_CD   = '${V_TEMPLE_CD}'
+					UNION ALL	
+				   SELECT RPH.TEMPLE_CD
+				   	 	 ,RPH.SEQ
+				   	 	 ,RPH.ACCEPT_SEQ
+				   	 	 ,RPH.SUB_DATE
+				   	 	 ,RPH.AMOUNT
+				   	 	 ,(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RPH.TEMPLE_CD AND ACCEPT_SEQ = RPH.ACCEPT_SEQ  AND SEQ = RPH.SEQ ) AS MIN_DATE
+				   	 	 ,RPH.CRT_USER
+				   	 	 ,RPH.REMOTE
+				   	 	 ,(CASE
+			        		WHEN RYD.DEL_YN = 'T' THEN  TO_CHAR(RYD.UPT_DATE , 'YYYY/MM/DD') ||' 접수취소 ' || RPH.REMARK
+			        		ELSE RPH.REMARK
+			     		   END ) REMARK
+			     		 ,TO_CHAR(RYD.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+			     		 ,4 AS ACCEPT_GBN
+			     		 ,AJM.JUNGAK_NM AS DETAIL_NAME
+			     		 ,TO_CHAR(RYD.JUNGAK_CD) AS DETAIL_CODE
+			     		 ,RPH.APPROVAL_GBN 
+				     FROM REC_YEONDEUNG_DETAIL RYD
+				     	 ,( SELECT TEMPLE_CD 
+								  ,SEQ 
+								  ,ACCEPT_SEQ 
+								  ,SUB_DATE 
+								  ,AMOUNT 
+								  ,CRT_USER
+								  ,REMOTE
+								  ,REMARK
+		                    	  ,APPROVAL_GBN 
+							  FROM REC_PAYMENT_HIS
+							 WHERE TEMPLE_CD = '${V_TEMPLE_CD}'
+							   AND SUB_DATE LIKE '${V_DATE}' || '%'
+							   <if test="V_USER_ID != '' and V_USER_ID != null  ">
+							   AND CRT_USER = '${V_USER_ID}'
+							   </if>
+					  	  ) RPH
+					   ,ASP_JUNGAK_MGT AJM
+				  WHERE RYD.TEMPLE_CD   = RPH.TEMPLE_CD
+					AND RYD.SEQ         = RPH.SEQ
+					AND RYD.ACCEPT_SEQ  = RPH.ACCEPT_SEQ
+					AND RYD.TEMPLE_CD   = AJM.TEMPLE_CD
+					AND RYD.JUNGAK_CD   = AJM.JUNGAK_CD
+					AND RYD.ACCEPT_GBN  = AJM.ACCEPT_GBN
+					AND RPH.TEMPLE_CD   = '${V_TEMPLE_CD}'
+				  UNION ALL
+				 SELECT RPH.TEMPLE_CD
+				 	   ,RPH.SEQ
+				 	   ,RPH.ACCEPT_SEQ
+				 	   ,RPH.SUB_DATE
+				 	   ,RPH.AMOUNT
+				 	   ,(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RPH.TEMPLE_CD AND ACCEPT_SEQ = RPH.ACCEPT_SEQ  AND SEQ = RPH.SEQ ) AS MIN_DATE
+				 	   ,RPH.CRT_USER
+				 	   ,RPH.REMOTE
+				 	   ,(CASE
+			        		WHEN RBD.DEL_YN = 'T' THEN  TO_CHAR(RBD.UPT_DATE , 'YYYY/MM/DD') ||' 접수취소 ' || RPH.REMARK
+			        		ELSE RPH.REMARK
+			     		 END ) REMARK
+			     	   ,TO_CHAR(RBD.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+			     	   ,3 AS ACCEPT_GBN
+			     	   ,RBM.BULSA_NM AS DETAIL_NAME
+			     	   ,TO_CHAR(RBD.BULSA_CD) AS DETAIL_CODE
+			     	   ,RPH.APPROVAL_GBN 
+				   FROM REC_BULSA_DETAIL RBD
+				   	   ,(SELECT TEMPLE_CD 
+							   ,SEQ 
+							   ,ACCEPT_SEQ 
+							   ,SUB_DATE 
+							   ,AMOUNT 
+							   ,CRT_USER
+							   ,REMOTE
+							   ,REMARK
+		                       ,APPROVAL_GBN
+						   FROM REC_PAYMENT_HIS
+						  WHERE TEMPLE_CD = '${V_TEMPLE_CD}'
+							AND SUB_DATE LIKE '${V_DATE}' || '%'
+							<if test="V_USER_ID != '' and V_USER_ID != null  ">
+							AND CRT_USER = '${V_USER_ID}'
+							</if>
+					  	) RPH
+					   , REC_BULSA_MGT RBM
+				  WHERE RBD.TEMPLE_CD  = RPH.TEMPLE_CD
+					AND RBD.SEQ        = RPH.SEQ
+					AND RBD.ACCEPT_SEQ = RPH.ACCEPT_SEQ
+					AND RBD.TEMPLE_CD  = RBM.TEMPLE_CD 
+					AND RBD.BULSA_CD   = RBM.BULSA_CD
+					AND RBM.ACPT_FDATE = '-1'
+					AND RBD.TEMPLE_CD  = '${V_TEMPLE_CD}'
+				  UNION ALL	
+				 SELECT RPH.TEMPLE_CD
+				 	   ,RPH.SEQ
+				 	   ,RPH.ACCEPT_SEQ
+				 	   ,RPH.SUB_DATE
+				 	   ,RPH.AMOUNT
+				 	   ,(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RPH.TEMPLE_CD AND ACCEPT_SEQ = RPH.ACCEPT_SEQ  AND SEQ = RPH.SEQ ) AS MIN_DATE
+				 	   ,RPH.CRT_USER
+				 	   ,RPH.REMOTE
+				 	   ,(CASE
+		        			WHEN RFD.DEL_YN = 'T' THEN  TO_CHAR(RFD.UPT_DATE , 'YYYY/MM/DD') ||' 접수취소 ' || RPH.REMARK
+		        			ELSE RPH.REMARK
+		        		  END ) REMARK
+		        	   ,TO_CHAR(RFD.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+		        	   ,5 AS ACCEPT_GBN
+		        	   ,'49제' AS DETAIL_NAME
+		        	   ,''  AS DETAIL_CODE
+		        	   ,RPH.APPROVAL_GBN 
+				  FROM REC_FORTY_NINE_DETAIL RFD
+				  	  ,REC_PAYMENT_HIS RPH
+				 WHERE RFD.TEMPLE_CD  = RPH.TEMPLE_CD
+				   AND RFD.SEQ        = RPH.SEQ
+				   AND RFD.ACCEPT_SEQ = RPH.ACCEPT_SEQ
+				   AND RFD.TEMPLE_CD  = '${V_TEMPLE_CD}'
+				   AND SUB_DATE LIKE '${V_DATE}' || '%'
+				   <if test="V_USER_ID != '' and V_USER_ID != null  ">
+				   AND RPH.CRT_USER   = '${V_USER_ID}'
+				   </if>
+				 UNION ALL
+				SELECT RPH.TEMPLE_CD
+					  ,RPH.SEQ
+					  ,RPH.ACCEPT_SEQ
+					  ,RPH.SUB_DATE
+					  ,RPH.AMOUNT
+					  ,(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RPH.TEMPLE_CD AND ACCEPT_SEQ = RPH.ACCEPT_SEQ  AND SEQ = RPH.SEQ ) AS MIN_DATE
+					  ,RPH.CRT_USER
+					  ,RPH.REMOTE
+					  ,(CASE
+		        			WHEN RGD.DEL_YN = 'T' THEN  TO_CHAR(RGD.UPT_DATE , 'YYYY/MM/DD') ||' 접수취소 ' || RPH.REMARK
+		        			ELSE RPH.REMARK
+		    			END ) REMARK
+		    		  ,TO_CHAR(RGD.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+		    		  ,6 AS ACCEPT_GBN
+		    		  ,'기제' AS DETAIL_NAME
+		    		  ,''  AS DETAIL_CODE
+		    		  ,RPH.APPROVAL_GBN  
+				  FROM REC_GIJE_DETAIL RGD
+				  	  ,REC_PAYMENT_HIS RPH
+				 WHERE RGD.TEMPLE_CD  = RPH.TEMPLE_CD
+				   AND RGD.SEQ 		  = RPH.SEQ
+				   AND RGD.ACCEPT_SEQ = RPH.ACCEPT_SEQ
+				   AND RGD.TEMPLE_CD  = '${V_TEMPLE_CD}'
+				   AND SUB_DATE LIKE '${V_DATE}' || '%'
+				   <if test="V_USER_ID != '' and V_USER_ID != null  ">
+				   AND RPH.CRT_USER   = '${V_USER_ID}'
+				   </if>
+				 UNION ALL
+				SELECT RPH.TEMPLE_CD
+					  ,RPH.SEQ
+					  ,RPH.ACCEPT_SEQ
+					  ,RPH.SUB_DATE
+					  ,RPH.AMOUNT
+					  ,(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RPH.TEMPLE_CD AND ACCEPT_SEQ = RPH.ACCEPT_SEQ  AND SEQ = RPH.SEQ ) AS MIN_DATE
+					  ,RPH.CRT_USER
+					  ,RPH.REMOTE
+					  ,(CASE
+		        			WHEN RCD.DEL_YN = 'T' THEN  TO_CHAR(RCD.UPT_DATE , 'YYYY/MM/DD') ||' 접수취소 ' || RPH.REMARK
+		        			ELSE RPH.REMARK
+		        		END ) REMARK
+		        	  ,TO_CHAR(RCD.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+		        	  ,7 AS ACCEPT_GBN
+		        	  ,'천도제' AS DETAIL_NAME
+		        	  ,''  AS DETAIL_CODE
+		        	  ,RPH.APPROVAL_GBN  
+				 FROM REC_CHONDOJE_DETAIL RCD
+				 	 ,REC_PAYMENT_HIS RPH
+				WHERE RCD.TEMPLE_CD  = RPH.TEMPLE_CD
+				  AND RCD.SEQ        = RPH.SEQ
+				  AND RCD.ACCEPT_SEQ = RPH.ACCEPT_SEQ
+				  AND RCD.TEMPLE_CD  = '${V_TEMPLE_CD}'
+				  AND SUB_DATE LIKE '${V_DATE}' || '%'
+				  <if test="V_USER_ID != '' and V_USER_ID != null  ">
+				  AND RPH.CRT_USER   = '${V_USER_ID}'
+				  </if>
+				UNION ALL	
+			   SELECT RPH.TEMPLE_CD
+			   	 	 ,RPH.SEQ
+			   	 	 ,RPH.ACCEPT_SEQ
+			   	 	 ,RPH.SUB_DATE
+			   	 	 ,RPH.AMOUNT
+			   	 	 ,(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RPH.TEMPLE_CD AND ACCEPT_SEQ = RPH.ACCEPT_SEQ  AND SEQ = RPH.SEQ ) AS MIN_DATE
+			   	 	 ,RPH.CRT_USER
+			   	 	 ,RPH.REMOTE
+			   	 	 ,(CASE
+			      		WHEN RWD.DEL_YN = 'T' THEN  TO_CHAR(RWD.UPT_DATE , 'YYYY/MM/DD') ||' 접수취소 ' || RPH.REMARK
+			      		ELSE RPH.REMARK
+			    		END ) REMARK
+			    	 ,TO_CHAR(RWD.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+			    	 ,8 AS ACCEPT_GBN
+			    	 ,RWM.EVENT_NAME AS DETAIL_NAME
+			    	 ,TO_CHAR(RWD.EVENT_CD) AS DETAIL_CODE
+			    	 ,RPH.APPROVAL_GBN  
+				FROM REC_WEPAE_CHONHON_DETAIL RWD
+					,(SELECT TEMPLE_CD 
+							,SEQ 
+							,ACCEPT_SEQ 
+							,SUB_DATE 
+							,AMOUNT 
+							,CRT_USER
+							,REMOTE
+							,REMARK
+		                    ,APPROVAL_GBN 
+					    FROM REC_PAYMENT_HIS
+					   WHERE TEMPLE_CD = '${V_TEMPLE_CD}'
+						 AND SUB_DATE LIKE '${V_DATE}' || '%'
+						 <if test="V_USER_ID != '' and V_USER_ID != null  ">
+						 AND CRT_USER = '${V_USER_ID}'
+						 </if>
+					  )  RPH, REC_WEPAE_CHONHON_MGT RWM
+			WHERE RWD.TEMPLE_CD = RPH.TEMPLE_CD
+				AND RWD.SEQ = RPH.SEQ
+				AND RWD.ACCEPT_SEQ = RPH.ACCEPT_SEQ	
+				AND RWD.TEMPLE_CD  = RWM.TEMPLE_CD 
+				AND RWD.EVENT_CD   = RWM.EVENT_CD
+				AND RWD.TEMPLE_CD  = '${V_TEMPLE_CD}'
+			  UNION ALL
+			 SELECT RPH.TEMPLE_CD
+			       ,RPH.SEQ
+			       ,RPH.ACCEPT_SEQ
+			       ,RPH.SUB_DATE
+			       ,RPH.AMOUNT
+			       ,(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RPH.TEMPLE_CD AND ACCEPT_SEQ = RPH.ACCEPT_SEQ  AND SEQ = RPH.SEQ ) AS MIN_DATE
+			       ,RPH.CRT_USER
+			       ,RPH.REMOTE
+			       ,(CASE
+			        	WHEN RSD.DEL_YN = 'T' THEN  TO_CHAR(RSD.UPT_DATE , 'YYYY/MM/DD') ||' 접수취소 ' || RPH.REMARK
+			        	ELSE RPH.REMARK
+			     	  END ) REMARK
+			       ,TO_CHAR(RSD.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+			       ,9 AS ACCEPT_GBN
+			       ,RSM.SUPPORT_NM AS DETAIL_NAME
+			       ,TO_CHAR(RSD.SUPPORT_CODE) AS DETAIL_CODE
+			       ,RPH.APPROVAL_GBN 
+			   FROM REC_SUPPORT_DETAIL RSD
+			   	   ,(SELECT TEMPLE_CD 
+						   ,SEQ 
+						   ,ACCEPT_SEQ 
+						   ,SUB_DATE 
+						   ,AMOUNT 
+						   ,CRT_USER
+						   ,REMOTE
+						   ,REMARK
+		                   ,APPROVAL_GBN
+					   FROM REC_PAYMENT_HIS
+					  WHERE TEMPLE_CD = '${V_TEMPLE_CD}'
+						AND SUB_DATE LIKE '${V_DATE}' || '%'
+						<if test="V_USER_ID != '' and V_USER_ID != null  ">
+						AND CRT_USER = '${V_USER_ID}'
+						</if>
+					) RPH
+				   ,REC_SUPPORT_MGT RSM
+			  WHERE RSD.TEMPLE_CD    = RPH.TEMPLE_CD
+				AND RSD.ACCEPT_SEQ   = RPH.ACCEPT_SEQ
+				AND RSD.SEQ          = RPH.SEQ
+				AND RSD.TEMPLE_CD    = RSM.TEMPLE_CD
+				AND RSD.SUPPORT_CODE = RSM.SUPPORT_CODE
+				AND RSD.TEMPLE_CD    = '${V_TEMPLE_CD}'
+			  UNION ALL
+			 SELECT RPH.TEMPLE_CD
+			 	   ,RPH.SEQ
+			 	   ,RPH.ACCEPT_SEQ
+			 	   ,RPH.SUB_DATE
+			 	   ,RPH.AMOUNT
+			 	   ,(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RPH.TEMPLE_CD AND ACCEPT_SEQ = RPH.ACCEPT_SEQ  AND SEQ = RPH.SEQ ) AS MIN_DATE
+			 	   ,RPH.CRT_USER
+			 	   ,RPH.REMOTE, 		        
+		        	(CASE
+			        	WHEN RPD.DEL_YN = 'T' THEN  TO_CHAR(RPD.UPT_DATE , 'YYYY/MM/DD') ||' 접수취소 ' || RPH.REMARK
+			        	ELSE RPH.REMARK
+			     	 END ) REMARK
+			       ,TO_CHAR(RPD.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+			       ,10 AS ACCEPT_GBN
+			       ,RPM.BUD_BOX_NM AS DETAIL_NAME
+			       ,TO_CHAR(RPD.SEQ_NO) AS DETAIL_CODE
+		           ,RPH.APPROVAL_GBN
+		      FROM REC_BUD_BOX_DETAIL RPD
+		      	  ,(SELECT TEMPLE_CD 
+		                  ,SEQ 
+		                  ,ACCEPT_SEQ 
+		                  ,SUB_DATE 
+		                  ,AMOUNT 
+		                  ,CRT_USER
+		                  ,REMOTE
+		                  ,REMARK
+		                  ,APPROVAL_GBN
+		              FROM REC_PAYMENT_HIS
+		             WHERE TEMPLE_CD = '${V_TEMPLE_CD}'
+		               AND SUB_DATE LIKE '${V_DATE}' || '%'
+		               <if test="V_USER_ID != '' and V_USER_ID != null  ">
+		               AND CRT_USER = '${V_USER_ID}'
+		               </if>
+		           ) RPH
+		          , REC_BUD_BOX_MGT RPM
+		    WHERE RPD.TEMPLE_CD = RPH.TEMPLE_CD
+		        AND RPD.ACCEPT_SEQ  = RPH.ACCEPT_SEQ
+		        AND RPD.SEQ 		= RPH.SEQ
+		        AND RPD.TEMPLE_CD   = RPM.TEMPLE_CD
+		        AND RPD.SEQ_NO      = RPM.SEQ_NO
+		        AND RPD.TEMPLE_CD   = '${V_TEMPLE_CD}'
+			UNION ALL
+			SELECT RPH.TEMPLE_CD
+				  ,RPH.SEQ
+				  ,RPH.ACCEPT_SEQ
+				  ,RPH.SUB_DATE
+				  ,RPH.AMOUNT
+				  ,(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RPH.TEMPLE_CD AND ACCEPT_SEQ = RPH.ACCEPT_SEQ  AND SEQ = RPH.SEQ ) AS MIN_DATE
+				  ,RPH.CRT_USER
+				  ,RPH.REMOTE
+				  ,(CASE
+			        	WHEN RSD.DEL_YN = 'T' THEN  TO_CHAR(RSD.UPT_DATE , 'YYYY/MM/DD') ||' 접수취소 ' || RPH.REMARK
+			        	ELSE RPH.REMARK
+			     	END ) REMARK
+			      ,TO_CHAR(RSD.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+			      ,11 AS ACCEPT_GBN
+			      ,RSM.TEMPLE_STAY_NM AS DETAIL_NAME
+			      ,TO_CHAR(RSD.TEMPLE_STAY_CD) AS DETAIL_CODE
+			      ,RPH.APPROVAL_GBN 
+			 FROM REC_TEMPLE_STAY_DETAIL RSD
+			 	 ,(SELECT TEMPLE_CD 
+						 ,SEQ 
+						 ,ACCEPT_SEQ 
+						 ,SUB_DATE 
+						 ,AMOUNT 
+						 ,CRT_USER
+						 ,REMOTE
+						 ,REMARK
+		                 ,APPROVAL_GBN
+					FROM REC_PAYMENT_HIS
+				   WHERE TEMPLE_CD = '${V_TEMPLE_CD}'
+					 AND SUB_DATE LIKE '${V_DATE}' || '%'
+					 <if test="V_USER_ID != '' and V_USER_ID != null  ">
+					 AND CRT_USER = '${V_USER_ID}'
+					 </if>
+				  ) RPH, REC_TEMPLE_STAY_MGT RSM
+			  WHERE RSD.TEMPLE_CD  		= RPH.TEMPLE_CD
+				AND RSD.ACCEPT_SEQ 		= RPH.ACCEPT_SEQ
+				AND RSD.SEQ        		= RPH.SEQ
+				AND RSD.TEMPLE_CD 		= RSM.TEMPLE_CD
+				AND RSD.TEMPLE_STAY_CD	= RSM.TEMPLE_STAY_CD
+				AND RSD.FDATE= RSM.FDATE				
+				AND RSD.TEMPLE_CD = '${V_TEMPLE_CD}'
+			UNION ALL
+			SELECT RPH.TEMPLE_CD
+				   ,RPH.SEQ
+				   ,RPH.ACCEPT_SEQ
+				   ,RPH.SUB_DATE
+				   ,RPH.AMOUNT
+				   ,(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RPH.TEMPLE_CD AND ACCEPT_SEQ = RPH.ACCEPT_SEQ  AND SEQ = RPH.SEQ ) AS MIN_DATE
+				   ,RPH.CRT_USER
+				   ,RPH.REMOTE
+				   ,(CASE
+			        	WHEN RYD.DEL_YN = 'T' THEN  TO_CHAR(RYD.UPT_DATE , 'YYYY/MM/DD') ||' 접수취소 ' || RPH.REMARK
+			        	ELSE RPH.REMARK
+			     	 END ) REMARK
+			       ,TO_CHAR(RYD.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+			       ,12 AS ACCEPT_GBN
+			       ,AJM.JUNGAK_NM AS DETAIL_NAME
+			       ,TO_CHAR(RYD.JUNGAK_CD) AS DETAIL_CODE
+		           ,RPH.APPROVAL_GBN 
+			 FROM REC_WONBUL_DETAIL RYD
+				 ,(SELECT TEMPLE_CD 
+						 ,SEQ 
+						 ,ACCEPT_SEQ 
+						 ,SUB_DATE 
+						 ,AMOUNT 
+						 ,CRT_USER
+						 ,REMOTE
+						 ,REMARK
+		                 ,APPROVAL_GBN
+					 FROM REC_PAYMENT_HIS
+					WHERE TEMPLE_CD  = '${V_TEMPLE_CD}'
+					  AND SUB_DATE LIKE '${V_DATE}' || '%'
+					  <if test="V_USER_ID != '' and V_USER_ID != null  ">
+						AND CRT_USER = '${V_USER_ID}'
+					  </if>
+				   ) RPH
+				  , ASP_JUNGAK_MGT AJM
+			WHERE RYD.TEMPLE_CD 	= RPH.TEMPLE_CD
+				AND RYD.SEQ 		= RPH.SEQ
+				AND RYD.ACCEPT_SEQ	= RPH.ACCEPT_SEQ
+				AND RYD.TEMPLE_CD 	= AJM.TEMPLE_CD
+				AND RYD.JUNGAK_CD 	= AJM.JUNGAK_CD
+				AND RYD.ACCEPT_GBN 	= AJM.ACCEPT_GBN
+				AND RPH.TEMPLE_CD 	= '${V_TEMPLE_CD}'
+			UNION ALL	
+			SELECT RPH.TEMPLE_CD
+				  ,RPH.SEQ
+				  ,RPH.ACCEPT_SEQ
+				  ,RPH.SUB_DATE
+				  ,RPH.AMOUNT
+				  ,(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RPH.TEMPLE_CD AND ACCEPT_SEQ = RPH.ACCEPT_SEQ  AND SEQ = RPH.SEQ ) AS MIN_DATE
+				  ,RPH.CRT_USER
+				  ,RPH.REMOTE
+				  ,(CASE
+			        	WHEN RPD.DEL_YN = 'T' THEN  TO_CHAR(RPD.UPT_DATE , 'YYYY/MM/DD') ||' 접수취소 ' || RPH.REMARK
+			        	ELSE RPH.REMARK
+			     	END ) REMARK
+			      ,TO_CHAR(RPD.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+			      ,13 AS ACCEPT_GBN
+			      ,RPM.PRAY_NM AS DETAIL_NAME
+			      ,RPD.PRAY_CODE AS DETAIL_CODE
+			      ,RPH.APPROVAL_GBN
+			  FROM REC_ALWAYS_PRAY_DETAIL RPD
+			  	  ,(SELECT TEMPLE_CD 
+						  ,SEQ 
+						  ,ACCEPT_SEQ 
+						  ,SUB_DATE 
+						  ,AMOUNT 
+						  ,CRT_USER
+						  ,REMOTE
+						  ,REMARK
+		                  ,APPROVAL_GBN
+					  FROM REC_PAYMENT_HIS
+					 WHERE TEMPLE_CD = '${V_TEMPLE_CD}'
+					   AND SUB_DATE LIKE '${V_DATE}' || '%'
+					   <if test="V_USER_ID != '' and V_USER_ID != null  ">
+					   AND CRT_USER  = '${V_USER_ID}'
+					   </if>
+					) RPH
+				   , REC_ALWAYS_PRAY_MGT RPM
+			WHERE RPD.TEMPLE_CD    = RPH.TEMPLE_CD
+				AND RPD.ACCEPT_SEQ = RPH.ACCEPT_SEQ
+				AND RPD.SEQ        = RPH.SEQ
+				AND RPD.TEMPLE_CD  = RPM.TEMPLE_CD
+				AND RPD.PRAY_CODE  = RPM.PRAY_CODE
+				AND RPD.TEMPLE_CD  = '${V_TEMPLE_CD}'
+		      UNION ALL 
+		     SELECT RPH.TEMPLE_CD
+		     	   ,RPH.SEQ
+		     	   ,RPH.ACCEPT_SEQ
+		     	   ,RPH.SUB_DATE
+		     	   ,RPH.AMOUNT
+		     	   ,(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RPH.TEMPLE_CD AND ACCEPT_SEQ = RPH.ACCEPT_SEQ  AND SEQ = RPH.SEQ ) AS MIN_DATE
+		     	   ,RPH.CRT_USER
+		     	   ,RPH.REMOTE
+		     	   ,(CASE
+		        		WHEN RYD.DEL_YN = 'T' THEN  TO_CHAR(RYD.UPT_DATE , 'YYYY/MM/DD') ||' 접수취소 ' || RPH.REMARK
+		        		ELSE RPH.REMARK
+		     		  END ) REMARK
+		     	   ,TO_CHAR(RYD.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+		     	   ,14 AS ACCEPT_GBN
+		     	   ,AJM.JUNGAK_NM||'-'||RYD.LIGHT_NO AS DETAIL_NAME
+		     	   ,TO_CHAR(RYD.JUNGAK_CD) AS DETAIL_CODE
+		     	   ,RPH.APPROVAL_GBN
+		  	  FROM REC_YOUNGTOP_DETAIL RYD
+		  	  	  ,(SELECT TEMPLE_CD 
+		          		  ,SEQ 
+		          		  ,ACCEPT_SEQ 
+		          		  ,SUB_DATE 
+		          		  ,AMOUNT 
+		          		  ,CRT_USER
+		          		  ,REMOTE
+		          		  ,REMARK
+		          		  ,APPROVAL_GBN
+		        	  FROM REC_PAYMENT_HIS
+		        	 WHERE TEMPLE_CD = '${V_TEMPLE_CD}'
+		        	   AND SUB_DATE LIKE '${V_DATE}' || '%'
+		        	   <if test="V_USER_ID != '' and V_USER_ID != null  ">
+		        	   AND CRT_USER  = '${V_USER_ID}'
+		        	   </if>
+		           ) RPH
+		          , ASP_JUNGAK_MGT AJM
+		     WHERE RYD.TEMPLE_CD  = RPH.TEMPLE_CD
+		       AND RYD.SEQ        = RPH.SEQ
+		       AND RYD.ACCEPT_SEQ = RPH.ACCEPT_SEQ
+		       AND RYD.TEMPLE_CD  = AJM.TEMPLE_CD
+		       AND RYD.JUNGAK_CD  = AJM.JUNGAK_CD
+		       AND RYD.ACCEPT_GBN = AJM.ACCEPT_GBN
+		       AND RPH.TEMPLE_CD  = '${V_TEMPLE_CD}'
+		  	 UNION ALL
+		  	SELECT RPH.TEMPLE_CD
+		  		  ,RPH.SEQ
+		  		  ,RPH.ACCEPT_SEQ
+		  		  ,RPH.SUB_DATE
+		  		  ,RPH.AMOUNT
+		  		  ,(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RPH.TEMPLE_CD AND ACCEPT_SEQ = RPH.ACCEPT_SEQ  AND SEQ = RPH.SEQ ) AS MIN_DATE
+		  		  ,RPH.CRT_USER
+		  		  ,RPH.REMOTE
+		  		  ,(CASE
+		        		WHEN RSD.DEL_YN = 'T' THEN  TO_CHAR(RSD.UPT_DATE , 'YYYY/MM/DD') ||' 접수취소 ' || RPH.REMARK
+		        		ELSE RPH.REMARK
+		     		END ) REMARK
+		     	  ,TO_CHAR(RSD.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+		     	  ,15 AS ACCEPT_GBN
+		     	  ,RSM.MANAGE_NM AS DETAIL_NAME
+		     	  ,TO_CHAR(RSD.MANAGE_CODE) AS DETAIL_CODE
+		     	  ,RPH.APPROVAL_GBN 
+		  	  FROM REC_MANAGE_DETAIL RSD
+		  	  	  ,(SELECT TEMPLE_CD 
+		          		  ,SEQ 
+		          		  ,ACCEPT_SEQ 
+		          		  ,SUB_DATE 
+		          		  ,AMOUNT 
+		          		  ,CRT_USER
+		          		  ,REMOTE
+		          		  ,REMARK
+		          		  ,APPROVAL_GBN
+		        	  FROM REC_PAYMENT_HIS
+		        	 WHERE TEMPLE_CD = '${V_TEMPLE_CD}'
+		        	   AND SUB_DATE LIKE '${V_DATE}' || '%'
+		        	   <if test="V_USER_ID != '' and V_USER_ID != null  ">
+		        	   AND CRT_USER  = '${V_USER_ID}'
+		        	   </if>
+		            ) RPH
+		          ,REC_MANAGE_MGT RSM
+		  	 WHERE RSD.TEMPLE_CD   = RPH.TEMPLE_CD
+		       AND RSD.ACCEPT_SEQ  = RPH.ACCEPT_SEQ
+		       AND RSD.SEQ         = RPH.SEQ
+		       AND RSD.TEMPLE_CD   = RSM.TEMPLE_CD
+		       AND RSD.MANAGE_CODE = RSM.MANAGE_CODE
+		       AND RSD.TEMPLE_CD   = '${V_TEMPLE_CD}'
+		) RD
+		, REC_MASTER RM, ASP_CODE_MGT ACM
+		WHERE RD.TEMPLE_CD     = RM.TEMPLE_CD
+			AND RD.ACCEPT_SEQ  = RM.ACCEPT_SEQ 
+			AND ACM.GROUP_CD   = 'REC'
+			AND ACM.USE_YN     = 'Y'
+			AND ACM.CODE       = RD.ACCEPT_GBN
+		UNION ALL
+		SELECT SGEH.TEMPLE_CD
+			  ,0 AS SEQ
+			  ,SGEH.BUD_NO  AS PROPOSAL_BUD_NO
+			  ,FN_GET_NM('BUD',SGEH.TEMPLE_CD,SGEH.BUD_NO) AS NAME_KOR
+			  ,( SELECT TELNO1 || '-' || TELNO2 || '-' || TELNO3 FROM SIN_CARD_MASTER WHERE TEMPLE_CD = SGEH.TEMPLE_CD AND BUD_NO = SGEH.BUD_NO) AS TELNO
+			  ,'' AS ACCEPT_SEQ
+			  ,RECEIPT_DATE AS SUB_DATE
+			  ,SGEH.AMOUNT
+			  ,1 AS CNT
+			  ,SGEH.CRT_USER
+			  ,SGEH.REMOTE
+			  ,SGEH.REMARK
+			  ,TO_CHAR(SGEH.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+			  ,100 AS ACCEPT_GBN
+			  ,SGM.ORG_NAME || ' 가입비' AS NAME
+			  ,'' AS DETAIL_NAME
+			  ,TO_CHAR(SGM.ORG_CD) AS DETAIL_CODE
+			  ,'1' AS APPROVAL_GBN
+			  ,( CASE WHEN TO_NUMBER(SGEH.AMOUNT) > 0 THEN TO_NUMBER(SGEH.AMOUNT) ELSE 0 END ) as P_AMOUNT
+		      ,( CASE WHEN TO_NUMBER(SGEH.AMOUNT) &lt; 0 THEN ABS( TO_NUMBER(SGEH.AMOUNT) ) ELSE 0 END  ) as M_AMOUNT
+		  FROM SIN_GROUP_ENTRANCE_HIS SGEH, SIN_GROUP_MGT SGM
+		 WHERE SGEH.TEMPLE_CD 	 = SGM.TEMPLE_CD
+		   AND SGEH.ORG_CD 		 = SGM.ORG_CD
+		   AND SGEH.TEMPLE_CD 	 = '${V_TEMPLE_CD}'
+		   AND SGEH.RECEIPT_DATE = '${V_DATE}'
+		   <if test="V_USER_ID != '' and V_USER_ID != null  ">
+		   AND SGEH.CRT_USER 	 = '${V_USER_ID}'
+		   </if>
+		UNION ALL
+		SELECT SGF.TEMPLE_CD
+			  ,0 AS SEQ
+			  ,SGF.BUD_NO  AS PROPOSAL_BUD_NO
+			  ,FN_GET_NM('BUD',SGF.TEMPLE_CD,SGF.BUD_NO) AS NAME_KOR
+			  ,( SELECT TELNO1 || '-' || TELNO2 || '-' || TELNO3 FROM SIN_CARD_MASTER WHERE TEMPLE_CD = SGF.TEMPLE_CD AND BUD_NO = SGF.BUD_NO) AS TELNO
+			  ,'' AS ACCEPT_SEQ
+			  ,RECEIPT_DATE  AS SUB_DATE
+			  ,SGM.FEE_AMT
+			  ,1 AS CNT
+			  ,SGF.CRT_USER
+			  ,SGF.REMOTE
+			  ,SGF.REMARK
+			  ,TO_CHAR(SGF.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+			  ,200 AS ACCEPT_GBN
+			  ,SGM.ORG_NAME || ' 회비' AS NAME
+			  ,'' AS DETAIL_NAME
+			  ,TO_CHAR(SGM.ORG_CD) AS DETAIL_CODE
+			  ,'1' AS APPROVAL_GBN
+			  ,( CASE WHEN TO_NUMBER(SGM.FEE_AMT) > 0 THEN TO_NUMBER(SGM.FEE_AMT) ELSE 0 END ) as P_AMOUNT
+		      ,( CASE WHEN TO_NUMBER(SGM.FEE_AMT) &lt; 0 THEN ABS( TO_NUMBER(SGM.FEE_AMT) ) ELSE 0 END  ) as M_AMOUNT
+		  FROM SIN_GROUP_FEE SGF
+		      ,SIN_GROUP_MGT SGM
+		 WHERE SGF.TEMPLE_CD    = SGM.TEMPLE_CD
+		   AND SGF.ORG_CD 		= SGM.ORG_CD
+		   AND SGF.TEMPLE_CD    = '${V_TEMPLE_CD}'
+		   AND SGF.RECEIPT_DATE = '${V_DATE}'
+		   <if test="V_USER_ID != '' and V_USER_ID != null  ">
+		   AND SGF.CRT_USER     = '${V_USER_ID}'
+		   </if>
+		UNION ALL
+		SELECT AMTM.TEMPLE_CD
+			  ,0 AS SEQ
+			  ,'' AS PROPOSAL_BUD_NO
+			  ,(SELECT USER_NM FROM ASP_TEMPLE_USER WHERE TEMPLE_CD = AMTM.TEMPLE_CD AND USER_ID = AMTM.USER_ID) AS NAME_KOR
+			  ,'' AS TELNO
+			  ,'' AS ACCEPT_SEQ
+			  ,AMTM.ACT_DATE
+			  ,DECODE(AMTM.IE_GBN,'I',AMTM.AMOUNT,AMTM.AMOUNT*-1) AS AMOUNT
+			  ,1 AS CNT
+			  ,AMTM.CRT_USER
+			  ,AMTM.REMOTE
+			  ,AMTM.REMARK
+			  ,AMTM.ACT_DATE AS CRT_DATE
+			  ,300 AS ACCEPT_GBN
+			  ,'현금출납' AS NAME
+			  ,AA.MOK_NAME AS DETAIL_NAME
+			  ,TO_CHAR(AMTM.KWAN || AMTM.HANG	|| AMTM.MOK ) AS DETAIL_CODE
+			  ,NVL(AMTM.APPROVAL_GBN,'1') AS APPROVAL_GBN
+			  ,DECODE(AMTM.IE_GBN,'I',AMTM.AMOUNT,0) as P_AMOUNT
+		      ,DECODE(AMTM.IE_GBN,'I',0,AMTM.AMOUNT) as M_AMOUNT
+		 FROM ACC_MONEY_TEMP_MGT 	AMTM
+		     ,ACC_ACCOUNTS 			AA
+		WHERE AMTM.TEMPLE_CD		= AA.TEMPLE_CD
+		  AND AMTM.ACCT_GBN			= AA.ACCT_GBN
+		  AND AMTM.IE_GBN			= AA.IE_GBN
+		  AND AMTM.KWAN				= AA.KWAN
+		  AND AMTM.HANG				= AA.HANG
+		  AND AMTM.MOK				= AA.MOK
+		  AND AMTM.TEMPLE_CD 		= '${V_TEMPLE_CD}'
+		  AND AMTM.ACT_DATE 		= '${V_DATE}'
+		  <if test="V_USER_ID != '' and V_USER_ID != null  ">
+		  AND AMTM.CRT_USER			= '${V_USER_ID}'
+		  </if>
+		ORDER BY ACCEPT_GBN
+				,DETAIL_CODE
+				,DETAIL_NAME
+				,SUB_DATE
+				,PROPOSAL_BUD_NO	 
+	</select>
+
+	
+	<!-- # 공통코드 본 정보 조회정보조회(선택) # -->
+	<select id="SELECT_SELECT_DAILYREPORT"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT 
+		    A.TEMPLE_CD,
+			A.ACCEPT_GBN,
+			A.NAME,
+			A.DETAIL_CODE,
+			A.DETAIL_NAME,
+			A.USER_NM,
+		    SUM(A.CNT) AS  CNT,
+		    SUM(CASH_AMOUNT) AS CASH_AMOUNT,
+		    SUM(CASH_AMOUNT + CMS_AMOUNT) AS CASH_CMS_AMOUNT,
+			SUM(CARD_AMOUNT) AS CARD_AMOUNT,
+		    SUM(CMS_AMOUNT) AS  CMS_AMOUNT,
+		    SUM(MU_AMOUNT) AS  MU_AMOUNT,
+		    SUM(A.AMOUNT_SUM) AS AMOUNT_SUM
+		   FROM (
+			SELECT 
+				A.TEMPLE_CD,
+				A.ACCEPT_GBN,
+				A.NAME,
+				A.DETAIL_CODE,
+				A.DETAIL_NAME,
+				A.USER_NM,
+				DECODE(A.APPROVAL_GBN,'1',A.AMOUNT_SUM,0) AS CASH_AMOUNT,
+			    DECODE(A.APPROVAL_GBN,'2',A.AMOUNT_SUM,0) AS CARD_AMOUNT,
+			    DECODE(A.APPROVAL_GBN,'3',A.AMOUNT_SUM,0) AS CMS_AMOUNT,
+			    DECODE(A.APPROVAL_GBN,'4',A.AMOUNT_SUM,0) AS MU_AMOUNT,
+			    AMOUNT_SUM,
+				A.CNT,
+				A.APPROVAL_GBN
+			FROM (
+				SELECT /*+ RULE */
+					RD.TEMPLE_CD,
+					RD.ACCEPT_GBN,
+					ACM.NAME,
+					RD.DETAIL_CODE,
+					RD.DETAIL_NAME,
+					NVL(ATU.USER_NM,'자동이체') USER_NM,
+					SUM(RD.AMOUNT) AS AMOUNT_SUM,   
+					SUM(CNT) AS CNT,
+				    RD.APPROVAL_GBN
+				FROM (
+					SELECT
+						RD.TEMPLE_CD, 
+						RD.ACCEPT_GBN,
+						RD.DETAIL_CODE,
+						RD.DETAIL_NAME,
+						RD.CRT_USER,
+						DECODE(RD.SUB_DATE,RD.MIN_DATE,1,0) AS CNT,
+						RD.AMOUNT,
+				        RD.APPROVAL_GBN
+					FROM (
+						SELECT 
+							RPD.TEMPLE_CD, 
+							1 AS ACCEPT_GBN,
+							RPD.PRAY_CODE AS DETAIL_CODE,
+							RPM.PRAY_NM AS DETAIL_NAME,
+							RPH.CRT_USER,
+							RPH.SUB_DATE,
+							(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RPD.TEMPLE_CD AND ACCEPT_SEQ = RPD.ACCEPT_SEQ  AND SEQ = RPD.SEQ ) AS MIN_DATE,
+							RPH.AMOUNT,
+				            RPH.APPROVAL_GBN
+					     FROM  REC_PRAY_DETAIL RPD,
+					          (SELECT 
+									TEMPLE_CD 
+									,SEQ 
+									,ACCEPT_SEQ 
+									,SUB_DATE 
+									,AMOUNT 
+									,CRT_USER
+				                    ,APPROVAL_GBN   
+								FROM REC_PAYMENT_HIS
+								WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+								AND SUB_DATE LIKE #{V_DATE} || '%' 
+							    ) RPH, 
+								REC_PRAY_MGT RPM
+						WHERE RPD.TEMPLE_CD   = RPH.TEMPLE_CD
+						  AND RPD.ACCEPT_SEQ  = RPH.ACCEPT_SEQ
+						  AND RPD.SEQ         = RPH.SEQ
+						  AND RPD.TEMPLE_CD   = RPM.TEMPLE_CD
+						  AND RPD.PRAY_GBN    = RPM.PRAY_GBN
+						  AND RPD.PRAY_CODE   = RPM.PRAY_CODE
+						  AND RPD.FDATE       = RPM.FDATE
+						  AND RPD.TEMPLE_CD   = #{V_TEMPLE_CD}			
+						 UNION ALL
+						SELECT 
+							RID.TEMPLE_CD, 
+							2 AS ACCEPT_GBN,
+							TO_CHAR(RID.JUNGAK_CD) AS DETAIL_CODE,
+							AJM.JUNGAK_NM AS DETAIL_NAME,
+							RPH.CRT_USER,
+							RPH.SUB_DATE,
+							(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RID.TEMPLE_CD AND ACCEPT_SEQ = RID.ACCEPT_SEQ  AND SEQ = RID.SEQ ) AS MIN_DATE,
+							RPH.AMOUNT,
+				            RPH.APPROVAL_GBN
+						FROM REC_INDEUNG_DETAIL RID, 
+						     (SELECT 
+									TEMPLE_CD 
+									,SEQ 
+									,ACCEPT_SEQ 
+									,SUB_DATE 
+									,AMOUNT 
+									,CRT_USER
+				                    ,APPROVAL_GBN
+								FROM REC_PAYMENT_HIS
+								WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+								AND SUB_DATE LIKE #{V_DATE} || '%'
+							  ) RPH, 
+							  ASP_JUNGAK_MGT AJM
+						 WHERE RID.TEMPLE_CD = RPH.TEMPLE_CD
+						   AND RID.ACCEPT_SEQ = RPH.ACCEPT_SEQ
+						   AND RID.SEQ = RPH.SEQ
+						   AND RID.TEMPLE_CD  = AJM.TEMPLE_CD
+						   AND RID.JUNGAK_CD  = AJM.JUNGAK_CD
+						   AND RID.ACCEPT_GBN = AJM.ACCEPT_GBN
+						   AND RID.TEMPLE_CD  = #{V_TEMPLE_CD}
+				        UNION ALL
+						SELECT 
+							RBD.TEMPLE_CD,
+							3 AS ACCEPT_GBN,
+							TO_CHAR(RBD.BULSA_CD) AS DETAIL_CODE,
+							RBM.BULSA_NM AS DETAIL_NAME,
+							RPH.CRT_USER,
+							RPH.SUB_DATE,
+							(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RBD.TEMPLE_CD AND ACCEPT_SEQ = RBD.ACCEPT_SEQ  AND SEQ = RBD.SEQ ) AS MIN_DATE,
+							RPH.AMOUNT,
+				            RPH.APPROVAL_GBN
+						  FROM REC_BULSA_DETAIL RBD, 
+						       (SELECT 
+									TEMPLE_CD 
+									,SEQ 
+									,ACCEPT_SEQ 
+									,SUB_DATE 
+									,AMOUNT 
+									,CRT_USER
+				                    ,APPROVAL_GBN
+								FROM REC_PAYMENT_HIS
+								WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+								AND SUB_DATE LIKE #{V_DATE} || '%'
+							  ) RPH, 
+							  REC_BULSA_MGT RBM
+						 WHERE RBD.TEMPLE_CD  = RPH.TEMPLE_CD
+						   AND RBD.SEQ        = RPH.SEQ
+						   AND RBD.ACCEPT_SEQ = RPH.ACCEPT_SEQ	
+						   AND RBD.TEMPLE_CD  = RBM.TEMPLE_CD 
+						   AND RBD.BULSA_CD   = RBM.BULSA_CD
+						   AND RBM.ACPT_FDATE = '-1'
+						   AND RBD.TEMPLE_CD  = #{V_TEMPLE_CD}
+						UNION ALL
+						SELECT 
+							RPH.TEMPLE_CD, 
+							4 AS ACCEPT_GBN,
+							TO_CHAR(RYD.JUNGAK_CD) AS DETAIL_CODE,
+							AJM.JUNGAK_NM AS DETAIL_NAME,
+							RPH.CRT_USER,
+							RPH.SUB_DATE,
+							(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RYD.TEMPLE_CD AND ACCEPT_SEQ = RYD.ACCEPT_SEQ  AND SEQ = RYD.SEQ ) AS MIN_DATE,
+							RPH.AMOUNT,
+				            RPH.APPROVAL_GBN
+						FROM REC_YEONDEUNG_DETAIL RYD, 
+						     (SELECT 
+									TEMPLE_CD 
+									,SEQ 
+									,ACCEPT_SEQ 
+									,SUB_DATE 
+									,AMOUNT 
+									,CRT_USER
+				                    ,APPROVAL_GBN
+								FROM REC_PAYMENT_HIS
+								WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+								AND SUB_DATE LIKE #{V_DATE} || '%'
+							  ) RPH, 
+							  ASP_JUNGAK_MGT AJM
+						WHERE RYD.TEMPLE_CD  = RPH.TEMPLE_CD
+						  AND RYD.ACCEPT_SEQ = RPH.ACCEPT_SEQ
+						  AND RYD.SEQ        = RPH.SEQ
+						  AND RYD.TEMPLE_CD  = AJM.TEMPLE_CD
+						  AND RYD.JUNGAK_CD  = AJM.JUNGAK_CD
+						  AND RYD.ACCEPT_GBN = AJM.ACCEPT_GBN
+						  AND RPH.TEMPLE_CD  = #{V_TEMPLE_CD}
+						UNION ALL
+						SELECT 
+							RPH.TEMPLE_CD,
+							5 AS ACCEPT_GBN,
+							'' AS DETAIL_CODE,
+							'49제' AS DETAIL_NAME,
+							RPH.CRT_USER,
+							RPH.SUB_DATE,
+							(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RFD.TEMPLE_CD AND ACCEPT_SEQ = RFD.ACCEPT_SEQ  AND SEQ = RFD.SEQ ) AS MIN_DATE,
+							RPH.AMOUNT,
+				            RPH.APPROVAL_GBN
+						FROM REC_FORTY_NINE_DETAIL RFD, REC_PAYMENT_HIS RPH
+						WHERE RFD.TEMPLE_CD  = RPH.TEMPLE_CD
+						  AND RFD.ACCEPT_SEQ = RPH.ACCEPT_SEQ
+						  AND RFD.SEQ        = RPH.SEQ
+						  AND RFD.TEMPLE_CD   = #{V_TEMPLE_CD}
+						  AND SUB_DATE LIKE #{V_DATE} || '%'
+						UNION ALL
+						SELECT 
+							RGD.TEMPLE_CD, 
+							6 AS ACCEPT_GBN,
+							'' AS DETAIL_CODE,
+							'기제' AS DETAIL_NAME,
+							RPH.CRT_USER,
+							RPH.SUB_DATE,
+							(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RGD.TEMPLE_CD AND ACCEPT_SEQ = RGD.ACCEPT_SEQ  AND SEQ = RGD.SEQ ) AS MIN_DATE,
+							RPH.AMOUNT,
+				            RPH.APPROVAL_GBN
+						FROM REC_GIJE_DETAIL RGD, REC_PAYMENT_HIS RPH
+						WHERE RGD.TEMPLE_CD  = RPH.TEMPLE_CD
+						  AND RGD.ACCEPT_SEQ = RPH.ACCEPT_SEQ
+						  AND RGD.SEQ        = RPH.SEQ
+						  AND RGD.TEMPLE_CD  = #{V_TEMPLE_CD}
+						  AND SUB_DATE LIKE #{V_DATE} || '%'
+						UNION ALL
+						SELECT 
+							RPH.TEMPLE_CD, 
+							7 AS ACCEPT_GBN,
+							'' AS DETAIL_CODE,
+							'천도제' AS DETAIL_NAME,
+							RPH.CRT_USER,
+							RPH.SUB_DATE,
+							(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RCD.TEMPLE_CD AND ACCEPT_SEQ = RCD.ACCEPT_SEQ  AND SEQ = RCD.SEQ ) AS MIN_DATE,
+							RPH.AMOUNT,
+				            RPH.APPROVAL_GBN
+						FROM REC_CHONDOJE_DETAIL RCD, 
+						     REC_PAYMENT_HIS RPH
+						WHERE RCD.TEMPLE_CD     = RPH.TEMPLE_CD
+							AND RCD.ACCEPT_SEQ  = RPH.ACCEPT_SEQ
+							AND RCD.SEQ         = RPH.SEQ
+							AND RCD.TEMPLE_CD   = #{V_TEMPLE_CD}
+							AND SUB_DATE LIKE #{V_DATE} || '%'
+						UNION ALL
+						SELECT 
+							RPH.TEMPLE_CD, 
+							8 AS ACCEPT_GBN,
+							TO_CHAR(RWD.EVENT_CD) AS DETAIL_CODE,
+							RWM.EVENT_NAME AS DETAIL_NAME,
+							RPH.CRT_USER, 
+							RPH.SUB_DATE,
+							(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RWD.TEMPLE_CD AND ACCEPT_SEQ = RWD.ACCEPT_SEQ  AND SEQ = RWD.SEQ ) AS MIN_DATE,
+							RPH.AMOUNT,
+				            RPH.APPROVAL_GBN	
+						FROM REC_WEPAE_CHONHON_DETAIL RWD, 
+							( SELECT 
+									TEMPLE_CD 
+									,SEQ 
+									,ACCEPT_SEQ 
+									,SUB_DATE 
+									,AMOUNT 
+									,CRT_USER
+				                    ,APPROVAL_GBN
+								FROM REC_PAYMENT_HIS
+								WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+								AND SUB_DATE LIKE #{V_DATE} || '%'
+							  ) RPH, 
+							  REC_WEPAE_CHONHON_MGT RWM
+						WHERE RWD.TEMPLE_CD = RPH.TEMPLE_CD
+							AND RWD.ACCEPT_SEQ   = RPH.ACCEPT_SEQ	
+							AND RWD.SEQ          = RPH.SEQ
+							AND RWD.TEMPLE_CD    = RWM.TEMPLE_CD 
+							AND RWD.EVENT_CD     = RWM.EVENT_CD
+							AND RWD.TEMPLE_CD    = #{V_TEMPLE_CD}
+						UNION ALL
+						SELECT 
+							RSD.TEMPLE_CD, 
+							9 AS ACCEPT_GBN,
+							TO_CHAR(RSD.SUPPORT_CODE) AS DETAIL_CODE,
+							RSM.SUPPORT_NM AS DETAIL_NAME,
+							RPH.CRT_USER,
+							RPH.SUB_DATE,
+							(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RSD.TEMPLE_CD AND ACCEPT_SEQ = RSD.ACCEPT_SEQ  AND SEQ = RSD.SEQ ) AS MIN_DATE,
+							RPH.AMOUNT,
+				            RPH.APPROVAL_GBN
+						FROM  REC_SUPPORT_DETAIL RSD, 
+							  (SELECT 
+									TEMPLE_CD 
+									,SEQ 
+									,ACCEPT_SEQ 
+									,SUB_DATE 
+									,AMOUNT 
+									,CRT_USER
+				                    ,APPROVAL_GBN
+								FROM REC_PAYMENT_HIS
+								WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+								AND SUB_DATE LIKE #{V_DATE} || '%'
+							  ) RPH, 
+							  REC_SUPPORT_MGT RSM
+						WHERE RSD.TEMPLE_CD    = RPH.TEMPLE_CD
+						  AND RSD.ACCEPT_SEQ   = RPH.ACCEPT_SEQ
+						  AND RSD.SEQ          = RPH.SEQ
+						  AND RSD.TEMPLE_CD    = RSM.TEMPLE_CD
+						  AND RSD.SUPPORT_CODE = RSM.SUPPORT_CODE
+						  AND RSD.TEMPLE_CD    = #{V_TEMPLE_CD}
+						UNION ALL
+				        SELECT 
+				            RPD.TEMPLE_CD, 
+				            10 AS ACCEPT_GBN,
+				            TO_CHAR(RPD.SEQ_NO) AS DETAIL_CODE,
+				            RPM.BUD_BOX_NM AS DETAIL_NAME,
+				            RPH.CRT_USER,
+				            RPH.SUB_DATE,
+				            (SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RPD.TEMPLE_CD AND ACCEPT_SEQ = RPD.ACCEPT_SEQ  AND SEQ = RPD.SEQ ) AS MIN_DATE,
+				            RPH.AMOUNT,
+				            RPH.APPROVAL_GBN
+				        FROM  REC_BUD_BOX_DETAIL RPD
+				            , (SELECT 
+				                    TEMPLE_CD 
+				                    ,SEQ 
+				                    ,ACCEPT_SEQ 
+				                    ,SUB_DATE 
+				                    ,AMOUNT 
+				                    ,CRT_USER
+				                    ,APPROVAL_GBN
+				                FROM REC_PAYMENT_HIS
+				                WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+				                AND SUB_DATE LIKE #{V_DATE} || '%'
+				               ) RPH, 
+				               REC_BUD_BOX_MGT RPM
+				        WHERE RPD.TEMPLE_CD = RPH.TEMPLE_CD
+				            AND RPD.ACCEPT_SEQ = RPH.ACCEPT_SEQ
+				            AND RPD.SEQ = RPH.SEQ
+				            AND RPD.TEMPLE_CD = RPM.TEMPLE_CD
+				            AND RPD.SEQ_NO= RPM.SEQ_NO
+				            AND RPD.TEMPLE_CD = #{V_TEMPLE_CD}
+						UNION ALL
+						SELECT 
+							RSD.TEMPLE_CD, 
+							11 AS ACCEPT_GBN,
+							TO_CHAR(RSD.TEMPLE_STAY_CD) AS DETAIL_CODE,
+							RSM.TEMPLE_STAY_NM AS DETAIL_NAME,
+							RPH.CRT_USER,
+							RPH.SUB_DATE,
+							(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RSD.TEMPLE_CD AND ACCEPT_SEQ = RSD.ACCEPT_SEQ  AND SEQ = RSD.SEQ ) AS MIN_DATE,
+							RPH.AMOUNT,
+				            RPH.APPROVAL_GBN
+						FROM  REC_TEMPLE_STAY_DETAIL RSD, 
+						    ( SELECT 
+									TEMPLE_CD 
+									,SEQ 
+									,ACCEPT_SEQ 
+									,SUB_DATE 
+									,AMOUNT 
+									,CRT_USER
+				                    ,APPROVAL_GBN
+								FROM REC_PAYMENT_HIS
+								WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+								AND SUB_DATE LIKE #{V_DATE} || '%'
+							  ) RPH, 
+							  REC_TEMPLE_STAY_MGT RSM
+						WHERE RSD.TEMPLE_CD      = RPH.TEMPLE_CD
+						  AND RSD.ACCEPT_SEQ     = RPH.ACCEPT_SEQ
+						  AND RSD.SEQ            = RPH.SEQ
+						  AND RSD.TEMPLE_CD      = RSM.TEMPLE_CD
+						  AND RSD.TEMPLE_STAY_CD = RSM.TEMPLE_STAY_CD
+						  AND RSD.FDATE          = RSM.FDATE
+						  AND RSD.TEMPLE_CD      = #{V_TEMPLE_CD}
+						UNION ALL
+						SELECT 
+							RPH.TEMPLE_CD, 
+							12 AS ACCEPT_GBN,
+							TO_CHAR(RYD.JUNGAK_CD) AS DETAIL_CODE,
+							AJM.JUNGAK_NM AS DETAIL_NAME,
+							RPH.CRT_USER,
+							RPH.SUB_DATE,
+							(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RYD.TEMPLE_CD AND ACCEPT_SEQ = RYD.ACCEPT_SEQ  AND SEQ = RYD.SEQ ) AS MIN_DATE,
+							RPH.AMOUNT,
+				            RPH.APPROVAL_GBN
+						FROM REC_WONBUL_DETAIL RYD, 
+						    (SELECT 
+									TEMPLE_CD 
+									,SEQ 
+									,ACCEPT_SEQ 
+									,SUB_DATE 
+									,AMOUNT 
+									,CRT_USER
+				                    ,APPROVAL_GBN
+								FROM REC_PAYMENT_HIS
+								WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+								AND SUB_DATE LIKE #{V_DATE} || '%'
+							  ) RPH
+							  , ASP_JUNGAK_MGT AJM
+						WHERE RYD.TEMPLE_CD = RPH.TEMPLE_CD
+							AND RYD.ACCEPT_SEQ = RPH.ACCEPT_SEQ
+							AND RYD.SEQ        = RPH.SEQ
+							AND RYD.TEMPLE_CD  = AJM.TEMPLE_CD
+							AND RYD.JUNGAK_CD  = AJM.JUNGAK_CD
+							AND RYD.ACCEPT_GBN = AJM.ACCEPT_GBN
+							AND RPH.TEMPLE_CD  = #{V_TEMPLE_CD}
+						UNION ALL
+						SELECT 
+							RPD.TEMPLE_CD, 
+							13 AS ACCEPT_GBN,
+							RPD.PRAY_CODE AS DETAIL_CODE,
+							RPM.PRAY_NM AS DETAIL_NAME,
+							RPH.CRT_USER,
+							RPH.SUB_DATE,
+							(SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RPD.TEMPLE_CD AND ACCEPT_SEQ = RPD.ACCEPT_SEQ  AND SEQ = RPD.SEQ ) AS MIN_DATE,
+							RPH.AMOUNT,
+				            RPH.APPROVAL_GBN
+						FROM  REC_ALWAYS_PRAY_DETAIL RPD, 
+						     (SELECT 
+									TEMPLE_CD 
+									,SEQ 
+									,ACCEPT_SEQ 
+									,SUB_DATE 
+									,AMOUNT 
+									,CRT_USER
+				                    ,APPROVAL_GBN
+								FROM REC_PAYMENT_HIS
+								WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+								AND SUB_DATE LIKE #{V_DATE} || '%'
+							  ) RPH
+							  , REC_ALWAYS_PRAY_MGT RPM
+						WHERE RPD.TEMPLE_CD  = RPH.TEMPLE_CD
+						  AND RPD.ACCEPT_SEQ = RPH.ACCEPT_SEQ
+						  AND RPD.SEQ        = RPH.SEQ
+						  AND RPD.TEMPLE_CD  = RPM.TEMPLE_CD
+						  AND RPD.PRAY_CODE  = RPM.PRAY_CODE
+						  AND RPD.TEMPLE_CD  = #{V_TEMPLE_CD}
+					    UNION ALL
+					    SELECT 
+					      RPH.TEMPLE_CD, 
+					      14 AS ACCEPT_GBN,
+					      TO_CHAR(RYD.JUNGAK_CD) AS DETAIL_CODE,
+					      AJM.JUNGAK_NM||'-'||RYD.LIGHT_NO AS DETAIL_NAME,
+					      RPH.CRT_USER,
+					      RPH.SUB_DATE,
+					      (SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RYD.TEMPLE_CD AND ACCEPT_SEQ = RYD.ACCEPT_SEQ  AND SEQ = RYD.SEQ ) AS MIN_DATE,
+					      RPH.AMOUNT,
+					      RPH.APPROVAL_GBN
+					    FROM REC_YOUNGTOP_DETAIL RYD, 
+					        (SELECT 
+						          TEMPLE_CD 
+						          ,SEQ 
+						          ,ACCEPT_SEQ 
+						          ,SUB_DATE 
+						          ,AMOUNT 
+						          ,CRT_USER
+						          ,APPROVAL_GBN
+						        FROM REC_PAYMENT_HIS
+						        WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+						        AND SUB_DATE LIKE #{V_DATE} || '%'
+					         ) RPH, 
+					         ASP_JUNGAK_MGT AJM
+					    WHERE RYD.TEMPLE_CD  = RPH.TEMPLE_CD
+					      AND RYD.ACCEPT_SEQ = RPH.ACCEPT_SEQ
+					      AND RYD.SEQ        = RPH.SEQ
+					      AND RYD.TEMPLE_CD  = AJM.TEMPLE_CD
+					      AND RYD.JUNGAK_CD  = AJM.JUNGAK_CD
+					      AND RYD.ACCEPT_GBN = AJM.ACCEPT_GBN
+		     			  AND RPH.TEMPLE_CD  = #{V_TEMPLE_CD}
+					    UNION ALL
+					    SELECT 
+					      RSD.TEMPLE_CD, 
+					      15 AS ACCEPT_GBN,
+					      TO_CHAR(RSD.MANAGE_CODE) AS DETAIL_CODE,
+					      RSM.MANAGE_NM AS DETAIL_NAME,
+					      RPH.CRT_USER,
+					      RPH.SUB_DATE,
+					      (SELECT MIN(SUB_DATE) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RSD.TEMPLE_CD AND ACCEPT_SEQ = RSD.ACCEPT_SEQ  AND SEQ = RSD.SEQ ) AS MIN_DATE,
+					      RPH.AMOUNT,
+					      RPH.APPROVAL_GBN
+					    FROM  REC_MANAGE_DETAIL RSD, 
+					         (SELECT 
+					          TEMPLE_CD 
+					          ,SEQ 
+					          ,ACCEPT_SEQ 
+					          ,SUB_DATE 
+					          ,AMOUNT 
+					          ,CRT_USER
+					          ,APPROVAL_GBN
+					        FROM REC_PAYMENT_HIS
+					        WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+					        AND SUB_DATE LIKE #{V_DATE} || '%'
+					        ) RPH, REC_MANAGE_MGT RSM
+					    WHERE RSD.TEMPLE_CD   = RPH.TEMPLE_CD
+					      AND RSD.ACCEPT_SEQ  = RPH.ACCEPT_SEQ
+					      AND RSD.SEQ         = RPH.SEQ
+					      AND RSD.TEMPLE_CD   = RSM.TEMPLE_CD
+					      AND RSD.MANAGE_CODE = RSM.MANAGE_CODE
+					      AND RSD.TEMPLE_CD   = #{V_TEMPLE_CD}
+					
+					)RD
+			) RD , ASP_TEMPLE_USER ATU  , ASP_CODE_MGT ACM
+		WHERE  RD.TEMPLE_CD = ATU.TEMPLE_CD(+)
+		  AND RD.CRT_USER = ATU.USER_ID(+)
+		  AND ACM.GROUP_CD = 'REC'
+		  AND ACM.USE_YN = 'Y'
+		  AND ACM.CODE = RD.ACCEPT_GBN
+		GROUP BY RD.TEMPLE_CD
+		        ,RD.ACCEPT_GBN
+		        ,ACM.NAME
+		        ,RD.DETAIL_CODE
+		        ,RD.DETAIL_NAME
+		        ,ATU.USER_NM
+		        ,RD.APPROVAL_GBN
+		UNION ALL
+		SELECT
+			RD.TEMPLE_CD,
+			RD.ACCEPT_GBN,
+			RD.NAME,
+			RD.DETAIL_CODE,
+			RD.DETAIL_NAME,
+			ATU.USER_NM,
+			SUM(RD.AMOUNT) AS AMOUNT_SUM,
+			SUM(CNT) AS CNT,
+		    '1' AS APPROVAL_GBN
+		FROM (
+				SELECT 
+				    SGEH.TEMPLE_CD,
+					100 AS ACCEPT_GBN,
+					SGM.ORG_NAME || ' 가입비' AS NAME,
+					TO_CHAR(SGM.ORG_CD) AS DETAIL_CODE,
+					''  AS DETAIL_NAME,
+					SGEH.CRT_USER,
+					1 AS CNT,
+					SGEH.AMOUNT
+				FROM SIN_GROUP_ENTRANCE_HIS SGEH,
+				 	 SIN_GROUP_MGT SGM
+				WHERE SGEH.TEMPLE_CD = SGM.TEMPLE_CD
+					AND SGEH.ORG_CD = SGM.ORG_CD
+					AND SGEH.TEMPLE_CD = #{V_TEMPLE_CD}
+					AND SGEH.RECEIPT_DATE = #{V_DATE}
+			  ) RD, ASP_TEMPLE_USER ATU
+		WHERE  RD.CRT_USER = ATU.USER_ID
+		GROUP BY 	RD.TEMPLE_CD,	RD.ACCEPT_GBN,	RD.NAME,	RD.DETAIL_CODE,	RD.DETAIL_NAME,	ATU.USER_NM
+		UNION ALL
+		SELECT
+			RD.TEMPLE_CD,
+			RD.ACCEPT_GBN,
+			RD.NAME,
+			RD.DETAIL_CODE,
+			RD.DETAIL_NAME,
+			ATU.USER_NM,
+			SUM(RD.AMOUNT) AS AMOUNT_SUM,
+			SUM(CNT) AS CNT,
+		   '1' AS APPROVAL_GBN
+		FROM (
+				SELECT 
+				    SGF.TEMPLE_CD,
+					200 AS ACCEPT_GBN,
+					SGM.ORG_NAME || ' 회비' AS NAME,
+					TO_CHAR(SGM.ORG_CD) AS DETAIL_CODE,
+					''  AS DETAIL_NAME,
+					SGF.CRT_USER,
+					1 AS CNT,
+					SGM.FEE_AMT as AMOUNT
+				FROM SIN_GROUP_FEE SGF, SIN_GROUP_MGT SGM
+				WHERE SGF.TEMPLE_CD = SGM.TEMPLE_CD
+					AND SGF.ORG_CD = SGM.ORG_CD
+					AND SGF.TEMPLE_CD = #{V_TEMPLE_CD}
+					AND SGF.RECEIPT_DATE = #{V_DATE}
+			  ) RD, ASP_TEMPLE_USER ATU
+		WHERE  RD.CRT_USER = ATU.USER_ID
+		GROUP BY 	RD.TEMPLE_CD,	RD.ACCEPT_GBN,	RD.NAME,	RD.DETAIL_CODE,	RD.DETAIL_NAME,	ATU.USER_NM 
+		UNION ALL
+		SELECT
+			RD.TEMPLE_CD,
+			RD.ACCEPT_GBN,
+			RD.NAME,
+			RD.DETAIL_CODE,
+			RD.DETAIL_NAME,
+			ATU.USER_NM,
+			SUM(RD.AMOUNT) AS AMOUNT_SUM,
+			SUM(CNT) AS CNT,
+		  RD.APPROVAL_GBN AS APPROVAL_GBN
+		FROM (
+				SELECT
+					AMTM.TEMPLE_CD,
+					300 AS ACCEPT_GBN,
+					'현금출납' AS NAME,
+					TO_CHAR(AMTM.KWAN || AMTM.HANG	|| AMTM.MOK ) AS DETAIL_CODE,
+					AA.MOK_NAME AS DETAIL_NAME,
+					AMTM.CRT_USER,
+					1 AS CNT,
+					DECODE(AMTM.IE_GBN,'I',AMTM.AMOUNT,AMTM.AMOUNT*-1) AS AMOUNT,
+					NVL(AMTM.APPROVAL_GBN,'1') AS APPROVAL_GBN
+				FROM ACC_MONEY_TEMP_MGT 	AMTM,
+					 ACC_ACCOUNTS 			AA
+				WHERE AMTM.TEMPLE_CD		= AA.TEMPLE_CD
+				AND	  AMTM.ACCT_GBN			= AA.ACCT_GBN
+				AND	  AMTM.IE_GBN			= AA.IE_GBN
+				AND	  AMTM.KWAN				= AA.KWAN
+				AND	  AMTM.HANG				= AA.HANG
+				AND	  AMTM.MOK				= AA.MOK
+				AND   AMTM.TEMPLE_CD 		= #{V_TEMPLE_CD}
+				AND   AMTM.ACT_DATE 		= #{V_DATE}
+			  ) RD, ASP_TEMPLE_USER ATU
+		 WHERE  RD.CRT_USER = ATU.USER_ID
+		 GROUP BY 	RD.TEMPLE_CD,	RD.ACCEPT_GBN,	RD.NAME,	RD.DETAIL_CODE,	RD.DETAIL_NAME,	ATU.USER_NM ,RD.APPROVAL_GBN
+		 )A
+		)A
+		GROUP BY 
+		  A.TEMPLE_CD,
+			A.ACCEPT_GBN,
+			A.NAME,
+			A.DETAIL_CODE,
+			A.DETAIL_NAME,
+			A.USER_NM
+	</select>
+	
+</mapper>

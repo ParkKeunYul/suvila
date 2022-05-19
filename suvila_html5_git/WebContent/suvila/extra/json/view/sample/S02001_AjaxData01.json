@@ -1,0 +1,7 @@
+{
+   "success":true,
+   "data":{
+       "info":{"custNo":"ABCDEF", "custName":"홍길동", "birth":"20140101", "point":0.0001, "addr":"서울시 종로구 세종대로 175 " }
+   },
+   "msg":""
+}

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="CAD004w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+
+
+	<select id="SELECT_V_SMS_LOG" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT
+		    A.TR_COMP,
+		    A.TR_MSG_GB,
+		    SUBSTR(A.TR_SENDDATE,1,8) AS TR_SENDDATE,
+		    A.TR_ID,
+		    A.TR_ETC4, 
+		    A.TR_PHONE, 
+		    A.TR_MSG,
+		    B.SORT_SEQ AS BUD_NO, 
+		    B.NAME_KOR,
+		    B.TEMPLE_CD,
+		    C.NAME,
+		    A.TR_RSLTSTAT_REMARK TR_SENDSTAT
+		FROM 
+		<choose>
+       		 <when test='tb_Radio == "1" '>
+       			SMSKT.V_SMS_LOG2 A,	
+       		 </when>
+       		 <otherwise>
+       			SMSKT.V_SMS_WAIT A,	 	
+       		 </otherwise>
+       </choose>
+		     ASP_NAME_CARD_MASTER B,
+		     ASP_CODE_MGT C
+		WHERE 1=1
+		AND A.TR_ETC3 = C.GROUP_CD(+)      
+		AND A.TR_ETC4 = C.CODE(+)
+		AND A.TR_ETC4 = '15'     
+		AND A.TR_ETC1 = B.TEMPLE_CD(+)
+		AND A.TR_ETC5 = B.USER_ID(+)
+		AND A.TR_ETC2 = B.SORT_SEQ(+)
+		AND A.TR_ETC1 = #{V_TEMPLE_CD}
+		AND A.TR_ETC5 = #{V_USER_ID}
+		AND A.TR_SENDDATE  >=    SUBSTR(#{em_sDate},1,8)||'000000' 
+		AND A.TR_SENDDATE  &lt;= SUBSTR(#{em_eDate},1,8)||'235959'
+		<if test='V_NAME_KOR != nul and  V_NAME_KOR != "" '>
+			AND B.NAME_KOR LIKE  '%' || #{V_NAME_KOR} || '%'
+		</if>
+		ORDER BY A.TR_ETC4 
+		       , A.TR_SENDDATE 
+		       , B.SORT_SEQ
+	</select>
+
+</mapper>

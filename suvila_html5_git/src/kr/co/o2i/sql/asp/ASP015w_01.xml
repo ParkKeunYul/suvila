@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ASP015w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+
+	<!-- 발송내역 조회 -->
+	<select id="SELECT_V_SMS_LOG" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT
+			 A.TR_COMP
+			,A.TR_MSG_GB
+			,SUBSTR(A.TR_SENDDATE,3) TR_SENDDATE
+			,A.TR_ID
+			,A.TR_ETC4
+			,A.TR_PHONE
+			,A.TR_MSG
+			,B.BUD_NO
+			,B.NAME_KOR
+			,B.TEMPLE_CD
+			,C.NAME
+			,A.TR_RSLTSTAT_REMARK TR_SENDSTAT
+			,SUBSTR(A.NOW_DATE,3) NOW_DATE
+			,D.TEMPLE_NM
+			<if test='sel_sendYn == "1" '>
+				,SUBSTR(A.DELIVER_DATE,3) DELIVER_DATE
+				FROM SMSKT.V_SMS_LOG2 A ,
+			</if>
+			<if test='sel_sendYn != "1" '>
+				 FROM SMSKT.V_SMS_WAIT A ,
+			</if>
+	   			SIN_CARD_MASTER B,
+     			ASP_CODE_MGT C,
+     			ASP_TEMPLE_MASTER D
+			WHERE 1=1
+			  <!-- AND A.TR_COMP       = #{sel_compGb} -->
+			  AND A.TR_SENDDATE  >= SUBSTR(#{em_sDate},1,8)||'000000' 
+			  AND A.TR_SENDDATE  &lt;= SUBSTR(#{em_eDate},1,8)||'235959'
+			  AND A.TR_ETC4 != '15'
+			 <if test='lc_org_NmAll != null and lc_org_NmAll !="" and lc_org_NmAll != "0" '>
+			 	AND  A.TR_ETC4      = #{lc_org_NmAll}
+			 </if>
+			 <if test='lc_templeCd  != ""   and lc_templeCd    != null '>
+			 	AND  A.TR_ETC1     = #{lc_templeCd}
+			 </if>
+			 
+			 <if test='sel_msgGb    != ""   and sel_msgGb    != null '>
+			 	AND  A.TR_MSG_GB     = #{sel_msgGb}
+			 </if>
+			 <if test='sel_succesYn != ""   and sel_succesYn != null '>
+			 	AND  A.TR_SUCC_COUNT = #{sel_succesYn}
+			 </if>
+			  AND B.TEMPLE_CD(+) = A.TR_ETC1
+			  AND B.BUD_NO(+)    = A.TR_ETC2
+			  AND C.GROUP_CD(+)  = A.TR_ETC3
+			  AND C.CODE(+)      = A.TR_ETC4
+			  AND D.TEMPLE_CD(+) = A.TR_ETC1
+			ORDER BY A.NOW_DATE DESC
+			        ,A.TR_SENDDATE DESC
+			        ,A.TR_ETC4
+			        ,B.BUD_NO
+	</select>
+
+
+</mapper>

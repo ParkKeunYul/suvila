@@ -1,0 +1,1037 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC000p_02DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+	</resultMap>
+	
+	
+	<select id="SELECT_MISU" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT HIS.TEMPLE_CD
+			  ,HIS.SEQ
+			  ,HIS.ACCEPT_SEQ
+			  ,HIS.SUB_DATE
+			  ,HIS.AMOUNT
+			  ,USR.USER_NM AS CRT_USER
+			  ,HIS.REMOTE
+			  ,HIS.REMARK
+			  ,HIS.APPROVAL_GBN
+			  ,HIS.PGCODE
+			  ,HIS.AUTHCODE
+			  ,' ' SMS_YN       
+		  FROM REC_PAYMENT_HIS HIS, ASP_TEMPLE_USER USR
+		 WHERE HIS.TEMPLE_CD = USR.TEMPLE_CD(+)
+		   AND HIS.CRT_USER  = USR.USER_ID(+)
+		   AND HIS.TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND HIS.ACCEPT_SEQ= #{V_ACCEPT_SEQ}
+		   AND HIS.SEQ       = #{V_SEQ}
+		ORDER BY SUB_DATE
+	</select>
+	
+	
+	<select id="SELECT_MISU_NO_LIMIT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		  SELECT HIS.TEMPLE_CD
+		        ,HIS.SEQ
+		        ,HIS.ACCEPT_SEQ
+		        ,HIS.SUB_DATE
+		        ,HIS.AMOUNT
+		        ,USR.USER_NM AS CRT_USER
+		        ,HIS.REMOTE
+		        ,HIS.REMARK
+		        ,HIS.PAYMENT_YYYYMM
+		        ,HIS.PAYMENT_STATE_CD
+		        ,APPROVAL_GBN
+		        ,ASP_APPROVAL.NAME AS APPROVAL_GBN_NM
+		        ,' ' SMS_YN
+		   FROM REC_PAYMENT_HIS HIS
+		       ,ASP_TEMPLE_USER USR
+		       ,ASP_CODE_MGT    ASP_APPROVAL
+		  WHERE HIS.TEMPLE_CD            = USR.TEMPLE_CD(+)
+		    AND HIS.CRT_USER             = USR.USER_ID(+)
+		    AND HIS.APPROVAL_GBN         = ASP_APPROVAL.CODE(+)
+		    AND ASP_APPROVAL.GROUP_CD(+) = 'APPROV'
+		    AND HIS.TEMPLE_CD            = #{V_TEMPLE_CD}
+		    AND HIS.ACCEPT_SEQ           = #{V_ACCEPT_SEQ}
+		    AND HIS.SEQ                  = #{V_SEQ}
+		ORDER BY SUB_DATE
+	</select>
+	
+	<select id="SELECT_PAYMENT_PERIOD_NO_LIMIT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT PAY.TEMPLE_CD
+		      ,PAY.ACCEPT_SEQ
+		      ,PAY.SEQ
+		      ,PAY.START_MONTH
+		      ,PAY.ACCEPT_GBN
+		      ,PAY.JUNGAK_CD
+		      ,PAY.LIGHT_NO
+		      ,PAY.INDEUNG_GBN
+		      ,PAY.SYS_YYYYMM
+		      ,PAY.INDEUNG_YEAR
+		      ,PAY.INDEUNG_MONTH
+		      ,PAY.YEAR
+		      ,MAX(M_STATUS_01) AS M_STATUS_01
+		      ,MAX(M_STATUS_02) AS M_STATUS_02
+		      ,MAX(M_STATUS_03) AS M_STATUS_03
+		      ,MAX(M_STATUS_04) AS M_STATUS_04
+		      ,MAX(M_STATUS_05) AS M_STATUS_05
+		      ,MAX(M_STATUS_06) AS M_STATUS_06
+		      ,MAX(M_STATUS_07) AS M_STATUS_07
+		      ,MAX(M_STATUS_08) AS M_STATUS_08
+		      ,MAX(M_STATUS_09) AS M_STATUS_09
+		      ,MAX(M_STATUS_10) AS M_STATUS_10
+		      ,MAX(M_STATUS_11) AS M_STATUS_11
+		      ,MAX(M_STATUS_12) AS M_STATUS_12
+		      ,MAX(A_STATUS_01) AS A_STATUS_01
+		      ,MAX(A_STATUS_02) AS A_STATUS_02
+		      ,MAX(A_STATUS_03) AS A_STATUS_03
+		      ,MAX(A_STATUS_04) AS A_STATUS_04
+		      ,MAX(A_STATUS_05) AS A_STATUS_05
+		      ,MAX(A_STATUS_06) AS A_STATUS_06
+		      ,MAX(A_STATUS_07) AS A_STATUS_07
+		      ,MAX(A_STATUS_08) AS A_STATUS_08
+		      ,MAX(A_STATUS_09) AS A_STATUS_09
+		      ,MAX(A_STATUS_10) AS A_STATUS_10
+		      ,MAX(A_STATUS_11) AS A_STATUS_11
+		      ,MAX(A_STATUS_12) AS A_STATUS_12
+		      ,MAX(B_STATUS_01) AS B_STATUS_01
+		      ,MAX(B_STATUS_02) AS B_STATUS_02
+		      ,MAX(B_STATUS_03) AS B_STATUS_03
+		      ,MAX(B_STATUS_04) AS B_STATUS_04
+		      ,MAX(B_STATUS_05) AS B_STATUS_05
+		      ,MAX(B_STATUS_06) AS B_STATUS_06
+		      ,MAX(B_STATUS_07) AS B_STATUS_07
+		      ,MAX(B_STATUS_08) AS B_STATUS_08
+		      ,MAX(B_STATUS_09) AS B_STATUS_09
+		      ,MAX(B_STATUS_10) AS B_STATUS_10
+		      ,MAX(B_STATUS_11) AS B_STATUS_11
+		      ,MAX(B_STATUS_12) AS B_STATUS_12
+		 FROM (
+				SELECT PAY.TEMPLE_CD
+					  ,PAY.ACCEPT_SEQ
+					  ,PAY.SEQ
+					  ,PAY.START_MONTH
+					  ,PAY.ACCEPT_GBN
+					  ,PAY.JUNGAK_CD
+					  ,PAY.LIGHT_NO
+					  ,PAY.SYS_YYYYMM
+					  ,PAY.PAYMENT_YYYYMM
+					  ,PAY.INDEUNG_YEAR
+					  ,PAY.INDEUNG_MONTH
+					  ,PAY.INDEUNG_GBN
+					  ,PAY.YEAR
+					  ,PAY.MONTH
+					  ,PAY.PAYMENT_STATE_CD
+					  ,FN_PAYMENT_MONTH_INDEUNG('01',LPAD(INDEUNG_MONTH,2,'0'),INDEUNG_YEAR,SYS_YYYYMM,PAYMENT_YYYYMM,PAYMENT_STATE_CD,END_YYYYMM) AS M_STATUS_01
+					  ,FN_PAYMENT_MONTH_INDEUNG('02',LPAD(INDEUNG_MONTH,2,'0'),INDEUNG_YEAR,SYS_YYYYMM,PAYMENT_YYYYMM,PAYMENT_STATE_CD,END_YYYYMM) AS M_STATUS_02
+					  ,FN_PAYMENT_MONTH_INDEUNG('03',LPAD(INDEUNG_MONTH,2,'0'),INDEUNG_YEAR,SYS_YYYYMM,PAYMENT_YYYYMM,PAYMENT_STATE_CD,END_YYYYMM) AS M_STATUS_03
+					  ,FN_PAYMENT_MONTH_INDEUNG('04',LPAD(INDEUNG_MONTH,2,'0'),INDEUNG_YEAR,SYS_YYYYMM,PAYMENT_YYYYMM,PAYMENT_STATE_CD,END_YYYYMM) AS M_STATUS_04
+					  ,FN_PAYMENT_MONTH_INDEUNG('05',LPAD(INDEUNG_MONTH,2,'0'),INDEUNG_YEAR,SYS_YYYYMM,PAYMENT_YYYYMM,PAYMENT_STATE_CD,END_YYYYMM) AS M_STATUS_05
+					  ,FN_PAYMENT_MONTH_INDEUNG('06',LPAD(INDEUNG_MONTH,2,'0'),INDEUNG_YEAR,SYS_YYYYMM,PAYMENT_YYYYMM,PAYMENT_STATE_CD,END_YYYYMM) AS M_STATUS_06
+					  ,FN_PAYMENT_MONTH_INDEUNG('07',LPAD(INDEUNG_MONTH,2,'0'),INDEUNG_YEAR,SYS_YYYYMM,PAYMENT_YYYYMM,PAYMENT_STATE_CD,END_YYYYMM) AS M_STATUS_07
+					  ,FN_PAYMENT_MONTH_INDEUNG('08',LPAD(INDEUNG_MONTH,2,'0'),INDEUNG_YEAR,SYS_YYYYMM,PAYMENT_YYYYMM,PAYMENT_STATE_CD,END_YYYYMM) AS M_STATUS_08
+					  ,FN_PAYMENT_MONTH_INDEUNG('09',LPAD(INDEUNG_MONTH,2,'0'),INDEUNG_YEAR,SYS_YYYYMM,PAYMENT_YYYYMM,PAYMENT_STATE_CD,END_YYYYMM) AS M_STATUS_09
+					  ,FN_PAYMENT_MONTH_INDEUNG('10',LPAD(INDEUNG_MONTH,2,'0'),INDEUNG_YEAR,SYS_YYYYMM,PAYMENT_YYYYMM,PAYMENT_STATE_CD,END_YYYYMM) AS M_STATUS_10
+					  ,FN_PAYMENT_MONTH_INDEUNG('11',LPAD(INDEUNG_MONTH,2,'0'),INDEUNG_YEAR,SYS_YYYYMM,PAYMENT_YYYYMM,PAYMENT_STATE_CD,END_YYYYMM) AS M_STATUS_11
+					  ,FN_PAYMENT_MONTH_INDEUNG('12',LPAD(INDEUNG_MONTH,2,'0'),INDEUNG_YEAR,SYS_YYYYMM,PAYMENT_YYYYMM,PAYMENT_STATE_CD,END_YYYYMM) AS M_STATUS_12
+					  ,DECODE(PAY.MONTH,'01',PAY.APPROVAL_GBN) A_STATUS_01 
+					  ,DECODE(PAY.MONTH,'02',PAY.APPROVAL_GBN) A_STATUS_02 
+					  ,DECODE(PAY.MONTH,'03',PAY.APPROVAL_GBN) A_STATUS_03 
+					  ,DECODE(PAY.MONTH,'04',PAY.APPROVAL_GBN) A_STATUS_04 
+					  ,DECODE(PAY.MONTH,'05',PAY.APPROVAL_GBN) A_STATUS_05 
+					  ,DECODE(PAY.MONTH,'06',PAY.APPROVAL_GBN) A_STATUS_06 
+					  ,DECODE(PAY.MONTH,'07',PAY.APPROVAL_GBN) A_STATUS_07 
+					  ,DECODE(PAY.MONTH,'08',PAY.APPROVAL_GBN) A_STATUS_08 
+					  ,DECODE(PAY.MONTH,'09',PAY.APPROVAL_GBN) A_STATUS_09 
+					  ,DECODE(PAY.MONTH,'10',PAY.APPROVAL_GBN) A_STATUS_10 
+					  ,DECODE(PAY.MONTH,'11',PAY.APPROVAL_GBN) A_STATUS_11 
+					  ,DECODE(PAY.MONTH,'12',PAY.APPROVAL_GBN) A_STATUS_12 
+					  ,DECODE(PAY.MONTH,'01',PAY.AUTHCODE) B_STATUS_01 
+					  ,DECODE(PAY.MONTH,'02',PAY.AUTHCODE) B_STATUS_02 
+					  ,DECODE(PAY.MONTH,'03',PAY.AUTHCODE) B_STATUS_03 
+					  ,DECODE(PAY.MONTH,'04',PAY.AUTHCODE) B_STATUS_04 
+					  ,DECODE(PAY.MONTH,'05',PAY.AUTHCODE) B_STATUS_05 
+					  ,DECODE(PAY.MONTH,'06',PAY.AUTHCODE) B_STATUS_06 
+					  ,DECODE(PAY.MONTH,'07',PAY.AUTHCODE) B_STATUS_07 
+					  ,DECODE(PAY.MONTH,'08',PAY.AUTHCODE) B_STATUS_08 
+					  ,DECODE(PAY.MONTH,'09',PAY.AUTHCODE) B_STATUS_09 
+					  ,DECODE(PAY.MONTH,'10',PAY.AUTHCODE) B_STATUS_10 
+					  ,DECODE(PAY.MONTH,'11',PAY.AUTHCODE) B_STATUS_11 
+					  ,DECODE(PAY.MONTH,'12',PAY.AUTHCODE) B_STATUS_12   
+			     FROM (
+			     	<if test="V_ACCEPT_GBN == 2">
+			     		SELECT DET.TEMPLE_CD
+			     			  ,DET.ACCEPT_SEQ
+			     			  ,DET.SEQ
+			     			  ,DET.INDEUNG_YEAR
+			     			  ,DET.INDEUNG_MONTH
+			     			  ,DET.INDEUNG_GBN
+			     			  ,DET.INDEUNG_YEAR || LPAD(DET.INDEUNG_MONTH,2,'0') AS START_MONTH
+			     			  ,DET.ACCEPT_GBN
+			     			  ,DET.JUNGAK_CD
+			     			  ,DET.LIGHT_NO
+			     			  ,TO_CHAR(SYSDATE,'YYYYMM') AS SYS_YYYYMM
+			     			  ,DECODE(DET.INDEUNG_PERIOD,0,'999912',TO_CHAR(ADD_MONTHS(TO_DATE(DET.INDEUNG_YEAR || LPAD(DET.INDEUNG_MONTH,2,'0'),'YYYYMM'),DET.INDEUNG_PERIOD-1),'YYYYMM')) AS END_YYYYMM
+			     			  ,RPH.PAYMENT_YYYYMM
+			     			  ,SUBSTR(RPH.PAYMENT_YYYYMM,1,4) AS YEAR
+			     			  ,SUBSTR(RPH.PAYMENT_YYYYMM,5) AS MONTH
+			     			  ,RPH.AMOUNT
+			     			  ,RPH.PAYMENT_STATE_CD
+			     			  ,RPH.APPROVAL_GBN
+			     			  ,RPH.AUTHCODE															
+						  FROM REC_INDEUNG_DETAIL DET, 
+			     	</if>
+			     	<if test="V_ACCEPT_GBN == 4">
+			     		SELECT DET.TEMPLE_CD
+			     			  ,DET.ACCEPT_SEQ
+			     			  ,DET.SEQ
+			     			  ,DET.YEONDEUNG_YEAR AS INDEUNG_YEAR
+			     			  ,DET.YEONDEUNG_MONTH AS INDEUNG_MONTH
+			     			  ,DET.YEONDEUNG_GBN AS INDEUNG_GBN
+			     			  ,DET.YEONDEUNG_YEAR || LPAD(DET.YEONDEUNG_MONTH,2,'0') AS START_MONTH
+			     			  ,DET.ACCEPT_GBN
+			     			  ,DET.JUNGAK_CD
+			     			  ,DET.LIGHT_NO
+			     			  ,TO_CHAR(SYSDATE,'YYYYMM') AS SYS_YYYYMM
+			     			  ,TO_CHAR(ADD_MONTHS(TO_DATE(DET.YEONDEUNG_YEAR || LPAD(DET.YEONDEUNG_MONTH,2,'0'),'YYYYMM'),DET.YEONDEUNG_PERIOD-1),'YYYYMM') AS END_YYYYMM
+			     			  ,RPH.PAYMENT_YYYYMM
+			     			  ,SUBSTR(RPH.PAYMENT_YYYYMM,1,4) AS YEAR
+			     			  ,SUBSTR(RPH.PAYMENT_YYYYMM,5) AS MONTH
+			     			  ,RPH.AMOUNT
+			     			  ,RPH.PAYMENT_STATE_CD
+			     			  ,RPH.APPROVAL_GBN
+			     			  ,RPH.AUTHCODE															
+						  FROM REC_YEONDEUNG_DETAIL DET, 	
+			     	</if>
+			     	<if test="V_ACCEPT_GBN == 9">
+			     		SELECT DET.TEMPLE_CD
+			     			  ,DET.ACCEPT_SEQ
+			     			  ,DET.SEQ
+			     			  ,SUBSTR(FIRST_PAYMENT_YYYYMM,1,4) AS INDEUNG_YEAR
+			     			  ,SUBSTR(FIRST_PAYMENT_YYYYMM,5) AS INDEUNG_MONTH
+			     			  ,DET.SUPPORT_CODE AS INDEUNG_GBN
+			     			  ,FIRST_PAYMENT_YYYYMM AS START_MONTH
+			     			  ,9 AS ACCEPT_GBN
+			     			  ,0 AS JUNGAK_CD
+			     			  ,0 AS LIGHT_NO
+			     			  ,TO_CHAR(SYSDATE,'YYYYMM') AS SYS_YYYYMM
+			     			  ,DECODE(DET.SUPPORT_PERIOD,0,'999912',TO_CHAR(ADD_MONTHS(TO_DATE(FIRST_PAYMENT_YYYYMM,'YYYYMM'),DET.SUPPORT_PERIOD-1),'YYYYMM')) AS END_YYYYMM
+			     			  ,RPH.PAYMENT_YYYYMM
+			     			  ,SUBSTR(RPH.PAYMENT_YYYYMM,1,4) AS YEAR
+			     			  ,SUBSTR(RPH.PAYMENT_YYYYMM,5) AS MONTH
+			     			  ,RPH.AMOUNT
+			     			  ,RPH.PAYMENT_STATE_CD
+			     			  ,RPH.APPROVAL_GBN
+			     			  ,RPH.AUTHCODE															
+						  FROM REC_SUPPORT_DETAIL DET, 
+			     	</if>
+			     	<if test="V_ACCEPT_GBN == 13">
+			     		SELECT DET.TEMPLE_CD
+			     			  ,DET.ACCEPT_SEQ
+			     			  ,DET.SEQ
+			     			  ,SUBSTR(START_YYYYMM,1,4) AS INDEUNG_YEAR
+			     			  ,SUBSTR(START_YYYYMM,5) AS INDEUNG_MONTH
+			     			  ,DET.PRAY_CODE AS INDEUNG_GBN
+			     			  ,START_YYYYMM AS START_MONTH
+			     			  ,13 AS ACCEPT_GBN
+			     			  ,0 AS JUNGAK_CD
+			     			  ,0 AS LIGHT_NO
+			     			  ,TO_CHAR(SYSDATE,'YYYYMM') AS SYS_YYYYMM
+			     			  ,(CASE WHEN  DET.END_YN  = 'T' AND NVL(DET.PRAY_END_DATE,'000000') != 000000  THEN DET.PRAY_END_DATE ELSE '999912' END ) END_YYYYMM
+			     			  ,RPH.PAYMENT_YYYYMM
+			     			  ,SUBSTR(RPH.PAYMENT_YYYYMM,1,4) AS YEAR
+			     			  ,SUBSTR(RPH.PAYMENT_YYYYMM,5) AS MONTH
+			     			  ,RPH.AMOUNT
+			     			  ,RPH.PAYMENT_STATE_CD
+			     			  ,RPH.APPROVAL_GBN
+			     			  ,RPH.AUTHCODE															
+						 FROM REC_ALWAYS_PRAY_DETAIL DET, 	
+			     	</if>
+			     	<if test="V_ACCEPT_GBN == 15">
+			     		SELECT DET.TEMPLE_CD
+			     			  ,DET.ACCEPT_SEQ
+			     			  ,DET.SEQ
+			     			  ,SUBSTR(FIRST_PAYMENT_YYYYMM,1,4) AS INDEUNG_YEAR
+			     			  ,SUBSTR(FIRST_PAYMENT_YYYYMM,5) AS INDEUNG_MONTH
+			     			  ,DET.MANAGE_CODE AS INDEUNG_GBN
+			     			  ,FIRST_PAYMENT_YYYYMM AS START_MONTH
+			     			  ,9 AS ACCEPT_GBN
+			     			  ,0 AS JUNGAK_CD
+			     			  ,0 AS LIGHT_NO
+			     			  ,TO_CHAR(SYSDATE,'YYYYMM') AS SYS_YYYYMM
+			     			  ,(CASE 																																	
+					               WHEN DET.MANAGE_END_YN = 'T' THEN NVL(DET.MANAGE_END_DATE, to_char(DET.UPT_DATE, 'yyyymm'))				
+					               ELSE DECODE(DET.MANAGE_PERIOD,0,'999912',TO_CHAR(ADD_MONTHS(TO_DATE(FIRST_PAYMENT_YYYYMM,'YYYYMM'),DET.MANAGE_PERIOD-1),'YYYYMM')) 	
+					            END ) AS END_YYYYMM
+					          ,RPH.PAYMENT_YYYYMM
+					          ,SUBSTR(RPH.PAYMENT_YYYYMM,1,4) AS YEAR
+					          ,SUBSTR(RPH.PAYMENT_YYYYMM,5) AS MONTH
+					          ,RPH.AMOUNT
+					          ,RPH.PAYMENT_STATE_CD
+					          ,RPH.APPROVAL_GBN
+					          ,RPH.AUTHCODE															
+			            FROM REC_MANAGE_DETAIL DET,
+			     	</if>
+			                  REC_SUB            RS,
+			             	 (SELECT A.TEMPLE_CD
+			             	        ,A.ACCEPT_SEQ
+			             	        ,A.SEQ
+			             	        ,A.PAYMENT_YYYYMM
+			             	        ,MAX(A.PAYMENT_STATE_CD) AS PAYMENT_STATE_CD
+			             	        ,SUM(A.AMOUNT) AS AMOUNT
+			             	        ,DECODE(A.APPROVAL_GBN,'2','2','4','4', '1') as APPROVAL_GBN
+			             	        ,A.AUTHCODE
+			                    FROM REC_PAYMENT_HIS A
+			                        ,REC_CARDPAY B
+			                   WHERE A.TEMPLE_CD     = B.TEMPLE_CD(+)
+			                	 AND A.PGCODE        = B.PGCODE(+)
+			                	 AND A.AUTHCODE      = B.PGAUTHCODE(+)
+			                	 AND B.END_PRICE(+) != 0
+			                	 AND A.TEMPLE_CD     = #{V_TEMPLE_CD}
+			                	 AND A.ACCEPT_SEQ    = #{V_ACCEPT_SEQ}
+			                	 AND A.SEQ	         = #{V_SEQ}
+			                   GROUP BY A.TEMPLE_CD
+			                		   ,A.ACCEPT_SEQ
+			                		   ,A.SEQ
+					                   ,A.PAYMENT_YYYYMM 
+					                   ,DECODE(A.APPROVAL_GBN,'2','2','4','4', '1') 
+					                   ,A.AUTHCODE
+			                   HAVING (SUM(A.AMOUNT) > 0 OR MAX(A.PAYMENT_STATE_CD) = '1')
+			                   ) RPH
+			        WHERE DET.TEMPLE_CD   = RS.TEMPLE_CD
+			          AND DET.ACCEPT_SEQ  = RS.ACCEPT_SEQ
+			          AND DET.SEQ         = RS.SEQ
+			          AND RS.TEMPLE_CD    = RPH.TEMPLE_CD
+			          AND RS.ACCEPT_SEQ   = RPH.ACCEPT_SEQ
+			          AND RS.SEQ          = RPH.SEQ
+			          AND DET.TEMPLE_CD   = #{V_TEMPLE_CD}
+			          AND DET.ACCEPT_SEQ  = #{V_ACCEPT_SEQ}
+					  AND DET.SEQ	      = #{V_SEQ}
+			    ) PAY
+			)PAY
+			GROUP BY PAY.TEMPLE_CD
+				    ,PAY.ACCEPT_SEQ
+				    ,PAY.SEQ
+				    ,PAY.START_MONTH
+				    ,PAY.ACCEPT_GBN
+				    ,PAY.JUNGAK_CD
+				    ,PAY.LIGHT_NO
+				    ,PAY.INDEUNG_GBN
+				    ,PAY.SYS_YYYYMM
+				    ,PAY.INDEUNG_YEAR
+				    ,PAY.INDEUNG_MONTH
+				    ,PAY.YEAR
+			 ORDER BY YEAR DESC
+	</select>
+	
+	
+	<select id="SELECT_PAYMENT_PERIOD" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT YEAR
+			  ,FN_PAYMENT_GBN(1, YEAR_GRADE,INDEUNG_MONTH,PAYMENT_PERIOD,INDEUNG_PERIOD) AS JANUARY
+			  ,FN_PAYMENT_GBN(2, YEAR_GRADE,INDEUNG_MONTH,PAYMENT_PERIOD,INDEUNG_PERIOD) AS FEBRUARY
+			  ,FN_PAYMENT_GBN(3, YEAR_GRADE,INDEUNG_MONTH,PAYMENT_PERIOD,INDEUNG_PERIOD) AS MARCH
+			  ,FN_PAYMENT_GBN(4, YEAR_GRADE,INDEUNG_MONTH,PAYMENT_PERIOD,INDEUNG_PERIOD) AS APRIL
+			  ,FN_PAYMENT_GBN(5, YEAR_GRADE,INDEUNG_MONTH,PAYMENT_PERIOD,INDEUNG_PERIOD) AS MAY
+			  ,FN_PAYMENT_GBN(6, YEAR_GRADE,INDEUNG_MONTH,PAYMENT_PERIOD,INDEUNG_PERIOD) AS JUNE
+			  ,FN_PAYMENT_GBN(7, YEAR_GRADE,INDEUNG_MONTH,PAYMENT_PERIOD,INDEUNG_PERIOD) AS JULY
+			  ,FN_PAYMENT_GBN(8, YEAR_GRADE,INDEUNG_MONTH,PAYMENT_PERIOD,INDEUNG_PERIOD) AS AUGUST
+			  ,FN_PAYMENT_GBN(9, YEAR_GRADE,INDEUNG_MONTH,PAYMENT_PERIOD,INDEUNG_PERIOD) AS SEPTEMBER
+			  ,FN_PAYMENT_GBN(10,YEAR_GRADE,INDEUNG_MONTH,PAYMENT_PERIOD,INDEUNG_PERIOD) AS OCTOBER
+			  ,FN_PAYMENT_GBN(11,YEAR_GRADE,INDEUNG_MONTH,PAYMENT_PERIOD,INDEUNG_PERIOD) AS NOVEMBER
+			  ,FN_PAYMENT_GBN(12,YEAR_GRADE,INDEUNG_MONTH,PAYMENT_PERIOD,INDEUNG_PERIOD) AS DECEMBER
+		  FROM (SELECT TEMPLE_CD
+		  			  ,ACCEPT_SEQ
+		  			  ,INDEUNG_MONTH
+		  			  ,INDEUNG_PERIOD
+		  			  ,PAYMENT_PERIOD
+		  			  ,PAYMENT_YEAR
+		  			  ,ROWNUM AS YEAR_GRADE
+		  			  ,TO_NUMBER(INDEUNG_YEAR) + ROWNUM - 1 AS YEAR
+		          FROM ASP_POST_MGT,
+		               (SELECT DET.TEMPLE_CD
+		               		  ,DET.ACCEPT_SEQ
+		               		  ,INDEUNG_YEAR
+		               		  ,DET.INDEUNG_MONTH
+		               		  ,DET.INDEUNG_PERIOD
+		               		  <!--  ,FLOOR(HIS.AMOUNT / (DET.PAYMENT_PLAN_AMT / DET.INDEUNG_PERIOD)) AS PAYMENT_PERIOD, -->
+		                      ,( CASE 
+		                       		WHEN DET.TEMPLE_CD = 000078 AND DET.PAYMENT_PLAN_AMT = 0 THEN 0
+		                       		ELSE FLOOR(HIS.AMOUNT / (DET.PAYMENT_PLAN_AMT / DET.INDEUNG_PERIOD))
+		                       	END ) AS PAYMENT_PERIOD
+		                      ,CEIL((DET.INDEUNG_PERIOD + (DET.INDEUNG_MONTH - 1)) / 12) AS PAYMENT_YEAR
+		                  FROM REC_INDEUNG_DETAIL DET
+		                      ,(SELECT TEMPLE_CD
+		                              ,ACCEPT_SEQ
+		                              ,SEQ
+		                              ,SUM(AMOUNT) AS AMOUNT
+		                          FROM REC_PAYMENT_HIS
+		                         WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+		                           AND ACCEPT_SEQ = #{V_ACCEPT_SEQ}
+		                           AND SEQ        = #{V_SEQ}
+		                        GROUP BY TEMPLE_CD, ACCEPT_SEQ, SEQ) HIS
+		                 WHERE DET.TEMPLE_CD  = HIS.TEMPLE_CD
+		                   AND DET.ACCEPT_SEQ = HIS.ACCEPT_SEQ
+		                   AND DET.SEQ        = HIS.SEQ
+		                   AND DET.TEMPLE_CD  = #{V_TEMPLE_CD}
+		                   AND DET.ACCEPT_SEQ = #{V_ACCEPT_SEQ}
+		                   AND DET.SEQ        = #{V_SEQ}
+		                )
+		         WHERE ROWNUM &lt;= PAYMENT_YEAR)
+		UNION ALL
+		SELECT YEAR
+			  ,MAX(FN_PAYMENT_MONTH_COUNT(1,  PAYMENT_MONTH,PAYMENT_COUNT)) AS JANUARY
+			  ,MAX(FN_PAYMENT_MONTH_COUNT(2,  PAYMENT_MONTH,PAYMENT_COUNT)) AS FEBRUARY
+			  ,MAX(FN_PAYMENT_MONTH_COUNT(3,  PAYMENT_MONTH,PAYMENT_COUNT)) AS MARCH
+			  ,MAX(FN_PAYMENT_MONTH_COUNT(4,  PAYMENT_MONTH,PAYMENT_COUNT)) AS APRIL
+			  ,MAX(FN_PAYMENT_MONTH_COUNT(5,  PAYMENT_MONTH,PAYMENT_COUNT)) AS MAY
+			  ,MAX(FN_PAYMENT_MONTH_COUNT(6,  PAYMENT_MONTH,PAYMENT_COUNT)) AS JUNE
+			  ,MAX(FN_PAYMENT_MONTH_COUNT(7,  PAYMENT_MONTH,PAYMENT_COUNT)) AS JULY
+			  ,MAX(FN_PAYMENT_MONTH_COUNT(8,  PAYMENT_MONTH,PAYMENT_COUNT)) AS AUGUST
+			  ,MAX(FN_PAYMENT_MONTH_COUNT(9,  PAYMENT_MONTH,PAYMENT_COUNT)) AS SEPTEMBER,
+		       MAX(FN_PAYMENT_MONTH_COUNT(10, PAYMENT_MONTH,PAYMENT_COUNT)) AS OCTOBER,
+		       MAX(FN_PAYMENT_MONTH_COUNT(11, PAYMENT_MONTH,PAYMENT_COUNT)) AS NOVEMBER,
+		       MAX(FN_PAYMENT_MONTH_COUNT(12, PAYMENT_MONTH,PAYMENT_COUNT)) AS DECEMBER
+		 FROM (SELECT HIS.TEMPLE_CD,
+		              HIS.ACCEPT_SEQ,
+		              HIS.SEQ,
+		              TO_NUMBER(SUBSTR(HIS.SUB_DATE,5,2)) AS PAYMENT_MONTH,
+		              COUNT(SUBSTR(HIS.SUB_DATE,0,8))     AS PAYMENT_COUNT,
+		              TO_NUMBER(SUBSTR(HIS.SUB_DATE,0,4)) AS YEAR,
+		              CEIL((DET.INDEUNG_PERIOD + (DET.INDEUNG_MONTH - 1)) / 12) AS PAYMENT_YEAR
+		         FROM REC_PAYMENT_HIS HIS, REC_INDEUNG_DETAIL DET
+		        WHERE HIS.TEMPLE_CD  = DET.TEMPLE_CD
+		          AND HIS.ACCEPT_SEQ = DET.ACCEPT_SEQ
+		          AND HIS.SEQ        = DET.SEQ
+		          AND DET.TEMPLE_CD  = #{V_TEMPLE_CD}
+		          AND DET.ACCEPT_SEQ = #{V_ACCEPT_SEQ}
+		          AND DET.SEQ        = #{V_SEQ}
+		       GROUP BY HIS.TEMPLE_CD, HIS.ACCEPT_SEQ, HIS.SEQ, SUBSTR(HIS.SUB_DATE,5,2),
+		                SUBSTR(HIS.SUB_DATE,0,4), DET.INDEUNG_PERIOD, DET.INDEUNG_MONTH)
+		GROUP BY YEAR, PAYMENT_YEAR
+		ORDER BY YEAR
+	</select>
+	
+	
+	<select id="SELECT_REC_DEUNG_CLASS_MGT_AMOUNT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+			  ,ACCEPT_GBN
+			  ,LIGHT_CODE
+			  ,'' AS START_YYYYMM
+			  ,'' AS END_YYYYMM
+			  ,AMOUNT
+			  ,'T' AS GBN 
+		  FROM REC_DEUNG_CLASS_MGT
+		 WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND ACCEPT_GBN = #{V_ACCEPT_GBN}
+		   AND LIGHT_CODE = #{V_PROD_CODE}
+		 UNION ALL
+		SELECT TEMPLE_CD
+			  ,ACCEPT_GBN
+			  ,LIGHT_CODE
+			  ,START_YYYYMM
+			  ,NVL(END_YYYYMM, '999912') AS END_YYYYMM
+			  ,AMOUNT
+			  ,'F' AS GBN
+		  FROM REC_DEUNG_PRICE_MGT
+		 WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND ACCEPT_GBN = #{V_ACCEPT_GBN}
+		   AND LIGHT_CODE = #{V_PROD_CODE}
+	</select>
+	
+	<select id="SELECT_REC_ALWAYS_PRAY_PRICE_MGT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+			  ,#{V_TEMPLE_CD} AS ACCEPT_GBN
+			  ,PRAY_CODE AS LIGHT_CODE
+			  ,'' AS START_YYYYMM
+			  ,'' AS END_YYYYMM
+			  ,(CASE 
+		      	 	WHEN 
+		          		(SELECT nvl(base_amt,0) FROM REC_ALWAYS_PRAY_DETAIL WHERE temple_cd = #{V_TEMPLE_CD} AND accept_seq = #{V_ACCEPT_SEQ} AND seq = #{V_SEQ}) > 0 
+		        	THEN 
+		          		(SELECT nvl(base_amt,0) FROM REC_ALWAYS_PRAY_DETAIL WHERE temple_cd = #{V_TEMPLE_CD} AND accept_seq = #{V_ACCEPT_SEQ} AND seq = #{V_SEQ}) 
+		      		ELSE AMOUNT
+		    	END ) as AMOUNT 
+		      ,'T' AS GBN 
+		  FROM REC_ALWAYS_PRAY_MGT
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND PRAY_CODE = #{V_PROD_CODE}
+		 UNION ALL
+		SELECT TEMPLE_CD
+			  ,#{V_TEMPLE_CD} AS ACCEPT_GBN
+			  ,PRAY_CODE AS LIGHT_CODE
+			  ,START_YYYYMM
+			  ,NVL(END_YYYYMM, '999912') AS END_YYYYMM
+			  ,(CASE 
+		      		WHEN 
+		          		(SELECT nvl(base_amt,0) FROM REC_ALWAYS_PRAY_DETAIL WHERE temple_cd = #{V_TEMPLE_CD} AND accept_seq = #{V_ACCEPT_SEQ} AND seq = #{V_SEQ}) > 0 
+		        	THEN 
+		          		(SELECT nvl(base_amt,0) FROM REC_ALWAYS_PRAY_DETAIL WHERE temple_cd = #{V_TEMPLE_CD} AND accept_seq = #{V_ACCEPT_SEQ} AND seq = #{V_SEQ}) 
+		      		ELSE AMOUNT
+		     	END )as AMOUNT
+		      ,'F' AS GBN
+		  FROM REC_ALWAYS_PRAY_PRICE_MGT
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND PRAY_CODE = #{V_PROD_CODE}
+	</select>
+	
+	<insert id="INSERT_REC_CMSINFO_HIS" parameterType="java.util.Map">
+		INSERT INTO REC_CMSINFO_HIS(
+			 SEQ
+			,BUNNAB_DAY
+			,BANK_NO
+			,ACCOUNT_NUMBER
+			,OLD_ACCOUNT_NUMBER
+			,ACCOUNT_SEQ
+			,OLD_ACCOUNT_SEQ
+			,CMS_TRADE_CD
+			,ACCEPT_SEQ
+			,TEMPLE_CD
+			,CRT_USER
+			,CRT_DATE
+			,REMOTE
+			,REC_NAME
+			,BANK_CD
+			,OLD_BANK_CD
+			,OLD_CMS_TRADE_CD
+		)VALUES(
+			 (select nvl(max(seq),0) +1 from REC_CMSINFO_HIS)
+			,#{BUNNAB_DAY}
+			,#{BANK_NO}
+			,#{ACCOUNT_NUMBER}
+			,#{OLD_ACCOUNT_NUMBER}
+			,#{ACCOUNT_SEQ}
+			,#{OLD_ACCOUNT_SEQ}
+			,#{CMS_TRADE_CD}
+			,#{ACCEPT_SEQ}
+			,#{TEMPLE_CD}
+			,#{V_USER_ID}
+			,sysdate
+			,#{V_REMOTE}
+			,#{REC_NAME}
+			,#{BANK_CD}
+			,#{OLD_BANK_CD}
+			,#{OLD_CMS_TRADE_CD}
+		)
+	</insert>
+	
+	
+	<update id="UPDATE_REC_MASTER_CMSINFO" parameterType="java.util.Map">
+		UPDATE REC_MASTER
+		   SET ACCOUNT_NUMBER = #{ACCOUNT_NUMBER}
+		      ,ACCOUNT_SEQ    = #{ACCOUNT_SEQ}
+		      ,BANK_NO        = #{BANK_CD}
+		      ,CMS_TRADE_CD   = #{CMS_TRADE_CD}
+		      ,UPT_USER       = #{V_USER_ID}
+		      ,UPT_DATE       = sysdate
+		 WHERE APPROVAL_GBN   = 3
+		   AND TEMPLE_CD      = #{TEMPLE_CD}
+		   AND ACCEPT_SEQ     = #{ACCEPT_SEQ}
+		   AND ACCOUNT_NUMBER = #{OLD_ACCOUNT_NUMBER}
+		   AND ACCOUNT_SEQ    = #{OLD_ACCOUNT_SEQ}
+		   AND CMS_TRADE_CD   = #{OLD_CMS_TRADE_CD}
+	</update>
+	
+	
+	
+	<update id="UPDATE_SIN_CELL_INFO" parameterType="java.util.Map">
+		UPDATE SIN_CARD_MASTER
+		   SET MOBILE_TELNO1 = #{MOBILE_TELNO1}
+		      ,MOBILE_TELNO2 = #{MOBILE_TELNO2}
+		      ,MOBILE_TELNO3 = #{MOBILE_TELNO3}
+		 WHERE TEMPLE_CD     = #{TEMPLE_CD}
+		   AND BUD_NO        = #{PROPOSAL_BUD_NO}
+	</update>
+	
+	<update id="UPDATE_REC_MASTER_SMS_YN" parameterType="java.util.Map">
+		UPDATE REC_MASTER
+		   SET SMS_YN 		   = #{SMS_YN}
+		 WHERE TEMPLE_CD       = #{TEMPLE_CD}
+		   AND ACCEPT_SEQ      = #{ACCEPT_SEQ}
+		   AND PROPOSAL_BUD_NO = #{PROPOSAL_BUD_NO}  
+	</update>
+	
+	<insert id="INSERT_MISU"  parameterType="java.util.Map">
+		INSERT INTO REC_PAYMENT_HIS (
+		        TEMPLE_CD
+		       ,SEQ
+		       ,ACCEPT_SEQ
+		       ,SUB_DATE
+		       ,AMOUNT
+		       ,CRT_USER
+		       ,REMOTE
+		       ,REMARK
+		       ,APPROVAL_GBN
+		       ,PGCODE
+		       ,AUTHCODE
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{ACCEPT_SEQ}
+		       ,(SELECT TO_CHAR(CURRENT_TIMESTAMP,'YYYYMMDDHH24MISSFF') FROM DUAL)
+		       ,#{AMOUNT}
+		       ,#{V_USER_ID}
+		       ,#{V_REMOTE}
+		       ,#{REMARK       ,jdbcType=VARCHAR}
+		       ,#{V_CASH_TYPE  ,jdbcType=VARCHAR}
+		       ,#{V_PGCODE     ,jdbcType=VARCHAR}
+		       ,#{V_AUTHCODE   ,jdbcType=VARCHAR} 
+		)
+	</insert>
+	
+	
+	<insert id="INSERT_MISU_LIMIT"  parameterType="java.util.Map">
+		INSERT INTO REC_PAYMENT_HIS (
+		        TEMPLE_CD
+		       ,SEQ
+		       ,ACCEPT_SEQ
+		       ,SUB_DATE
+		       ,AMOUNT
+		       ,PAYMENT_YYYYMM
+		       ,CRT_USER
+		       ,REMOTE
+		       ,REMARK
+		       ,APPROVAL_GBN
+		       ,PGCODE
+		       ,AUTHCODE
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{ACCEPT_SEQ}
+		       ,(SELECT TO_CHAR(CURRENT_TIMESTAMP,'YYYYMMDDHH24MISSFF') FROM DUAL)
+		       ,#{AMOUNT}
+		       ,#{PAYMENT_YYYYMM}
+		       ,#{V_USER_ID}
+		       ,#{V_REMOTE}
+		       ,#{REMARK       ,jdbcType=VARCHAR}
+		       ,#{V_CASH_TYPE  ,jdbcType=VARCHAR}
+		       ,#{V_PGCODE     ,jdbcType=VARCHAR}
+		       ,#{V_AUTHCODE   ,jdbcType=VARCHAR} 
+		)
+	</insert>
+	
+	<update id="UPDAET_CANCEL" parameterType="java.util.Map">
+		UPDATE REC_SUB
+		   SET DEL_YN = 'T'
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		   AND ACCEPT_SEQ = #{ACCEPT_SEQ}
+		   AND SEQ        = #{SEQ}
+		   AND ACCEPT_GBN = #{ACCEPT_GBN}
+	</update>
+	
+	<update id="UPDAET_CANCEL_DETAIL" parameterType="java.util.Map">
+		UPDATE
+		<if test="ACCEPT_GBN == 1">REC_PRAY_DETAIL</if>
+		<if test="ACCEPT_GBN == 2">REC_INDEUNG_DETAIL</if>
+		<if test="ACCEPT_GBN == 3">REC_BULSA_DETAIL</if>
+		<if test="ACCEPT_GBN == 4">REC_YEONDEUNG_DETAIL</if>
+		<if test="ACCEPT_GBN == 5">REC_FORTY_NINE_DETAIL</if>
+		<if test="ACCEPT_GBN == 6">REC_GIJE_DETAIL</if>
+		<if test="ACCEPT_GBN == 7">REC_CHONDOJE_DETAIL</if>
+		<if test="ACCEPT_GBN == 8">REC_WEPAE_CHONHON_DETAIL</if>
+		<if test="ACCEPT_GBN == 9">REC_SUPPORT_DETAIL</if>
+		<if test="ACCEPT_GBN == 11">REC_TEMPLE_STAY_DETAIL</if>
+		<if test="ACCEPT_GBN == 12">REC_WONBUL_DETAIL</if>
+		<if test="ACCEPT_GBN == 13">REC_ALWAYS_PRAY_DETAIL</if>
+		<if test="ACCEPT_GBN == 14">REC_YOUNGTOP_DETAIL</if>
+		<if test="ACCEPT_GBN == 15">REC_MANAGE_DETAIL</if>
+		SET DEL_YN   = 'T' ,
+		<if test="ACCEPT_GBN == 2 or ACCEPT_GBN == 4 or ACCEPT_GBN == 12">
+			CLOSE_YN = 'T',
+		</if>
+		<if test="ACCEPT_GBN ==  13">
+			END_YN = 'T',
+		</if>
+		<if test="ACCEPT_GBN ==  15">
+			MANAGE_END_YN = 'T',
+		</if>
+		<if test="ACCEPT_GBN ==  8">
+			MEMO   = #{REMARK},
+		</if>
+		<if test="ACCEPT_GBN !=  8">
+			REMARK   = #{REMARK},
+		</if>
+			UPT_USER   = #{UPT_USER},
+	        UPT_DATE   = SYSDATE,
+	        REMOTE     = #{REMOTE}
+		WHERE TEMPLE_CD  = #{TEMPLE_CD}
+   		  AND ACCEPT_SEQ = #{ACCEPT_SEQ}
+   		  AND SEQ        = #{SEQ}
+		
+	</update>
+	
+	<delete id="DELETE_RESERVED_SMS" parameterType="java.util.Map">
+		DELETE FROM SMSKT.SDK_SMS_SEND
+		 WHERE RESERVED1 = #{TEMPLE_CD}
+		   AND RESERVED4 = #{ACCEPT_GBN}
+		   AND RESERVED6 = #{ACCEPT_SEQ} || '|' || TRUNC(#{SEQ})
+	</delete>
+	
+	
+	<select id="SELECT_DEUNG" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT DET.TEMPLE_CD
+			  ,DET.ACCEPT_SEQ
+			  ,DET.SEQ
+			  ,DET.ACCEPT_GBN
+			  ,DET.JUNGAK_CD
+			  ,DET.LIGHT_NO
+			  ,DET.CLOSE_YN
+			  ,DECODE(DET.CLOSE_YN,'T','예','아니오') AS CLOSE_YN_NM
+			  ,DET.REMARK
+			  ,DET.DEL_YN
+			  ,MGT.DONGCHAM_BUD_NO
+			  ,BUD.NAME_KOR
+			  ,DET.UPT_USER
+			  ,DET.UPT_DATE
+			  ,DET.REMOTE
+			  ,DET.JUNGAK_CD JUNGAK_NM
+			<if test="V_ACCEPT_GBN == 2">
+			  ,INDEUNG_GBN AS PROD_CODE
+			</if>
+			<if test="V_ACCEPT_GBN == 4">
+			  ,YEONDEUNG_GBN AS PROD_CODE
+			</if>
+			<if test="V_ACCEPT_GBN == 12">
+			  ,WONBUL_GBN AS PROD_CODE
+			</if>
+		FROM  SIN_CARD_MASTER BUD
+			<if test="V_ACCEPT_GBN == 2">
+			,REC_INDEUNG_DETAIL DET
+			,REC_INDEUNG_JOIN_MGT MGT
+			</if>
+			<if test="V_ACCEPT_GBN == 4">
+			,REC_YEONDEUNG_DETAIL DET
+			,REC_YEONDEUNG_JOIN_MGT MGT
+			</if>
+			<if test="V_ACCEPT_GBN == 12">
+			,REC_WONBUL_DETAIL DET
+			,REC_WONBUL_JOIN_MGT MGT
+			</if>
+		 WHERE DET.TEMPLE_CD  	   = MGT.TEMPLE_CD
+		   AND DET.ACCEPT_SEQ 	   = MGT.ACCEPT_SEQ
+		   AND DET.SEQ        	   = MGT.SEQ
+		   AND DET.ACCEPT_GBN 	   = MGT.ACCEPT_GBN
+		   AND DET.JUNGAK_CD  	   = MGT.JUNGAK_CD
+		   AND DET.LIGHT_NO   	   = MGT.LIGHT_NO
+		   AND MGT.TEMPLE_CD  	   = BUD.TEMPLE_CD
+		   AND MGT.DONGCHAM_BUD_NO = BUD.BUD_NO
+		   AND DET.DEL_YN      	   = 'F'
+		   AND MGT.SORT_SEQ    	   = '1'
+		   AND DET.TEMPLE_CD   	   = #{V_TEMPLE_CD}
+		   AND DET.ACCEPT_SEQ  	   = #{V_ACCEPT_SEQ}
+		   AND DET.SEQ         	   = #{V_SEQ}
+		   AND DET.ACCEPT_GBN  	   = #{V_ACCEPT_GBN}
+		   AND DET.JUNGAK_CD   	   = #{V_JUNGAK_CD}
+		   AND DET.LIGHT_NO    	   = #{V_LIGHT_NO}
+		   <if test="V_ACCEPT_GBN == 2">
+			  AND DET.INDEUNG_GBN = #{V_PROD_CODE}
+		   </if>
+		   <if test="V_ACCEPT_GBN == 4">
+			  AND DET.YEONDEUNG_GBN = #{V_PROD_CODE}
+		   </if>
+		  <if test="V_ACCEPT_GBN == 12">
+			  AND DET.WONBUL_GBN = #{V_PROD_CODE} 
+		  </if>
+	</select>
+	
+	<select id="SELECT_BULSA" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT DET.TEMPLE_CD
+			  ,DET.ACCEPT_SEQ
+			  ,DET.SEQ
+			  ,0 AS JUNGAK_CD
+			  ,'' AS JUNGAK_NM
+			  ,0 AS LIGHT_NO
+			  ,'F' as CLOSE_YN
+			  ,'아니오' AS CLOSE_YN_NM
+			  ,'' AS REMARK
+			  ,DET.DEL_YN
+			  ,''  as DONGCHAM_BUD_NO
+			  ,BUD.NAME_KOR
+			  ,DET.UPT_USER
+			  ,DET.UPT_DATE
+			  ,DET.REMOTE
+			  ,'3' AS ACCEPT_GBN
+			  ,0 AS PROD_CODE
+		  FROM REC_BULSA_DETAIL DET
+		      ,SIN_CARD_MASTER BUD
+		 WHERE DET.TEMPLE_CD   = BUD.TEMPLE_CD
+		   AND DET.BUD_NO      = BUD.BUD_NO
+		   AND DET.DEL_YN      = 'F'
+		   AND DET.TEMPLE_CD   = #{V_TEMPLE_CD}
+		   AND DET.ACCEPT_SEQ  = #{V_ACCEPT_SEQ}
+		   AND DET.SEQ         = #{V_SEQ}
+	</select>
+	
+	<select id="SELECT_WEPAE" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT DET.TEMPLE_CD
+			  ,DET.ACCEPT_SEQ
+			  ,DET.SEQ
+			  ,0 AS JUNGAK_CD
+			  ,'' AS JUNGAK_NM
+			  ,0 AS LIGHT_NO
+			  ,DET.CLOSE_YN
+			  ,DECODE(DET.CLOSE_YN,'T','예','아니오') AS CLOSE_YN_NM
+			  ,'' AS REMARK
+			  ,DET.DEL_YN
+			  ,MGT.DECE_BUD_NO as DONGCHAM_BUD_NO
+			  ,BUD.NAME_KOR
+			  ,DET.UPT_USER
+			  ,DET.UPT_DATE
+			  ,DET.REMOTE
+			  ,'8' AS ACCEPT_GBN
+			  ,0 AS PROD_CODE
+		  FROM REC_WEPAE_CHONHON_DETAIL DET
+		      ,REC_WEPAE_CHONHON_JOIN_MGT MGT
+		      ,SIN_CARD_MASTER BUD
+		 WHERE DET.TEMPLE_CD   = MGT.TEMPLE_CD
+		   AND DET.ACCEPT_SEQ  = MGT.ACCEPT_SEQ
+		   AND DET.SEQ         = MGT.SEQ
+		   AND MGT.TEMPLE_CD   = BUD.TEMPLE_CD
+		   AND MGT.DECE_BUD_NO = BUD.BUD_NO
+		   AND DET.DEL_YN      = 'F'
+		   AND DET.TEMPLE_CD   = #{V_TEMPLE_CD}
+		   AND DET.ACCEPT_SEQ  = #{V_ACCEPT_SEQ}
+		   AND DET.SEQ         = #{V_SEQ}
+	</select>
+	
+	<select id="SELECT_YOUNGTOP" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT DET.TEMPLE_CD
+			  ,DET.ACCEPT_SEQ
+			  ,DET.SEQ
+			  ,DET.ACCEPT_GBN
+			  ,DET.JUNGAK_CD
+			  ,DET.LIGHT_NO
+			  ,DET.CLOSE_YN
+			  ,DECODE(DET.CLOSE_YN,'T','예','아니오') AS CLOSE_YN_NM
+			  ,DET.REMARK
+			  ,DET.DEL_YN
+			  ,MST.PROPOSAL_BUD_NO DONGCHAM_BUD_NO
+			  ,FN_SINDO_INFO('NAME_KOR',DET.TEMPLE_CD,MST.PROPOSAL_BUD_NO) NAME_KOR
+			  ,DET.UPT_USER
+			  ,DET.UPT_DATE
+			  ,DET.REMOTE
+			  ,TO_CHAR(DET.JUNGAK_CD) AS PROD_CODE
+			  ,CD1.JUNGAK_NM||'-'||DET.LIGHT_NO JUNGAK_NM
+		  FROM REC_YOUNGTOP_DETAIL DET
+		  	  ,REC_MASTER MST
+		  	  ,ASP_JUNGAK_MGT CD1
+		 WHERE DET.DEL_YN     = 'F'
+		   AND DET.TEMPLE_CD   = #{V_TEMPLE_CD}
+		   AND DET.ACCEPT_SEQ  = #{V_ACCEPT_SEQ}
+		   AND DET.SEQ         = #{V_SEQ}
+		   AND DET.ACCEPT_GBN  = #{V_ACCEPT_GBN}
+		   AND DET.JUNGAK_CD   = #{V_JUNGAK_CD}
+		   AND DET.LIGHT_NO    = #{V_LIGHT_NO}
+		   AND MST.TEMPLE_CD   = DET.TEMPLE_CD
+		   AND MST.ACCEPT_SEQ  = DET.ACCEPT_SEQ
+		   AND CD1.TEMPLE_CD   = DET.TEMPLE_CD
+		   AND CD1.ACCEPT_GBN  = DET.ACCEPT_GBN
+		   AND CD1.JUNGAK_CD   = DET.JUNGAK_CD
+	</select>
+	
+	
+	<delete id="UPDATE_WEPAE_OUT" parameterType="java.util.Map">
+		UPDATE REC_WEPAE_CHONHON_DETAIL 
+		   SET CLOSE_YN    = 'T'
+		      ,UPT_DATE    = SYSDATE
+			  ,UPT_USER    = #{UPT_USER}
+			  ,REMOTE      = #{REMOTE}
+		 WHERE TEMPLE_CD   = #{TEMPLE_CD}
+		   AND ACCEPT_SEQ  = #{ACCEPT_SEQ}
+		   AND SEQ         = #{SEQ}
+	</delete>
+	
+	<delete id="UPDATE_DEUGN" parameterType="java.util.Map">
+		UPDATE 
+		<if test="ACCEPT_GBN == 2">
+			REC_INDEUNG_DETAIL
+		</if>
+		<if test="ACCEPT_GBN == 4">
+			REC_YEONDEUNG_DETAIL
+		</if>
+		<if test="ACCEPT_GBN == 12">
+			REC_WONBUL_DETAIL
+		</if>
+		<if test="ACCEPT_GBN == 14">
+			REC_YOUNGTOP_DETAIL
+		</if>
+		   SET CLOSE_YN    = 'T'
+		      ,UPT_DATE    = SYSDATE
+			  ,UPT_USER    = #{UPT_USER}
+			  ,REMOTE      = #{REMOTE}
+		 WHERE TEMPLE_CD   = #{TEMPLE_CD}
+		   AND ACCEPT_SEQ  = #{ACCEPT_SEQ}
+		   AND SEQ         = #{SEQ}
+		   AND ACCEPT_GBN  = #{ACCEPT_GBN}
+		   AND JUNGAK_CD   = #{JUNGAK_CD}
+		   AND LIGHT_NO    = #{LIGHT_NO}
+		   <if test="ACCEPT_GBN == 2">
+				AND INDEUNG_GBN   = #{PROD_CODE}
+			</if>
+			<if test="ACCEPT_GBN == 4">
+				AND YEONDEUNG_GBN = #{PROD_CODE}
+			</if>
+			<if test="ACCEPT_GBN == 12">
+				AND WONBUL_GBN 	  = #{PROD_CODE} 
+			</if>
+			<if test="ACCEPT_GBN == 14"></if>
+	</delete>
+	
+	
+	<update id="UPDATE_REC_MASTER_MEMO" parameterType="java.util.Map">
+		UPDATE REC_MASTER
+		   SET MEMO 	  = #{MEMO}
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		   AND ACCEPT_SEQ = #{ACCEPT_SEQ}
+	</update>
+	
+	
+	<update id="UPDATE_REC_DETAIL_REMARK" parameterType="java.util.Map">
+		UPDATE
+		<if test="ACCEPT_GBN == 1">REC_PRAY_DETAIL</if>
+		<if test="ACCEPT_GBN == 2">REC_INDEUNG_DETAIL</if>
+		<if test="ACCEPT_GBN == 3">REC_BULSA_DETAIL</if>
+		<if test="ACCEPT_GBN == 4">REC_YEONDEUNG_DETAIL</if>
+		<if test="ACCEPT_GBN == 5">REC_FORTY_NINE_DETAIL</if>
+		<if test="ACCEPT_GBN == 6">REC_GIJE_DETAIL</if>
+		<if test="ACCEPT_GBN == 7">REC_CHONDOJE_DETAIL</if>
+		<if test="ACCEPT_GBN == 8">REC_WEPAE_CHONHON_DETAIL</if>
+		<if test="ACCEPT_GBN == 9">REC_SUPPORT_DETAIL</if>
+		<if test="ACCEPT_GBN == 11">REC_TEMPLE_STAY_DETAIL</if>
+		<if test="ACCEPT_GBN == 12">REC_WONBUL_DETAIL</if>
+		<if test="ACCEPT_GBN == 13">REC_ALWAYS_PRAY_DETAIL</if>
+		<if test="ACCEPT_GBN == 14">REC_YOUNGTOP_DETAIL</if>
+		<if test="ACCEPT_GBN == 15">REC_MANAGE_DETAIL</if>
+		 SET
+		<if test="ACCEPT_GBN ==  8">
+			MEMO   = #{REMARK},
+		</if>
+		<if test="ACCEPT_GBN !=  8">
+			REMARK   = #{REMARK},
+		</if>
+			UPT_USER   = #{V_USER_ID},
+	        UPT_DATE   = SYSDATE,
+	        REMOTE     = #{V_REMOTE}
+		WHERE TEMPLE_CD  = #{TEMPLE_CD}
+   		  AND ACCEPT_SEQ = #{ACCEPT_SEQ}
+   		  AND SEQ        = #{SEQ}
+	</update>
+	
+	<update id="UPDATE_MISU" parameterType="java.util.Map">
+		UPDATE REC_PAYMENT_HIS
+		   SET REMARK       = #{REMARK,jdbcType=VARCHAR}
+		 WHERE TEMPLE_CD    = #{TEMPLE_CD}
+		   AND ACCEPT_SEQ   = #{ACCEPT_SEQ}
+		   AND SEQ          = #{SEQ}
+		   AND AMOUNT       = #{AMOUNT}
+		   AND SUB_DATE     = #{SUB_DATE}
+		   AND APPROVAL_GBN = #{APPROVAL_GBN}
+	</update>
+	
+	<select id="SELECT_JESA_INFO" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT T1.JESA_NAME
+		      ,T1.EVENT_DATE
+		      ,T1.EVENT_TIME
+		      ,T1.ACCEPT_GBN
+		      ,T1.YOUNG_NM
+		      ,T1.BOK_NM
+		      ,T1.YOUNG_REL
+		  FROM(
+			SELECT JES.NAME as JESA_NAME
+			      ,SUB.EVENT_DATE
+			      ,SUB.EVENT_TIME
+			      ,5 as ACCEPT_GBN
+			      ,FN_GET_NM('BUD',DEATH.TEMPLE_CD,DEATH.DECE_BUD_NO) as YOUNG_NM
+			      ,DEATH.DECE_REL as YOUNG_REL
+		          ,FN_GET_NM('BUD',DEATH.TEMPLE_CD,BOK.BUD_NO) as BOK_NM
+			  FROM REC_FORTY_NINE_JESA_MGT SUB
+		          ,REC_FORTY_NINE_DEATH DEATH
+		          ,SIN_DEATH_BOKWI_INFO BOK
+			      ,ASP_CODE_MGT JES
+			      ,ASP_CODE_MGT LUN
+			 WHERE JES.GROUP_CD(+) = 'SAGUJESA'
+			   AND SUB.JESA_GUBUN  = JES.CODE(+)
+			   AND LUN.GROUP_CD(+) = 'LUNAR_SOLAR'
+			   AND SUB.LUNAR_SOLAR = LUN.CODE(+)
+			   AND BOK.TEMPLE_CD   = DEATH.TEMPLE_CD
+		       AND BOK.DECE_BUD_NO = DEATH.DECE_BUD_NO
+			   AND SUB.TEMPLE_CD   = DEATH.TEMPLE_CD
+		       AND SUB.ACCEPT_SEQ  = DEATH.ACCEPT_SEQ
+		       AND SUB.SEQ         = DEATH.SEQ      
+		       AND BOK.DEL_YN      = 'F'
+			   AND SUB.TEMPLE_CD   = #{V_TEMPLE_CD}
+			   AND SUB.SEQ         = #{V_SEQ}
+			   AND SUB.ACCEPT_SEQ  = #{V_ACCEPT_SEQ}
+			UNION ALL
+			SELECT '천도재' AS JESA_NAME
+			       ,DETAIL.EVENT_DATE 
+			       ,DETAIL.EVENT_TIME
+			       ,7 as ACCEPT_GBN
+			       ,FN_GET_NM('BUD',DEATH.TEMPLE_CD,DEATH.DECE_BUD_NO) as YOUNG_NM
+			       ,FN_GET_NM('BUD',DEATH.TEMPLE_CD,BOK.BUD_NO) as BOK_NM
+			       ,DEATH.DECE_REL as YOUNG_REL
+			FROM REC_CHONDOJE_DETAIL DETAIL
+		        ,REC_CHONDOJE_DEATH DEATH
+		        ,SIN_DEATH_BOKWI_INFO BOK
+			WHERE DETAIL.TEMPLE_CD   = DEATH.TEMPLE_CD 
+			  AND DETAIL.SEQ         = DEATH.SEQ 
+			  AND DETAIL.ACCEPT_SEQ  = DEATH.ACCEPT_SEQ
+			  AND BOK.TEMPLE_CD      = DEATH.TEMPLE_CD
+			  AND BOK.DECE_BUD_NO    = DEATH.DECE_BUD_NO
+			  AND BOK.DEL_YN         = 'F'
+			  AND DETAIL.TEMPLE_CD   = #{V_TEMPLE_CD}
+			  AND DETAIL.SEQ         = #{V_SEQ}
+			  AND DETAIL.ACCEPT_SEQ  = #{V_ACCEPT_SEQ}
+			UNION ALL
+			SELECT '기제'  AS JESA_NAME
+			       ,DETAIL.EVENT_DATE 
+			       ,DETAIL.EVENT_TIME
+			       ,6 as ACCEPT_GBN
+			       ,FN_GET_NM('BUD',DEATH.TEMPLE_CD,DEATH.DECE_BUD_NO) as YOUNG_NM
+			       ,DEATH.DECE_REL as YOUNG_REL
+		           ,FN_GET_NM('BUD',DEATH.TEMPLE_CD,BOK.BUD_NO) as BOK_NM
+			  FROM REC_GIJE_DETAIL DETAIL
+		          ,REC_GIJE_DEATH  DEATH 
+		          ,SIN_DEATH_BOKWI_INFO BOK
+			WHERE DETAIL.TEMPLE_CD   = DEATH.TEMPLE_CD 
+		      AND DETAIL.SEQ         = DEATH.SEQ 
+		      AND DETAIL.ACCEPT_SEQ  = DEATH.ACCEPT_SEQ
+		      AND BOK.TEMPLE_CD      = DEATH.TEMPLE_CD
+		      AND BOK.DECE_BUD_NO    = DEATH.DECE_BUD_NO
+		      AND BOK.DEL_YN         = 'F'
+			  AND DETAIL.TEMPLE_CD   = #{V_TEMPLE_CD}
+			  AND DETAIL.SEQ         = #{V_SEQ}
+			  AND DETAIL.ACCEPT_SEQ  = #{V_ACCEPT_SEQ}
+		) T1
+		WHERE T1.ACCEPT_GBN = #{V_ACCEPT_GBN}
+	</select>
+	
+	
+	<select id="SELECT_PRAY_ORGINATE" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT RPD.PER_BUD_NO
+		      ,RPD.ORGINATE
+		      ,FN_GET_NM('BUD' , '000008' , RPD.PER_BUD_NO ) as PER_NM
+		  FROM REC_PRAY_DETAIL RPD
+		 WHERE RPD.TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND RPD.ACCEPT_SEQ = #{V_ACCEPT_SEQ}
+		   AND RPD.SEQ 		  = #{V_SEQ}
+		   AND NVL(RPD.PER_BUD_NO, '-9999') != '-9999'
+	</select>
+	
+	
+	<select id="SELECT_REC_DEUNG_CLASS_ALL_MGT_AMOUNT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+			  ,ACCEPT_GBN
+			  ,LIGHT_CODE
+			  ,START_YYYYMM
+			  ,NVL(END_YYYYMM, '999912') AS END_YYYYMM
+			  ,AMOUNT
+			  ,'F' AS GBN
+		  FROM REC_DEUNG_PRICE_MGT
+	     WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND ACCEPT_GBN = 2   
+		 ORDER by LIGHT_CODE 
+		 	     ,START_YYYYMM
+	</select>
+	
+	
+</mapper>

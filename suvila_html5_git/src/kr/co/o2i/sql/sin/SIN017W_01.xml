@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SIN017W_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="CONTENT"    column="CONTENT"  javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		 <result  property="CHECK_P" column="CHECK_P"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+	</resultMap>
+
+	<select id="SELECT_SIN_FAMILY" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT A.TEMPLE_CD
+		      ,A.BUD_NO
+		      ,B.NAME_KOR
+		      ,A.CARD_NO
+		      ,A.ISSUE_STATE            
+		  FROM SIN_CARD_ISSUE_DETAIL A
+		      ,SIN_CARD_MASTER B
+		WHERE A.TEMPLE_CD 				= B.TEMPLE_CD 
+		  AND A.BUD_NO 	  				= B.BUD_NO 
+		  AND A.TEMPLE_CD   			= #{V_TEMPLE_CD}  
+		  AND A.DEL_YN      			= 'F'
+		  AND NVL(A.CANCEL_YN, 'F') 	= 'F'
+		  AND SUBSTR(A.BUD_NO, 0, 10)   = SUBSTR(#{V_BUD_NO},0 ,10)
+		ORDER by A.BUD_NO
+	</select>
+	
+	
+</mapper>

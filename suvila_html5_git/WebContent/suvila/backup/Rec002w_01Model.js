@@ -1,0 +1,53 @@
+Ext.define('ExFrm.view.rec.Rec002w_01Model', {
+    extend:'Ext.app.ViewModel', 
+    alias: 'viewmodel.rec002w_01', 
+    stores:{ 
+         familyList:{
+            fields:['field1'],
+            proxy:{
+                type:'ajax',
+                url:'./json/family.json',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list',
+                    //totalProperty:'listTotalSize',
+                    keepRawData:true
+                }
+            },
+            autoLoad:false,
+            //pageSize:10
+        },
+        younggaList:{
+            fields:['field1'],
+            
+            proxy:{
+                type:'ajax',
+                url:'./json/youngga.json',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list',
+                    //totalProperty:'listTotalSize',
+                    keepRawData:true
+                }
+            },
+            autoLoad:false,
+            //pageSize:10
+        },
+        recpList:{
+            fields:['field1'],
+            
+            proxy:{
+                type:'ajax',
+                url:'./json/recp.json',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list',
+                    //totalProperty:'listTotalSize',
+                    keepRawData:true
+                }
+            },
+            autoLoad:false,
+            //pageSize:10
+        }
+    }
+});

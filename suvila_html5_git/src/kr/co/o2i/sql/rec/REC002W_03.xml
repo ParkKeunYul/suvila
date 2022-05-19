@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC002w_03DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+	
+	
+	<select id="SELECT_GDKIND" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		    SELECT '' AS PRAY_CODE
+		          ,'전체' AS PRAY_NM
+		          ,0 AS SORT_SEQ
+		      FROM DUAL
+			 UNION ALL
+			SELECT MGT.PRAY_CODE AS PROD_CODE
+		          ,MGT.PRAY_NM||decode(MGT.PRAY_GBN , '2', ('(특별)'))
+		          ,MGT.SORT_SEQ AS SORT_SEQ
+		      FROM REC_PRAY_MGT MGT, ASP_CODE_MGT COD
+		     WHERE MGT.FDATE       = '-1'
+		   	   AND COD.GROUP_CD(+) = 'PRAYGBN'
+		   	   AND MGT.PRAY_GBN    = COD.CODE(+)
+		   	   AND MGT.TEMPLE_CD   = #{V_TEMPLE_CD}
+		   	   <if test="V_PRAY_GBN != '' and V_PRAY_GBN != null  ">
+		   	   		AND MGT.PRAY_GBN LIKE NVL(#{V_PRAY_GBN},'%')
+		   	   </if>
+		   	   
+		     ORDER BY SORT_SEQ, PRAY_CODE
+	</select>
+	
+	
+	
+	<select id="SELECT_BSKIND" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		    SELECT 0 AS BULSA_CD
+		          ,'전체' AS BULSA_NM
+			  FROM DUAL
+			 UNION ALL
+			SELECT BULSA_CD
+				  ,BULSA_NM 
+			  FROM REC_BULSA_MGT
+			 WHERE ACPT_FDATE  = '-1'
+			   AND TEMPLE_CD   = #{V_TEMPLE_CD}
+			ORDER BY BULSA_CD
+	</select>
+	
+	
+	<select id="SELECT_GDREC" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+		      ,FILTER_KEY
+		      ,ACCEPT_SEQ
+		      ,ACCEPT_DATE
+		      ,PROPOSAL_BUD_NO
+		      ,PROPOSAL_NAME_KOR
+		      ,APPROVAL_GBN
+		      ,SEQ
+		      ,ACCEPT_GBN
+		      ,ACCEPT_NAME
+		      ,PRAY_GBN
+		      ,PRAY_GBN_NAME
+		      ,PRAY_CODE
+		      ,PRAY_NM
+		      ,FDATE
+		      ,RDATE
+		      ,PERIOD
+		      ,PAYMENT_PLAN_AMT
+		      ,PAYMENT_AMT
+		      ,(PAYMENT_PLAN_AMT-PAYMENT_AMT) MISU_AMT
+		      ,MEMO
+		      ,REMARK
+		      ,DEL_YN
+		      ,CRT_USER
+		      ,UPT_USER
+		      ,CRT_DATE
+		      ,UPT_DATE
+		      ,REMOTE
+		      ,SMS_YN
+		      ,MOBILE_TELNO
+		      ,SEXAGENARY
+		      ,BIRTHDAY
+		      ,REPRESEN_REL
+		      ,LUNAR_SOLAR
+		      ,FN_GET_NM('BUD',TEMPLE_CD,DAEJU_BUD_NO)AS DAEJU_NM
+		      ,PER_BUD_NO
+		      ,ORGINATE
+		      ,PER_BUD_NM
+		      ,BUD_NO
+		      ,NAME_KOR
+		      ,SMS_GROUP_TRANS
+		      ,PROPOSAL_DEL_YN
+		  FROM (SELECT DET.TEMPLE_CD
+		   			  ,DET.ACCEPT_SEQ || DET.SEQ AS FILTER_KEY
+		   			  ,DET.ACCEPT_SEQ
+		   			  ,MST.ACCEPT_DATE
+		   			  ,MST.PROPOSAL_BUD_NO
+		   			  ,SMS.NAME_KOR AS PROPOSAL_NAME_KOR
+		   			  ,MST.APPROVAL_GBN
+		   			  ,DET.SEQ
+		   			  ,SUB.ACCEPT_GBN
+		   			  ,COD.NAME AS ACCEPT_NAME
+		   			  ,DET.PRAY_GBN
+		   			  ,PRY.NAME AS PRAY_GBN_NAME
+		   			  ,DET.PRAY_CODE
+		   			  ,MGT.PRAY_NM
+		   			  ,DET.FDATE
+		   			  ,MGT.RDATE
+		   			  ,MGT.PERIOD
+		   			  ,DET.PAYMENT_PLAN_AMT
+		   			  ,(SELECT NVL(SUM(HIS.AMOUNT),0)
+		                  FROM REC_PAYMENT_HIS HIS
+		                 WHERE SUB.TEMPLE_CD  = HIS.TEMPLE_CD
+		                   AND SUB.ACCEPT_SEQ = HIS.ACCEPT_SEQ
+		                   AND SUB.SEQ        = HIS.SEQ
+		                ) AS PAYMENT_AMT
+		              ,MST.MEMO
+		              ,DET.REMARK
+		              ,DET.DEL_YN
+		              ,DET.CRT_USER
+		              ,DET.UPT_USER
+		              ,TO_CHAR(DET.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+		              ,TO_CHAR(DET.UPT_DATE,'YYYYMMDD') AS UPT_DATE
+		              ,DET.REMOTE
+		              ,DECODE(MST.SMS_YN,'T',DECODE(SMS.MOBILE_TELNO1||SMS.MOBILE_TELNO2||SMS.MOBILE_TELNO3,NULL,'N','Y'),'N') SMS_YN
+		              <!-- ,SMS.MOBILE_TELNO1||SMS.MOBILE_TELNO2||SMS.MOBILE_TELNO3 MOBILE_TELNO -->
+		              ,SMS.MOBILE_TELNO1 || DECODE(SMS.MOBILE_TELNO1,NULL,'','-') || SMS.MOBILE_TELNO2 || DECODE(SMS.MOBILE_TELNO2,NULL,'','-') || SMS.MOBILE_TELNO3 AS MOBILE_TELNO
+		              ,SMS.SEXAGENARY
+		              ,SMS.BIRTHDAY
+		              ,SMS.LUNAR_SOLAR
+		              ,SMS.REPRESEN_REL
+		              ,SMS.DAEJU_BUD_NO
+		              ,DET.PER_BUD_NO
+		              ,DET.ORGINATE
+		              ,FN_SINDO_INFO('NAME_KOR',MGT.TEMPLE_CD , DET.PER_BUD_NO ) as PER_BUD_NM
+		              ,SMS.BUD_NO
+		              ,SMS.NAME_KOR
+		              ,SMS.SMS_GROUP_TRANS
+		              ,SMS.DEL_YN as PROPOSAL_DEL_YN
+		          FROM REC_PRAY_DETAIL DET
+		              ,REC_PRAY_MGT MGT
+		              ,REC_SUB SUB
+		              ,REC_MASTER MST
+		              ,SIN_CARD_MASTER SMS
+		              ,ASP_CODE_MGT COD
+		              ,ASP_CODE_MGT PRY 
+		         WHERE MST.TEMPLE_CD  = DET.TEMPLE_CD
+		           AND MST.ACCEPT_SEQ = DET.ACCEPT_SEQ
+		           AND MST.TEMPLE_CD  = SMS.TEMPLE_CD(+)
+		           AND MST.PROPOSAL_BUD_NO = SMS.BUD_NO(+)
+		           AND COD.GROUP_CD(+)= 'REC'
+		           AND SUB.ACCEPT_GBN = COD.CODE(+)
+		           AND PRY.GROUP_CD(+)= 'PRAYGBN'
+		           AND DET.PRAY_GBN   = PRY.CODE(+)
+		           AND DET.TEMPLE_CD  = MGT.TEMPLE_CD
+		           AND DET.PRAY_GBN   = MGT.PRAY_GBN
+		           AND DET.PRAY_CODE  = MGT.PRAY_CODE
+		           AND DET.FDATE      = MGT.FDATE
+		           AND DET.TEMPLE_CD  = SUB.TEMPLE_CD
+		           AND DET.ACCEPT_SEQ = SUB.ACCEPT_SEQ
+		           AND DET.SEQ        = SUB.SEQ
+		           AND SUB.DEL_YN     = 'F'
+		           AND DET.TEMPLE_CD  = #{V_TEMPLE_CD}
+		           <if test="V_PROPOSAL_BUD_NO != '' and V_PROPOSAL_BUD_NO != null  ">
+		           		AND MST.PROPOSAL_BUD_NO LIKE SUBSTR(#{V_PROPOSAL_BUD_NO},0,10) || '%'
+		           </if>
+		           <if test="V_DATE_GBN == 1">
+		           		AND MST.ACCEPT_DATE BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		           </if>
+		           <if test="V_DATE_GBN == 2">
+		           		AND DET.FDATE       BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		           </if>
+		           <if test="V_DATE_GBN == 3">
+		           		MGT.RDATE           BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		           </if>
+		           <if test="V_CODE != '' and V_CODE != null  ">
+		           		AND DET.PRAY_CODE = #{V_CODE}
+		           </if>
+		           <if test="VV_USER_ID != '' and VV_USER_ID != null  ">
+		           		AND MST.CRT_USER = #{VV_USER_ID}
+		           </if>
+		           <if test="V_PRAY_GBN != '' and V_PRAY_GBN != null  ">
+		           		AND DET.PRAY_GBN = #{V_PRAY_GBN}
+		           </if>
+		           <if test="V_CLASS_CD != 0 and V_CLASS_CD != '' and V_CLASS_CD != null">
+		           		AND MST.PROPOSAL_BUD_NO IN (SELECT BUD_NO FROM SIN_CLASS_INFO WHERE TEMPLE_CD = #{V_TEMPLE_CD} AND CLASS_CD = #{V_CLASS_CD})
+		           </if>
+		           <if test="V_APPROV != '' and V_APPROV != null  ">
+		           		AND MST.APPROVAL_GBN = #{V_APPROV}
+		           </if>
+		           <choose>
+		           		<when test="V_PAY_STATE == 1">
+		           			)  WHERE (PAYMENT_PLAN_AMT-PAYMENT_AMT) &lt;= 0
+		           		</when>
+		           		<when test="V_PAY_STATE == 2">
+		           			) WHERE (PAYMENT_PLAN_AMT-PAYMENT_AMT) > 0
+		           		</when>
+		           		<otherwise>
+		           			)
+		           		</otherwise>
+		           </choose>
+	</select>
+	
+	<select id="SELECT_BSREC" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+		      ,FILTER_KEY
+		      ,ACCEPT_SEQ
+		      ,SEQ
+		      ,ACCEPT_GBN
+		      ,ACCEPT_DATE
+		      ,ACCEPT_NAME
+		      ,PROPOSAL_BUD_NO
+		      ,PROPOSAL_NAME_KOR
+		      ,APPROVAL_GBN
+		      ,BUD_NO
+		      ,NAME_KOR
+		      ,BULSA_CD
+		      ,BULSA_SEQ
+		      ,BULSA_DETAIL
+		      ,BULSA_NM
+		      ,ACPT_FDATE
+		      ,ACPT_EDATE
+		      ,PAYMENT_PLAN_AMT
+		      ,PAYMENT_AMT
+		      ,(PAYMENT_PLAN_AMT-PAYMENT_AMT) MISU_AMT
+		      ,MEMO
+		      ,REMARK
+		      ,DEL_YN
+		      ,CRT_USER
+		      ,UPT_USER
+		      ,CRT_DATE
+		      ,UPT_DATE
+		      ,REMOTE
+		      ,SMS_YN
+		      ,MOBILE_TELNO		      
+		      ,SMS_GROUP_TRANS
+		      ,PROPOSAL_DEL_YN
+		  FROM (SELECT DET.TEMPLE_CD
+		  			  ,DET.ACCEPT_SEQ || DET.SEQ AS FILTER_KEY
+		              ,DET.ACCEPT_SEQ
+		              ,DET.SEQ
+		              ,SUB.ACCEPT_GBN
+		              ,MST.ACCEPT_DATE
+		              ,COD.NAME AS ACCEPT_NAME
+		              ,MST.PROPOSAL_BUD_NO
+		              ,SMS.NAME_KOR AS PROPOSAL_NAME_KOR
+		              ,MST.APPROVAL_GBN
+		              ,DET.BUD_NO
+		              ,SIN.NAME_KOR
+		              ,DET.BULSA_CD
+		              ,DET.BULSA_SEQ
+		              ,DMG.BULSA_DETAIL
+		              ,SGT.BULSA_NM
+		              ,MGT.ACPT_FDATE
+		              ,MGT.ACPT_EDATE
+		              ,DET.PAYMENT_PLAN_AMT
+		              ,(SELECT NVL(SUM(HIS.AMOUNT),0)
+		                  FROM REC_PAYMENT_HIS HIS
+		                 WHERE SUB.TEMPLE_CD  = HIS.TEMPLE_CD
+		                   AND SUB.ACCEPT_SEQ = HIS.ACCEPT_SEQ
+		                   AND SUB.SEQ        = HIS.SEQ
+		                ) AS PAYMENT_AMT
+		              ,MST.MEMO
+		              ,DET.REMARK
+		              ,DET.DEL_YN
+		              ,DET.CRT_USER
+		              ,DET.UPT_USER
+		              ,TO_CHAR(DET.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+		              ,TO_CHAR(DET.UPT_DATE,'YYYYMMDD') AS UPT_DATE
+		              ,DET.REMOTE
+		              ,DECODE(MST.SMS_YN,'T',DECODE(SMS.MOBILE_TELNO1||SMS.MOBILE_TELNO2||SMS.MOBILE_TELNO3,NULL,'N','Y'),'N') SMS_YN
+		              <!-- ,SMS.MOBILE_TELNO1||SMS.MOBILE_TELNO2||SMS.MOBILE_TELNO3 MOBILE_TELNO -->
+		              ,SMS.MOBILE_TELNO1 || DECODE(SMS.MOBILE_TELNO1,NULL,'','-') || SMS.MOBILE_TELNO2 || DECODE(SMS.MOBILE_TELNO2,NULL,'','-') || SMS.MOBILE_TELNO3 AS MOBILE_TELNO		              
+		              ,SMS.SMS_GROUP_TRANS
+		              ,SMS.DEL_YN as PROPOSAL_DEL_YN
+		          FROM REC_MASTER MST
+		              ,REC_SUB SUB
+		              ,SIN_CARD_MASTER SMS
+		              ,ASP_CODE_MGT COD
+		              ,REC_BULSA_DETAIL DET
+		              ,REC_BULSA_MGT MGT
+		              ,REC_BULSA_MGT SGT
+		              ,REC_BULSA_DETAIL_MGT DMG
+		              ,SIN_CARD_MASTER SIN
+		              ,REC_PAYMENT_HIS RPH
+		         WHERE MST.TEMPLE_CD  = DET.TEMPLE_CD
+		           AND MST.ACCEPT_SEQ = DET.ACCEPT_SEQ
+		           AND MST.TEMPLE_CD  = SMS.TEMPLE_CD(+)
+		           AND MST.PROPOSAL_BUD_NO = SMS.BUD_NO(+)
+		           AND DET.TEMPLE_CD  = SIN.TEMPLE_CD(+)
+		           AND DET.BUD_NO     = SIN.BUD_NO(+)
+		           AND SUB.TEMPLE_CD  = DET.TEMPLE_CD
+		           AND SUB.ACCEPT_SEQ = DET.ACCEPT_SEQ
+		           AND SUB.SEQ        = DET.SEQ
+		           AND COD.GROUP_CD(+)= 'REC'
+		           AND SUB.ACCEPT_GBN = COD.CODE(+)
+		           AND DET.TEMPLE_CD  = MGT.TEMPLE_CD
+		           AND DET.BULSA_CD   = MGT.BULSA_CD
+		           AND DET.ACPT_FDATE = MGT.ACPT_FDATE
+		           AND MGT.TEMPLE_CD  = SGT.TEMPLE_CD
+		           AND MGT.BULSA_CD   = SGT.BULSA_CD
+		           AND SGT.ACPT_FDATE = '-1'
+		           AND DET.TEMPLE_CD  = DMG.TEMPLE_CD
+		           AND DET.BULSA_CD   = DMG.BULSA_CD
+		           AND DET.BULSA_SEQ  = DMG.BULSA_SEQ
+		           AND SUB.DEL_YN     = 'F'
+		           AND DET.TEMPLE_CD  = #{V_TEMPLE_CD}
+		           AND RPH.TEMPLE_CD  = #{V_TEMPLE_CD}        
+		           AND MST.TEMPLE_CD  = RPH.TEMPLE_CD
+		           AND SUB.TEMPLE_CD  = RPH.TEMPLE_CD
+		           AND DET.TEMPLE_CD  = RPH.TEMPLE_CD           
+		           AND MST.ACCEPT_SEQ  = RPH.ACCEPT_SEQ
+		           AND SUB.ACCEPT_SEQ  = RPH.ACCEPT_SEQ
+		           AND DET.ACCEPT_SEQ  = RPH.ACCEPT_SEQ           
+		           AND SUB.SEQ  = RPH.SEQ
+		           AND DET.SEQ  = RPH.SEQ  
+		           <if test="V_PROPOSAL_BUD_NO != '' and V_PROPOSAL_BUD_NO != null  ">
+		           		AND MST.PROPOSAL_BUD_NO LIKE SUBSTR(#{V_PROPOSAL_BUD_NO},0,10) || '%'
+		           </if>
+		           <choose>
+		           		<when test="V_DATE_GBN == 1">
+		           			AND MST.ACCEPT_DATE BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		           		</when>
+		           		<when test="V_DATE_GBN == 2">
+		           			AND DET.ACPT_FDATE BETWEEN #{V_FDATE} AND #{V_EDATE}
+		           		</when>
+		           		<when test="V_DATE_GBN == 3">
+		           			AND RPH.SUB_DATE BETWEEN RPAD(#{V_ACCEPT_SDATE},20,'0') AND RPAD(#{V_ACCEPT_EDATE},20,'9') 
+		           		</when>
+		           </choose>
+		           <if test="V_CODE != 0">
+		           		AND DET.BULSA_CD = #{V_CODE}
+		           </if>
+		           <if test="VV_USER_ID != '' and VV_USER_ID != null  ">
+		           		AND MST.CRT_USER = #{VV_USER_ID}
+		           </if>
+		           <if test="V_CLASS_CD != 0">
+		           		AND MST.PROPOSAL_BUD_NO IN (SELECT BUD_NO FROM SIN_CLASS_INFO WHERE TEMPLE_CD = #{V_TEMPLE_CD} AND CLASS_CD = #{V_CLASS_CD}) 
+		           </if>
+		           <if test="V_APPROV != '' and V_APPROV != null  ">
+		           		AND MST.APPROVAL_GBN = #{V_APPROV}
+		           </if>
+		           
+		           <choose>
+		           		<when test="V_PAY_STATE == '1'">
+		           			) WHERE (PAYMENT_PLAN_AMT-PAYMENT_AMT) &lt;= 0
+		           		</when>
+		           		<when test="V_PAY_STATE == '2'">
+		           			) WHERE (PAYMENT_PLAN_AMT-PAYMENT_AMT) > 0
+		           		</when>
+		           		<otherwise>
+		           			)
+		           		</otherwise>
+		           </choose>
+		GROUP BY TEMPLE_CD   ,FILTER_KEY     , ACCEPT_SEQ      , SEQ         ,ACCEPT_GBN   ,        
+		         ACCEPT_NAME ,PROPOSAL_BUD_NO,PROPOSAL_NAME_KOR,APPROVAL_GBN ,BUD_NO       ,             
+		         NAME_KOR    ,BULSA_CD       ,BULSA_SEQ        ,BULSA_DETAIL ,BULSA_NM     ,           
+			     ACPT_FDATE  ,ACPT_EDATE     ,PAYMENT_PLAN_AMT ,PAYMENT_AMT  ,ACCEPT_DATE  , 
+			     MEMO        , REMARK        ,DEL_YN           ,CRT_USER     ,UPT_USER     ,          
+			     CRT_DATE    ,UPT_DATE       ,REMOTE           ,SMS_YN       ,MOBILE_TELNO ,
+			     (PAYMENT_PLAN_AMT-PAYMENT_AMT) ,SMS_GROUP_TRANS ,PROPOSAL_DEL_YN
+		ORDER by ACCEPT_SEQ asc
+		        ,SEQ asc
+	</select>
+	
+	<update id="UPDATE_PRAY_ORGINATE" parameterType="java.util.Map" >
+		UPDATE REC_PRAY_DETAIL
+		   SET ORGINATE        = #{ORGINATE ,jdbcType=VARCHAR}
+		      ,UPT_USER        = #{UPT_USER }
+		      ,UPT_DATE        = sysdate
+		 WHERE TEMPLE_CD       = #{TEMPLE_CD}
+		   AND ACCEPT_SEQ      = #{ACCEPT_SEQ}
+		   AND SEQ             = #{SEQ}
+	</update>
+	
+</mapper>

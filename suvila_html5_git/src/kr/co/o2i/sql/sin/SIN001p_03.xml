@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SIN001p_03DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+	
+	
+	<select id="SELECT_BOKWI" parameterType="kr.co.o2i.util.CommonMap" resultType="java.util.Map">
+		SELECT BUD_NO
+		      ,NAME_KOR
+	      FROM SIN_CARD_MASTER A
+	     WHERE TEMPLE_CD   = #{V_TEMPLE_CD}
+	       AND DEL_YN      = 'F'
+		   AND BUD_NO LIKE #{V_BUD_CODE} || '%'
+		   AND BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = A.TEMPLE_CD)
+	     ORDER BY SORT_SEQ
+	</select>
+	
+	<select id="SELECT_BOKWI_GBN" parameterType="kr.co.o2i.util.CommonMap" resultType="java.util.Map">
+		SELECT SIN.BUD_NO
+		      ,SIN.NAME_KOR
+		      ,ACM.NAME
+		      ,ACM.CODE
+		      ,SIN.NAME_KOR || ' - ' || ACM.NAME as NAME_CODE
+		      ,SIN.BUD_NO || '|||' || ACM.CODE as VALUE
+		      ,SIN.SEX_GBN 
+		 FROM SIN_CARD_MASTER SIN
+		     ,ASP_CODE_MGT ACM
+		WHERE TEMPLE_CD   = #{V_TEMPLE_CD}
+		  AND SIN.DEL_YN  = 'F'
+		  AND ACM.CODE   != '-1'
+		  AND BUD_NO LIKE #{V_BUD_CODE} || '%'
+		  AND BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = SIN.TEMPLE_CD)
+		  AND ACM.GROUP_CD = 'DEATH_GBN'
+		ORDER BY SIN.SORT_SEQ
+		        ,ACM.SORT_SEQ
+	</select>
+	
+	
+	<select id="SELECT_BOKWI2_GBN" parameterType="kr.co.o2i.util.CommonMap" resultType="java.util.Map">
+		SELECT SIN.BUD_NO
+			  ,SIN.NAME_KOR
+			  ,ACM.NAME
+			  ,ACM.CODE						
+			  ,SIN.NAME_KOR || ' - ' || ACM.NAME as NAME_CODE
+			  ,SIN.BUD_NO || '|||' || ACM.CODE as VALUE
+			  ,SIN.SEX_GBN
+		 FROM SIN_CARD_MASTER SIN
+		     ,ASP_CODE_MGT ACM																	
+		 WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND SIN.DEL_YN   = 'F'
+		   AND ACM.GROUP_CD = 'DEATH_GBN'
+		   AND ACM.CODE    != '-1'																	
+		   AND BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = SIN.TEMPLE_CD)	
+		   AND BUD_NO LIKE #{V_BUD_CODE} || '%'									
+		   AND BUD_NO NOT IN 		(#{V_DEATH_BUD_NO}) 					
+		 ORDER BY SIN.SORT_SEQ, ACM.SORT_SEQ														
+	</select>
+	
+	<select id="SELECT_SIN_DEATH_INFO" parameterType="kr.co.o2i.util.CommonMap" resultType="java.util.Map">
+		SELECT SDBI.TEMPLE_CD
+		      ,SDBI.BUD_NO AS BOKWI_BUD_NO
+		      ,SDBI.DECE_BUD_NO
+		      ,SDBI.SORT_SEQ
+		      ,SDBI.HYO_REL
+		      ,SDBI.BOKWI_KIBU_GBN
+		      ,SDBI.DECE_REL
+		      ,SDI.BON
+		      ,NVL((SELECT NAME FROM ASP_CODE_MGT WHERE GROUP_CD = 'BON'AND CODE &lt;> '-1' AND USE_YN = 'Y'AND CODE = SDI.BON AND ROWNUM = 1) , '') as BON_NM
+		      ,SDI.BON ORI_BON
+		      ,SDI.LUNAR_SOLAR
+		      ,SDI.DEATH_DAY
+		      ,SUBSTR(SDI.DEATH_TIME,1,2) AS DEATH_TIME1
+		      ,SUBSTR(SDI.DEATH_TIME,3) AS DEATH_TIME2
+		      ,SIN.NAME_KOR
+		      ,SIN.SACRED_KOR
+		      ,SIN.SEX_GBN
+		      ,SDBI.DEATH_YN
+		      ,SDBI.EQUAL_GBN
+		      ,SDBI.SPIRITUAL_GBN
+		      ,'T' AS SEL_YN
+		      ,SIN.BUD_NO
+		      ,SDI.LNAME
+		      ,FN_CODE_NAME('BON',SDI.BON) DEATH_BON_NAME
+		      ,'F' CHECKP
+		      ,'ABC' as BUD
+		 FROM SIN_DEATH_BOKWI_INFO SDBI
+		     ,SIN_DEATH_INFO	   SDI
+		     ,SIN_CARD_MASTER      SIN
+		WHERE SDBI.TEMPLE_CD 		= SDI.TEMPLE_CD
+	      AND SDBI.DECE_BUD_NO 		= SDI.BUD_NO
+		  AND SDI.TEMPLE_CD 		= SIN.TEMPLE_CD
+		  AND SDI.BUD_NO    		= SIN.BUD_NO
+		  AND SDBI.DEL_YN 			= 'F'
+		  AND SDBI.TEMPLE_CD 		=  #{V_TEMPLE_CD}
+		  AND SDBI.BUD_NO    		=  #{V_BOKWI_BUD_NO}
+		  <if test='V_DEATH_GBN != "" and V_DEATH_GBN != null'>
+		  	AND SDBI.DEATH_YN = #{V_DEATH_GBN}
+		  </if>
+		ORDER BY SDBI.SORT_SEQ
+	</select>
+	
+	<select  id="SELECT_MAX_DECE_BUD_NO" parameterType="java.util.Map" resultType="String">
+		    SELECT NVL(MAX(BUD_NO),'영0-00000-0-00') AS BUD_NO		
+			  FROM SIN_CARD_MASTER								
+			 WHERE TEMPLE_CD = #{V_TEMPLE_CD}	
+			   AND (   BUD_NO LIKE  '영0%'
+				    OR BUD_NO LIKE  '영1%'
+				    OR BUD_NO LIKE  '영2%'
+				    OR BUD_NO LIKE  '영3%'
+				    OR BUD_NO LIKE  '영4%'
+				    OR BUD_NO LIKE  '영5%'
+				    OR BUD_NO LIKE  '영6%'
+				    OR BUD_NO LIKE  '영7%'
+				    OR BUD_NO LIKE  '영8%'
+				    OR BUD_NO LIKE  '영9%' )
+	</select>
+	
+	<insert id="INSERT_SIN_CARD_MASTER" parameterType="java.util.Map">
+		INSERT INTO SIN_CARD_MASTER(
+			 TEMPLE_CD
+			,BUD_NO
+			,BUD_CODE
+			,SORT_SEQ
+			,NAME_KOR
+			,SACRED_KOR
+			,ISSUE_DATE
+			,SEX_GBN
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+			,DEL_YN
+		) VALUES (
+			 #{V_TEMPLE_CD}
+			,#{DECE_BUD_NO}
+			,#{V_BUD_CODE}
+			,1
+			,#{NAME_KOR}
+			,#{SACRED_KOR   ,jdbcType=VARCHAR}
+			,TO_CHAR(SYSDATE,'YYYYMMDD')
+			,#{SEX_GBN      ,jdbcType=VARCHAR}
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_REMOTE}
+			,'F'
+		)
+	</insert>
+	
+	
+	<select  id="SELECT_DUPLE_YOUNG" parameterType="java.util.Map" resultType="Integer">
+		SELECT COUNT(*) 
+		  FROM SIN_DEATH_INFO
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{DECE_BUD_NO}
+	</select>
+	
+	<select  id="SELECT_DUPLE_BOKWI" parameterType="java.util.Map" resultType="Integer">
+		SELECT COUNT(*) 
+		  FROM SIN_DEATH_BOKWI_INFO
+		 WHERE TEMPLE_CD   = #{V_TEMPLE_CD} 
+		   AND BUD_NO      = #{BOKWI_BUD_NO}
+		   AND DECE_BUD_NO = #{DECE_BUD_NO}
+	</select>
+	
+	
+	<insert id="INSERT_SIN_DEATH_INFO" parameterType="java.util.Map">
+		INSERT INTO SIN_DEATH_INFO(
+			 TEMPLE_CD
+			,BUD_NO
+			,LUNAR_SOLAR
+			,BON
+			,DEATH_DAY
+			,DEATH_TIME
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,LNAME
+			,REMOTE
+		) VALUES (
+			 #{V_TEMPLE_CD}
+			,#{DECE_BUD_NO}
+			,#{LUNAR_SOLAR   ,jdbcType=VARCHAR}
+			,#{BON           ,jdbcType=VARCHAR}
+			,#{DEATH_DAY     ,jdbcType=VARCHAR}
+			,#{DEATH_TIME1   ,jdbcType=VARCHAR} || #{DEATH_TIME2,jdbcType=VARCHAR}
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{LNAME}
+			,#{V_REMOTE}	 
+		)
+	</insert>
+	
+	<update id="UPDATE_SIN_DEATH_INFO" parameterType="java.util.Map">
+		UPDATE SIN_DEATH_INFO
+		   SET LUNAR_SOLAR 	= #{LUNAR_SOLAR ,jdbcType=VARCHAR}
+		      ,BON 			= #{BON         ,jdbcType=VARCHAR}
+		      ,DEATH_DAY 	= #{DEATH_DAY   ,jdbcType=VARCHAR}
+		      ,DEATH_TIME 	= #{DEATH_TIME1 ,jdbcType=VARCHAR} || #{DEATH_TIME2  ,jdbcType=VARCHAR}
+		      ,UPT_USER		= #{V_USER_ID}
+		      ,UPT_DATE		= SYSDATE
+		      ,LNAME		= #{LNAME       ,jdbcType=VARCHAR}
+		      ,REMOTE		= #{V_REMOTE}
+		WHERE TEMPLE_CD     = #{V_TEMPLE_CD}
+		  AND BUD_NO        = #{DECE_BUD_NO}
+	</update>
+	
+	<update id="UPDATE_SIN_CARD_MASTER" parameterType="java.util.Map">
+		UPDATE SIN_CARD_MASTER
+		   SET NAME_KOR   = #{NAME_KOR     ,jdbcType=VARCHAR}
+		      ,SACRED_KOR = #{SACRED_KOR   ,jdbcType=VARCHAR}
+		      ,SEX_GBN    = #{SEX_GBN      ,jdbcType=VARCHAR}
+		      ,UPT_USER   = #{V_USER_ID}
+		      ,UPT_DATE   = SYSDATE
+		      ,REMOTE     = #{V_REMOTE}
+		WHERE TEMPLE_CD   = #{V_TEMPLE_CD}
+		  AND BUD_NO      = #{DECE_BUD_NO}
+	</update>
+	
+	
+	
+	
+	<insert id="INSERT_SIN_DEATH_BOKWI_INFO" parameterType="java.util.Map">
+		INSERT INTO SIN_DEATH_BOKWI_INFO(
+			 TEMPLE_CD
+			,BUD_NO
+			,SORT_SEQ
+			,DECE_BUD_NO
+			,HYO_REL
+			,BOKWI_KIBU_GBN
+			,DECE_REL
+			,DEL_YN
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+			,DEATH_YN
+			,EQUAL_GBN
+			,SPIRITUAL_GBN
+		) VALUES (
+			 #{V_TEMPLE_CD}
+			,#{BOKWI_BUD_NO}
+			,#{SORT_SEQ         ,jdbcType=VARCHAR}
+			,#{DECE_BUD_NO}
+			,#{HYO_REL          ,jdbcType=VARCHAR}
+			,#{BOKWI_KIBU_GBN   ,jdbcType=VARCHAR}
+			,#{DECE_REL         ,jdbcType=VARCHAR}
+			,'F'
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_REMOTE}
+			,#{DEATH_YN        ,jdbcType=VARCHAR}
+			,#{EQUAL_GBN       ,jdbcType=VARCHAR}
+			,#{SPIRITUAL_GBN   ,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<update id="UPDATE_SIN_DEATH_BOKWI_INFO" parameterType="java.util.Map">
+		UPDATE SIN_DEATH_BOKWI_INFO
+		   SET SORT_SEQ			= #{SORT_SEQ}
+		      ,HYO_REL			= #{HYO_REL         ,jdbcType=VARCHAR}
+		      ,BOKWI_KIBU_GBN	= #{BOKWI_KIBU_GBN  ,jdbcType=VARCHAR}
+		      ,DECE_REL			= #{DECE_REL        ,jdbcType=VARCHAR}
+		      ,UPT_USER			= #{V_USER_ID}
+		      ,UPT_DATE			= SYSDATE
+		      ,REMOTE			= #{V_REMOTE}
+		      ,DEATH_YN			= #{DEATH_YN        ,jdbcType=VARCHAR}
+		      ,EQUAL_GBN		= #{EQUAL_GBN       ,jdbcType=VARCHAR}
+		      ,SPIRITUAL_GBN	= #{SPIRITUAL_GBN   ,jdbcType=VARCHAR}
+		      ,DEL_YN           = 'F'
+		WHERE TEMPLE_CD     	= #{V_TEMPLE_CD}
+		  AND BUD_NO      		= #{BOKWI_BUD_NO}
+		  AND DECE_BUD_NO 		= #{DECE_BUD_NO}
+	</update>
+	
+	<!-- <update id="UPDATE_SIN_DEATH_BOKWI_INFO" parameterType="java.util.Map">
+		UPDATE SIN_DEATH_BOKWI_INFO
+		   SET SORT_SEQ			= #{SORT_SEQ}
+		      ,HYO_REL			= #{HYO_REL       ,jdbcType=VARCHAR}
+		      ,BOKWI_KIBU_GBN	= #{BOKWI_KIBU_GBN}
+		      ,DECE_REL			= #{DECE_REL}
+		      ,UPT_USER			= #{V_USER_ID}
+		      ,UPT_DATE			= SYSDATE
+		      ,REMOTE			= #{V_REMOTE}
+		      ,DEATH_YN			= #{DEATH_YN}
+		      ,EQUAL_GBN		= #{EQUAL_GBN}
+		      ,SPIRITUAL_GBN	= #{SPIRITUAL_GBN}
+		      ,DEL_YN           = 'F'
+		 WHERE TEMPLE_CD        = #{V_TEMPLE_CD}
+		   AND BUD_NO           = #{BOKWI_BUD_NO}
+		   AND DECE_BUD_NO      = #{DECE_BUD_NO}
+	</update> -->
+	
+	
+	<update id="UPDATE_REC_YOUNGTOP_YOUNGGA" parameterType="java.util.Map">
+		UPDATE REC_YOUNGTOP_YOUNGGA
+		   SET YOUNGGA_BUD_NM    = #{NAME_KOR}
+		      ,YOUNGGA_GENDER    = #{SEX_GBN        ,jdbcType=VARCHAR}
+		      ,YOUNGGA_REL       = #{DECE_REL       ,jdbcType=VARCHAR}		      
+		      ,YOUNGGA_EQUAL     = #{EQUAL_GBN      ,jdbcType=VARCHAR}
+		      ,YOUNGGA_SPIRITUAL = #{SPIRITUAL_GBN  ,jdbcType=VARCHAR}
+		      ,YOUNGGA_BON       = SUVILA.FN_CODE_NAME('BON',#{BON ,jdbcType=VARCHAR})
+		      ,UPT_USER          = #{V_USER_ID}
+		      ,UPT_DATE          = SYSDATE
+		WHERE TEMPLE_CD          = #{V_TEMPLE_CD}
+		  AND YOUNGGA_BUD_NO     = #{DECE_BUD_NO}
+		  AND YOUNGGA_BUD_NO IS NOT NULL
+	</update>
+	
+	<delete id="DELETE_SIN_DEATH_BOKWI_INFO" parameterType="java.util.Map">
+		UPDATE SIN_DEATH_BOKWI_INFO
+		   SET DEL_YN      = 'T'
+	 	 WHERE TEMPLE_CD   = #{V_TEMPLE_CD}
+		   AND BUD_NO      = #{BOKWI_BUD_NO}
+		   AND DECE_BUD_NO = #{DECE_BUD_NO}
+	</delete>
+
+	
+</mapper>

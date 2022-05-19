@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC003w_34DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="CONTENT"    column="CONTENT"      javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="ACCEPT_YN" column="ACCEPT_YN"   typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+		<result  property="MAIN_BOKWI" column="MAIN_BOKWI"   typeHandler="kr.co.o2i.handler.CustomTypeHandler" />		
+	</resultMap>
+
+
+	<!-- # 기제 제사 조회 # -->
+	<select id="SELECT_GIJAE" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		
+	</select>
+	
+	
+	
+	
+</mapper>

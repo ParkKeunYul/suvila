@@ -1,0 +1,609 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC000w_03DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+	
+	<insert id="INSERT_MASTER" parameterType="java.util.Map">
+		INSERT INTO REC_MASTER (
+		        TEMPLE_CD
+		       ,ACCEPT_SEQ
+		       ,ACCEPT_DATE
+		       ,PROPOSAL_BUD_NO
+		       ,WHAJUBOSAL
+		       ,KWONSUN_NO
+		       ,PAYMENT_GBN
+		       ,TOT_PAYMENT_PLAN_AMT
+		       ,SMS_YN
+		       ,APPROVAL_GBN
+		       ,TOT_PAYMENT_AMT
+		       ,BUNNAB_DAY
+		       ,BANK_NO
+		       ,ACCOUNT_NUMBER
+		       ,VIRTUAL_BANK_NO
+		       ,VIRTUAL_ACCOUNT_NUMBER
+		       ,JUMIN_NO
+		       ,CLOSE_YN
+		       ,CLOSE_DATE
+		       ,CLOSE_USER
+		       ,MEMO
+		       ,DEL_YN
+		       ,CRT_USER
+		       ,UPT_USER
+		       ,CRT_DATE
+		       ,UPT_DATE
+		       ,REMOTE
+		       ,ACCOUNT_SEQ
+		       ,CMS_TRADE_CD
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{ACCEPT_SEQ}
+		       ,#{ACCEPT_DATE}
+		       ,#{PROPOSAL_BUD_NO}
+		       ,#{WHAJUBOSAL      		,jdbcType=VARCHAR}
+		       ,#{KWONSUN_NO      		,jdbcType=VARCHAR}
+		       ,#{PAYMENT_GBN}
+		       ,#{TOT_PAYMENT_PLAN_AMT}
+		       ,#{SMS_YN}
+		       ,#{APPROVAL_GBN}
+		       ,#{TOT_PAYMENT_AMT}
+		       ,#{BUNNAB_DAY      		,jdbcType=VARCHAR}
+		       ,#{BANK_NO         		,jdbcType=VARCHAR}
+		       ,#{ACCOUNT_NUMBER  		,jdbcType=VARCHAR}
+		       ,#{VIRTUAL_BANK_NO       ,jdbcType=VARCHAR}
+		       ,#{VIRTUAL_ACCOUNT_NUMBER,jdbcType=VARCHAR}
+		       ,#{JUMIN_NO  			,jdbcType=VARCHAR}
+		       ,NVL(#{CLOSE_YN  		,jdbcType=VARCHAR},'F')
+		       ,#{CLOSE_DATE 			,jdbcType=VARCHAR}
+		       ,#{CLOSE_USER  			,jdbcType=VARCHAR}
+		       ,#{MEMO  			    ,jdbcType=VARCHAR}
+		       ,NVL(#{DEL_YN 			,jdbcType=VARCHAR},'F')
+		       ,#{CRT_USER}
+		       ,#{UPT_USER}
+		       ,SYSDATE
+		       ,SYSDATE
+		       ,#{REMOTE}
+		       ,#{ACCOUNT_SEQ   		,jdbcType=VARCHAR}
+		       ,#{CMS_TRADE_CD  		,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<insert id="INSERT_SUB" parameterType="java.util.Map">
+		INSERT INTO REC_SUB (
+		        TEMPLE_CD
+		       ,ACCEPT_SEQ
+		       ,SEQ
+		       ,ACCEPT_GBN
+		       ,DEL_YN
+		) VALUES (
+		       #{TEMPLE_CD}
+		      ,#{ACCEPT_SEQ}
+		      ,#{SEQ}
+		      ,#{ACCEPT_GBN}
+		      ,'F'
+		)
+	</insert>
+	
+	<insert id="INSERT_REC_PAYMENT_HIS" parameterType="java.util.Map">
+		INSERT INTO REC_PAYMENT_HIS (
+		        TEMPLE_CD
+		       ,SEQ
+		       ,ACCEPT_SEQ
+		       ,SUB_DATE
+		       ,AMOUNT
+		       ,PAYMENT_YYYYMM
+		       ,CRT_USER
+		       ,REMOTE
+		       ,REMARK
+		       ,APPROVAL_GBN
+		       ,PGCODE
+		       ,AUTHCODE   
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{ACCEPT_SEQ}
+		       ,(SELECT TO_CHAR(CURRENT_TIMESTAMP,'YYYYMMDDHH24MISSFF') FROM DUAL)
+		       ,#{V_AMOUNT}
+		       ,#{V_PAYMENT_YYYYMM}
+		       ,#{V_USER_ID}
+		       ,#{REMOTE}
+		       ,#{REMARK 		,jdbcType=VARCHAR}
+		       ,#{V_CASH_TYPE 	,jdbcType=VARCHAR}
+		       ,#{V_PGCODE 		,jdbcType=VARCHAR}
+		       ,#{V_AUTHCODE 	,jdbcType=VARCHAR} 
+		)
+	</insert>
+	
+	<insert id="INSERT_REC_PAYMENT_HIS_ZERO" parameterType="java.util.Map">
+		INSERT INTO REC_PAYMENT_HIS (
+		        TEMPLE_CD
+		       ,SEQ
+		       ,ACCEPT_SEQ
+		       ,SUB_DATE
+		       ,AMOUNT
+		       ,CRT_USER
+		       ,REMOTE
+		       ,REMARK
+		       ,APPROVAL_GBN
+		       ,PGCODE
+		       ,AUTHCODE   
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{ACCEPT_SEQ}
+		       ,(SELECT TO_CHAR(CURRENT_TIMESTAMP,'YYYYMMDDHH24MISSFF') FROM DUAL)
+		       ,#{PAYMENT_AMT}
+		       ,#{V_USER_ID}
+		       ,#{REMOTE}
+		       ,#{REMARK 		,jdbcType=VARCHAR}
+		       ,#{V_CASH_TYPE 	,jdbcType=VARCHAR}
+		       ,#{V_PGCODE 		,jdbcType=VARCHAR}
+		       ,#{V_AUTHCODE 	,jdbcType=VARCHAR} 
+		)
+	</insert>
+	
+	<select  id="SELECT_MASTER" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT
+		       TEMPLE_CD,              -- 사찰코드
+		       ACCEPT_SEQ,             -- 접수번호
+		       ACCEPT_DATE,            -- 접수일
+		       PROPOSAL_BUD_NO,        -- 신청신도번호
+		       (SELECT BUD.NAME_KOR
+		          FROM SIN_CARD_MASTER BUD
+		         WHERE BUD.TEMPLE_CD = TEMPLE_CD
+		           AND BUD.BUD_NO    = PROPOSAL_BUD_NO) AS PROPOSAL_BUD_NM,  -- 신청자명
+		       WHAJUBOSAL,             -- 화주보살 신도번호
+		       (SELECT BUD.NAME_KOR
+		          FROM SIN_CARD_MASTER BUD
+		         WHERE BUD.TEMPLE_CD = TEMPLE_CD
+		           AND BUD.BUD_NO    = WHAJUBOSAL) AS WHAJUBOSAL_NM,         -- 화주보살명
+		       KWONSUN_NO,             -- 권선문번호
+		       PAYMENT_GBN AS PAYMENT_GBN,            -- 납부구분
+		       TOT_PAYMENT_PLAN_AMT,   -- 총납부예정금액
+		       TOT_PAYMENT_AMT,        -- 총입금액
+		       TOT_PAYMENT_PLAN_AMT - TOT_PAYMENT_AMT AS MISU_AMT, -- 총미수금액
+		       SMS_YN,                 -- SMS 전송유무
+		       APPROVAL_GBN,           -- 결재구분
+		       BUNNAB_DAY,             -- 분납결재일
+		       BANK_NO,                -- 은행코드
+		       ACCOUNT_NUMBER,         -- 계좌번호
+		       VIRTUAL_BANK_NO,        -- 가상은행코드
+		       VIRTUAL_ACCOUNT_NUMBER, -- 가상계좌번호
+		       JUMIN_NO,               -- 주민등록번호
+		       CLOSE_YN,               -- 마감구분
+		       CLOSE_DATE,             -- 마감일
+		       CLOSE_USER,             -- 마감자
+			   MEMO,				   -- 메모
+		       DEL_YN,                 -- 삭제구분
+		       CRT_USER,               -- 등록자
+		       UPT_USER,               -- 수정자
+		       TO_CHAR(CRT_DATE,'YYYYMMDD') AS CRT_DATE,  -- 등록일
+		       TO_CHAR(UPT_DATE,'YYYYMMDD') AS UPT_DATE,  -- 수정일
+		       REMOTE                  -- IP
+		  FROM REC_MASTER
+		 WHERE TEMPLE_CD  = #V_TEMPLE_CD#
+		   AND ACCEPT_SEQ = #V_ACCEPT_SEQ#
+	
+	</select>
+	
+	<insert id="INSERT_MISU" parameterType="java.util.Map">
+		INSERT INTO REC_PAYMENT_HIS (
+		        TEMPLE_CD
+		       ,SEQ
+		       ,ACCEPT_SEQ
+		       ,SUB_DATE
+		       ,AMOUNT
+		       ,CRT_USER
+		       ,REMOTE
+		       ,REMARK
+		       ,APPROVAL_GBN
+		       ,PGCODE
+		       ,AUTHCODE       
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{ACCEPT_SEQ}
+		       ,(SELECT TO_CHAR(CURRENT_TIMESTAMP,'YYYYMMDDHH24MISSFF') FROM DUAL)
+		       ,#{PAYMENT_AMT}
+		       ,#{CRT_USER}
+		       ,#{REMOTE         ,jdbcType=VARCHAR}
+		       ,#{REMARK         ,jdbcType=VARCHAR}
+		       ,#{V_CASH_TYPE    ,jdbcType=VARCHAR}
+		       ,#{V_PGCODE       ,jdbcType=VARCHAR}
+		       ,#{V_AUTHCODE     ,jdbcType=VARCHAR} 
+		)
+	</insert>
+	
+	
+	<select id="SELECT_REC_MASTER_SUB" parameterType="java.util.Map" resultMap="boardMap">
+		 SELECT A.PROPOSAL_BUD_NO			MASTER_PROPOSAL_BUD_NO
+		 	   ,A.CRT_USER					MASTER_CRT_USER
+		 	   ,B.ACCEPT_GBN				SUB_ACCEPT_GBN
+		 	   ,B.SEQ						SUB_SEQ
+		 	   ,A.TEMPLE_CD                 TEMPLE_CD	
+		 	   		               
+		   FROM REC_MASTER A
+		   	   ,REC_SUB B
+		   	   ,ASP_TEMPLE_MASTER	C							
+		  WHERE A.TEMPLE_CD  = B.TEMPLE_CD									
+		 	AND A.ACCEPT_SEQ = B.ACCEPT_SEQ								
+		 	AND A.TEMPLE_CD  = #{TEMPLE_CD}							
+		 	AND A.ACCEPT_SEQ = #{ACCEPT_SEQ}							
+		 	AND A.TEMPLE_CD  = C.TEMPLE_CD 								
+		 	AND C.SMS_YN     = 'Y'								
+	</select>
+	
+	<select id="SELECT_REC_SMS_INFO" parameterType="java.util.Map" resultMap="boardMap">
+		SELECT (SELECT NVL(SMS_TRANS,'F') 
+		          FROM SIN_CARD_MASTER 
+		         WHERE TEMPLE_CD  = #{TEMPLE_CD}	 
+		           AND BUD_NO     = #{MASTER_PROPOSAL_BUD_NO} 
+		       ) SMS_TRAN_FLAG
+		      ,(SELECT TELNO1 || '-' || TELNO2 || '-' || TELNO3 AS TEL_NO 
+		          FROM ASP_TEMPLE_MASTER 
+		         WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		       ) TR_CALLBACK
+		      ,(SELECT TEMPLE_NM 
+		          FROM ASP_TEMPLE_MASTER 
+		         WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		        ) TEMPLE_NM
+		      ,(SELECT NVL(NAME_KOR,'')||'^'||NVL(MOBILE_TELNO1, '') || NVL(MOBILE_TELNO2, '') || NVL(MOBILE_TELNO3, '') MOBILE_TEL_NO 
+		          FROM SIN_CARD_MASTER 
+		         WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		           AND BUD_NO     = #{MASTER_PROPOSAL_BUD_NO}
+		        ) TR_PHONE
+		  FROM DUAL
+	</select>
+	
+	<select id="SELECT_SUB_REC_SMS_INFO" parameterType="java.util.Map" resultMap="boardMap">
+		SELECT ALARM_DAY 
+		      ,ALARM_TIME
+		      ,( SELECT CONTENTS 
+		           FROM ASP_TEMPLE_EVENT_ALARM_DOC 
+		          WHERE TEMPLE_CD = #{TEMPLE_CD}
+		      	    AND GROUP_CD  = 'SMSREC'
+		      	    AND CODE      = #{SUB_ACCEPT_GBN_SMS}
+		      	    AND USE_YN = 'T' 
+		        ) as CONTENTS
+   		  FROM ASP_TEMPLE_EVENT_ALARM_MGT 
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND GROUP_CD  = 'SMSREC' 
+		   AND USE_YN    = 'T'
+		   AND CODE      = #{SUB_ACCEPT_GBN_SMS}
+	</select>
+	
+	
+	<select id="SELECT_SMS_COL_INFO" parameterType="java.util.Map" resultMap="boardMap">
+		SELECT COL_ID
+		      ,COL_NAME 
+		  FROM ASP_TEMPLE_EVENT_ALARM_ITEM 
+		 WHERE GROUP_CD = 'SMSREC' 
+		   AND CODE     = #{SUB_ACCEPT_GBN_SMS} 
+		   AND USE_YN   = 'T' 
+	</select>
+	
+	<select id="SELECT_SMS_01" parameterType="java.util.Map" resultMap="boardMap">
+		SELECT * 
+		  FROM REC_PRAY_DETAIL
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		   AND ACCEPT_SEQ = #{ACCEPT_SEQ}
+		   AND SEQ        = #{SEQ}
+		   AND DEL_YN     = 'F'
+		 ORDER BY ACCEPT_SEQ
+	</select>
+	
+	
+	<select id="SELECT_PRAY_NM" parameterType="java.util.Map" resultType="String">
+		SELECT PRAY_NM 
+		  FROM REC_PRAY_MGT 
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND PRAY_GBN  = #{PRAY_GBN}
+		   AND PRAY_CODE = #{PRAY_CODE}
+		   AND FDATE     = #{FDATE}
+	</select>
+	
+	<insert id="INSERT_LMS_REC" parameterType="java.util.Map">
+		INSERT INTO SMSKT.SDK_MMS_SEND ( 
+          	   MSG_ID
+          	  ,NOW_DATE
+          	  ,USER_ID
+          	  ,CDR_ID
+          	  ,SCHEDULE_TYPE
+          	  ,MMS_MSG
+          	  ,CALLBACK
+          	  ,RESERVED1
+          	  ,RESERVED2
+          	  ,RESERVED3
+          	  ,RESERVED4
+          	  ,RESERVED5
+          	  ,RESERVED6
+          	  ,DEST_INFO
+          	  ,SEND_DATE 
+        )SELECT SMSKT.SDK_MMS_SEQ.nextval
+        	  ,TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS')
+        	  ,#{USER_ID}
+        	  ,#{V_TR_ID}
+        	  ,NVL(#{V_TR_MSGTYPE ,jdbcType=VARCHAR},0)
+        	  ,#{V_TR_MESSAGE}
+        	  ,#{V_TR_CALLBACK}
+        	  ,#{V_TR_ETC1}
+        	  ,#{V_TR_ETC2}
+        	  ,#{V_TR_ETC3}
+        	  ,#{V_TR_ETC4}
+        	  ,#{V_TR_ETC5}
+        	  ,#{V_TR_ETC6  ,jdbcType=VARCHAR}
+        	  ,#{V_TR_DESTINFO}
+        	  ,DECODE(#{V_TR_MSGTYPE},'1',#{V_TR_SENDDATE}||#{V_TR_SENDTIME},TO_CHAR(SYSDATE,'YYYYMMDDHH24MI'))  
+          FROM DUAL 
+	</insert>
+	
+	<insert id="INSERT_SMS_REC" parameterType="java.util.Map">
+		INSERT INTO SMSKT.SDK_SMS_SEND (
+          	   MSG_ID
+          	  ,NOW_DATE
+          	  ,USER_ID
+          	  ,CDR_ID
+          	  ,SCHEDULE_TYPE
+          	  ,SMS_MSG
+          	  ,CALLBACK
+          	  ,RESERVED1
+          	  ,RESERVED2
+          	  ,RESERVED3
+          	  ,RESERVED4
+          	  ,RESERVED5
+          	  ,RESERVED6
+          	  ,DEST_INFO
+          	  ,SEND_DATE 
+        )SELECT SMSKT.SDK_SMS_SEQ.nextval
+        	  ,TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS')
+        	  ,#{USER_ID ,jdbcType=VARCHAR}
+        	  ,#{V_TR_ID ,jdbcType=VARCHAR}
+        	  ,NVL(#{V_TR_MSGTYPE ,jdbcType=VARCHAR},0)
+        	  ,#{V_TR_MESSAGE}
+        	  ,#{V_TR_CALLBACK}
+        	  ,#{V_TR_ETC1}
+        	  ,#{V_TR_ETC2}
+        	  ,#{V_TR_ETC3}
+        	  ,#{V_TR_ETC4}
+        	  ,#{V_TR_ETC5}
+        	  ,#{V_TR_ETC6  ,jdbcType=VARCHAR}
+        	  ,#{V_TR_DESTINFO}
+        	  ,DECODE(#{V_TR_MSGTYPE},'1',#{V_TR_SENDDATE}||#{V_TR_SENDTIME},TO_CHAR(SYSDATE,'YYYYMMDDHH24MI'))  
+          FROM DUAL 
+	</insert>
+	
+	
+	
+	<select  id="selectLightUsedChk" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT ROWNUM AS NUM
+			  ,DEU.TEMPLE_CD
+			  ,DEU.ACCEPT_GBN
+			  ,DEU.JUNGAK_CD
+			  ,TO_CHAR(DEU.LIGHT_NO) AS LIGHT_NO
+			  ,DET.CLOSE_YN
+			  ,DEU.RESERVATION_YN
+			  ,DEU.ADD_FLAG
+			  ,DEU.USE_YN                                         
+		  FROM (SELECT TEMPLE_CD
+		  			  ,ACCEPT_GBN
+		  			  ,JUNGAK_CD
+		  			  ,LIGHT_NO
+		  			  ,CLOSE_YN
+		  			  <choose>
+		  			  	<when test='V_ACCEPT_GBN == "2" '>
+		  			  		FROM REC_INDEUNG_DETAIL
+		  			  	</when>
+		  			  	<when test='V_ACCEPT_GBN == "4" '>
+		  			  		FROM REC_YEONDEUNG_DETAIL
+		  			  	</when>
+		  			  	<when test='V_ACCEPT_GBN == "12" '>
+		  			  		FROM REC_WONBUL_DETAIL
+		  			  	</when>
+		  			  	<when test='V_ACCEPT_GBN == "14" '>
+		  			  		FROM REC_YOUNGTOP_DETAIL
+		  			  	</when>
+		  			  	<otherwise>
+		  			  		FROM REC_YEONDEUNG_DETAIL  
+		  			  	</otherwise>
+		  			  </choose>
+		          WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		            AND CLOSE_YN  = 'F') DET                      
+		        , REC_DEUNG_MGT DEU                               
+		 WHERE DET.TEMPLE_CD(+)  = DEU.TEMPLE_CD                  
+		   AND DET.ACCEPT_GBN(+) = DEU.ACCEPT_GBN                 
+		   AND DET.JUNGAK_CD(+)  = DEU.JUNGAK_CD                  
+		   AND DET.LIGHT_NO(+)   = DEU.LIGHT_NO                   
+		   AND DEU.TEMPLE_CD     = #{V_TEMPLE_CD} 
+		   AND DEU.ACCEPT_GBN    = #{V_ACCEPT_GBN}
+		   AND DEU.JUNGAK_CD     = #{V_JUNGAK_CD} 
+		   AND DEU.LIGHT_NO      = #{V_LIGHT_NO}  
+	</select>
+	
+	<select id="SELECT_NINE_JESA_MGT" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT * 
+		  FROM REC_FORTY_NINE_JESA_MGT 
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD} 
+		   AND ACCEPT_SEQ = #{ACCEPT_SEQ} 
+		   AND SEQ        = #{SUB_SEQ} 
+		   AND DEL_YN     = 'F' 
+		 ORDER BY JESA_GUBUN 
+	</select>
+	
+	<select id="SELECT_ASP_CODE_MGT"  parameterType="java.util.Map" resultType="String">
+		SELECT NAME 
+		  FROM ASP_CODE_MGT 
+		 WHERE GROUP_CD = 'SAGUJESA' 
+		   AND CODE     = #{JESA_GUBUN}
+	</select>
+	
+	
+	<select id="SELECT_GIJE_DETAIL" parameterType="java.util.Map" resultMap="boardMap">
+		SELECT * 
+		  FROM REC_GIJE_DETAIL 
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD} 
+		   AND ACCEPT_SEQ = #{ACCEPT_SEQ} 
+		   AND SEQ        = #{SUB_SEQ} 
+		   AND DEL_YN     = 'F' 
+		 ORDER BY ACCEPT_SEQ 
+	</select>
+	
+	<select id="SELECT_CHONDOJE_DETAIL" parameterType="java.util.Map" resultMap="boardMap">
+		SELECT * 
+		  FROM REC_CHONDOJE_DETAIL 
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD} 
+		   AND ACCEPT_SEQ = #{ACCEPT_SEQ} 
+		   AND SEQ        = #{SUB_SEQ} 
+		   AND DEL_YN     = 'F' 
+		 ORDER BY ACCEPT_SEQ
+	</select>
+	
+	<select id="SELECT_WEPAE_DETAIL" parameterType="java.util.Map" resultMap="boardMap">
+		SELECT * 
+		  FROM REC_WEPAE_CHONHON_DETAIL 
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD} 
+		   AND ACCEPT_SEQ = #{ACCEPT_SEQ} 
+		   AND SEQ        = #{SUB_SEQ} 
+		   AND DEL_YN     = 'F' 
+		 ORDER BY ACCEPT_SEQ
+	</select>
+	
+	<select id="SELECT_WEPAE_MGT" parameterType="java.util.Map" resultType="String">
+		SELECT EVENT_NAME 
+		  FROM REC_WEPAE_CHONHON_MGT
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND EVENT_CD  = #{EVENT_CD}
+	</select>
+	
+	<select id="SELECT_TEMPLE_DETAIL" parameterType="java.util.Map" resultType="String">
+		SELECT * 
+		  FROM REC_TEMPLE_STAY_DETAIL 
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD} 
+		   AND ACCEPT_SEQ = #{ACCEPT_SEQ} 
+		   AND SEQ        = #{SUB_SEQ} 
+		   AND DEL_YN     = 'F' 
+		 ORDER BY ACCEPT_SEQ
+	</select>
+	
+	<select id="SELECT_TEMPLE_MGT" parameterType="java.util.Map" resultType="String">
+		SELECT TEMPLE_STAY_NM 
+		  FROM REC_TEMPLE_STAY_MGT  
+		 WHERE TEMPLE_CD      = #{TEMPLE_CD} 
+		   AND TEMPLE_STAY_CD = #{TEMPLE_STAY_CD} 
+		   AND FDATE          = #{FDATE}
+	</select>
+	
+	<select id="SELECT_TEMPLE_MGT_PERIOD" parameterType="java.util.Map" resultType="String">
+		SELECT PERIOD 
+		  FROM REC_TEMPLE_STAY_MGT  
+		 WHERE TEMPLE_CD      = #{TEMPLE_CD} 
+		   AND TEMPLE_STAY_CD = #{TEMPLE_STAY_CD} 
+		   AND FDATE          = #{FDATE}
+	</select>
+	
+	
+	<insert id="INSERT_REC_CARDPAY" parameterType="java.util.Map">
+		INSERT INTO REC_CARDPAY ( 
+			 TEMPLE_CD
+			,PGCODE
+			,PGAUTHCODE
+			,PGAUTHDATE
+			,PGAUTHTIME
+			,CARDQUOTA
+			,FST_PRICE
+			,CANCEL_PRICE
+			,END_PRICE
+			,PARTCANCELCNT
+			,BUD_NO
+			,TRN_CLSF
+			,TRN_TYPE
+			,REP_CODE
+			,ISN_CD
+			,ISN_NM
+			,BUY_CD
+			,BUY_NM
+			,MEM_SNM
+			,CATID
+			,REP_MSG
+			,CARD_BEAN
+			,CARD_TYPE
+			,PRF_MNG_NMB
+			,TRD_SRNM
+			,NICE_AUTHDATE
+			,TID
+			,MID
+		) VALUES (
+		 	 #{TEMPLE_CD     ,jdbcType=VARCHAR}
+			,#{PGCODE        ,jdbcType=VARCHAR}
+			,#{CARDAUTHCODE  ,jdbcType=VARCHAR}
+			,#{PGAUTHDATE    ,jdbcType=VARCHAR}
+			,#{PGAUTHTIME    ,jdbcType=VARCHAR}
+			,#{CARDQUOTA     ,jdbcType=VARCHAR}
+			,#{PR_REMAINS    ,jdbcType=VARCHAR}
+			,0
+			,#{PR_REMAINS    ,jdbcType=VARCHAR}
+			,0
+			,#{BUD_NO        ,jdbcType=VARCHAR}
+			,#{TRN_CLSF      ,jdbcType=VARCHAR}
+			,#{TRN_TYPE      ,jdbcType=VARCHAR}
+			,#{REP_CODE      ,jdbcType=VARCHAR}
+			,#{ISN_CD        ,jdbcType=VARCHAR}
+			,#{ISN_NM        ,jdbcType=VARCHAR}
+			,#{BUY_CD        ,jdbcType=VARCHAR}
+			,#{BUY_NM        ,jdbcType=VARCHAR}
+			,#{MEM_SNM       ,jdbcType=VARCHAR}
+			,#{CATID         ,jdbcType=VARCHAR}
+			,#{REP_MSG       ,jdbcType=VARCHAR}
+			,#{CARD_BEAN     ,jdbcType=VARCHAR}
+			,#{CARD_TYPE     ,jdbcType=VARCHAR}
+			,#{PRF_MNG_NMB   ,jdbcType=VARCHAR}
+			,#{TRD_SRNM      ,jdbcType=VARCHAR}
+			,#{NICE_AUTHDATE ,jdbcType=VARCHAR}
+			,#{TID           ,jdbcType=VARCHAR}
+			,#{MID           ,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<insert id="INSERT_REC_CARDPAY_HIS" parameterType="java.util.Map">
+		INSERT INTO REC_CARDPAY_HIS ( 
+			 TEMPLE_CD
+			,PGCODE
+			,PGAUTHCODE
+			,SEQ
+			,AUTHGBN
+			,TID
+			,RESULTMSG
+			,ORG_TID
+			,PR_REMAINS
+			,GETRESULTPRICE
+			,CRT_DATE
+			,PAY_TYPE
+		) 
+		VALUES (
+			 #{TEMPLE_CD     ,jdbcType=VARCHAR}
+			,#{PGCODE        ,jdbcType=VARCHAR}
+			,#{CARDAUTHCODE  ,jdbcType=VARCHAR}
+			,(SELECT 
+				NVL(MAX(SEQ),0) + 1
+			  FROM 
+				REC_CARDPAY_HIS
+			  WHERE 1=1
+				AND TEMPLE_CD  = #{TEMPLE_CD     ,jdbcType=VARCHAR}
+				AND PGCODE     = #{PGCODE        ,jdbcType=VARCHAR}
+				AND PGAUTHCODE = #{CARDAUTHCODE  ,jdbcType=VARCHAR}
+			)
+			,#{AUTHGBN        ,jdbcType=VARCHAR}
+			,#{TID            ,jdbcType=VARCHAR}
+			,#{RESULTMSG      ,jdbcType=VARCHAR}
+			,#{ORG_TID        ,jdbcType=VARCHAR}
+			,#{PR_REMAINS     ,jdbcType=VARCHAR}
+			,#{GETRESULTPRICE ,jdbcType=VARCHAR}
+			,SYSDATE
+			,#{PAY_TYPE       ,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+</mapper>

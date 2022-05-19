@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC022w_02DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="SEL_YN" column="SEL_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+
+
+
+	<insert id="INSERT_WBREC" parameterType="java.util.Map">
+		INSERT INTO REC_WONBUL_DETAIL (
+		        TEMPLE_CD
+		       ,SEQ
+		       ,WONBUL_GBN
+		       ,CRT_USER
+		       ,CRT_DATE
+		       ,PAYMENT_PLAN_AMT
+		       ,UPT_DATE
+		       ,PAYMENT_AMT
+		       ,UPT_USER
+		       ,REMOTE
+		       ,DEL_YN
+		       ,REMARK
+		       ,ACCEPT_GBN
+		       ,JUNGAK_CD
+		       ,ACCEPT_SEQ
+		       ,LIGHT_NO
+		       ,CLOSE_YN
+		       ,PERIOD_MONTH
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{PROD_CODE}
+		       ,#{V_USER_ID}
+		       ,SYSDATE
+		       ,#{PAYMENT_PLAN_AMT}
+		       ,SYSDATE
+		       ,#{PAYMENT_AMT}
+		       ,#{V_USER_ID}
+		       ,#{REMOTE}
+		       ,'F'
+		       ,#{REMARK  ,jdbcType=VARCHAR}
+		       ,'12'
+		       ,DECODE(#{JUNGAK_CD ,jdbcType=VARCHAR},'',0,TO_NUMBER(#{JUNGAK_CD ,jdbcType=VARCHAR}))
+		       ,#{ACCEPT_SEQ}
+		       ,TO_NUMBER(#{LIGHT_NO})
+		       ,'F'
+		       ,#{PERIOD_MONTH ,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<insert id="INSERT_WONBUL_DONGCHAM" parameterType="java.util.Map">
+		INSERT INTO REC_WONBUL_JOIN_MGT (
+		        DONGCHAM_BUD_NO
+		       ,DEL_YN
+		       ,REMARK
+		       ,CRT_USER
+		       ,CRT_DATE
+		       ,UPT_DATE
+		       ,UPT_USER
+		       ,SORT_SEQ
+		       ,REMOTE
+		       ,TEMPLE_CD
+		       ,SEQ
+		       ,ACCEPT_GBN
+		       ,JUNGAK_CD
+		       ,ACCEPT_SEQ
+		       ,LIGHT_NO
+		       ,BOKWIJA_NO
+		) VALUES (
+		        #{DONGCHAM_BUD_NO}
+		       ,'F'
+		       ,#{REMARK ,jdbcType=VARCHAR}
+		       ,#{V_USER_ID}
+		       ,SYSDATE
+		       ,SYSDATE
+		       ,#{V_USER_ID}
+		       ,(SELECT NVL(MAX(SORT_SEQ)+1,1)
+		           FROM REC_WONBUL_JOIN_MGT
+		          WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		            AND SEQ        = #{SEQ}
+		            AND ACCEPT_GBN = '12'
+		            AND JUNGAK_CD  = DECODE(#{JUNGAK_CD ,jdbcType=VARCHAR},'',0,TO_NUMBER(#{JUNGAK_CD ,jdbcType=VARCHAR}))
+		            AND ACCEPT_SEQ = #{ACCEPT_SEQ}
+		            AND LIGHT_NO   = #{LIGHT_NO})
+		       ,#{REMOTE}
+		       ,#{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,'12'
+		       ,DECODE(#{JUNGAK_CD ,jdbcType=VARCHAR},'',0,TO_NUMBER(#{JUNGAK_CD ,jdbcType=VARCHAR}))
+		       ,#{ACCEPT_SEQ}
+		       ,TO_NUMBER(#{LIGHT_NO})
+		       ,#{BOKWIJA_NO ,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+</mapper>

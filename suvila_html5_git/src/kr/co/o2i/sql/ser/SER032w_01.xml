@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SER032w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+
+	<select id="SELECT_SMS_LOG" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT B.TEMPLE_CD
+		      ,B.TEMPLE_NM
+		      ,A.TR_ETC4
+		      ,C.NAME
+		      ,A.TR_MSG_GB
+		      ,COUNT(1) AS COUNT
+		      ,NVL(
+		      	SUM(CASE WHEN TR_MSG_GB='SMS' THEN #{GV_SMS_U}
+		                 WHEN TR_MSG_GB='LMS' THEN #{GV_LMS_U}
+		            END) ,0) as COST
+		 FROM SMSKT.V_SMS_LOG2 A
+		     ,ASP_TEMPLE_MASTER B
+		     ,ASP_CODE_MGT C
+		WHERE 1=1
+		  AND A.TR_ETC3 = C.GROUP_CD(+)      
+		  AND A.TR_ETC4 = C.CODE(+)
+		  AND A.TR_ETC1 = B.TEMPLE_CD
+		  AND B.TEMPLE_CD = #{V_TEMPLE_CD}
+		  AND A.TR_ETC4 != '15'
+		  AND A.TR_SENDDATE     >= #{em_sDate}||'000000' 
+		  AND A.TR_SENDDATE  &lt;= #{em_eDate}||'235959'
+		  <if test='V_TEMPLE_CD ==  "000064"'>
+		  		AND A.TR_SUCC_COUNT = '1'
+		  </if>
+	 GROUP BY B.TEMPLE_CD
+	         ,B.TEMPLE_NM
+	         ,A.TR_ETC4
+	         ,C.NAME
+	         ,A.TR_MSG_GB
+	  UNION ALL
+	  SELECT B.TEMPLE_CD
+	        ,B.USER_NM TEMPLE_NM
+	        ,A.TR_ETC4
+	        ,C.NAME
+	        ,A.TR_MSG_GB
+	        ,COUNT(TR_MSG) AS COUNT
+	        ,NVL(SUM(CASE WHEN TR_MSG_GB='SMS' THEN #{GV_SMS_U}
+		                  WHEN TR_MSG_GB='LMS' THEN #{GV_LMS_U}
+		              END)
+		          ,0) as COST
+		FROM SMSKT.V_SMS_LOG2 A
+		    ,ASP_TEMPLE_USER B
+		    ,ASP_CODE_MGT C
+	   WHERE 1=1
+		 AND A.TR_ETC3       = C.GROUP_CD(+)      
+		 AND A.TR_ETC4       = C.CODE(+)
+		 AND A.TR_ETC1       = B.TEMPLE_CD
+		 AND A.TR_ETC5       = B.USER_ID
+		 AND B.TEMPLE_CD     = #{V_TEMPLE_CD}
+		 AND A.TR_ETC4       = '15'
+		 AND A.TR_SENDDATE     >= #{em_sDate}||'000000' 
+		 AND A.TR_SENDDATE  &lt;= #{em_eDate}||'235959'
+		 <if test='V_TEMPLE_CD ==  "000064"'>
+		  		AND A.TR_SUCC_COUNT = '1'
+		 </if>	
+	    GROUP BY B.TEMPLE_CD
+	            ,B.USER_NM
+	            ,A.TR_ETC4
+	            ,C.NAME
+	            ,A.TR_MSG_GB
+		ORDER BY TR_ETC4
+		        ,NAME
+		        ,TEMPLE_NM
+		        ,TR_MSG_GB
+	</select>
+	
+
+	
+</mapper>

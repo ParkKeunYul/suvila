@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.o2i.dao.asp.ASP022w_02DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+
+	<!-- 발송내역 조회 -->
+	<select id="SELECT_PG_CARD_COMMISSION" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT 
+			 A.TEMPLE_CD
+			,A.TEMPLE_NM
+			,A.TEMPLE_NM || '(' || A.TEMPLE_CD || ')' AS TEMPLE
+			,COUNT(DISTINCT A.PGAUTHCODE) AS AUTHCNT
+			,SUM(END_PRICE) AS AMOUNT
+			,NVL(A.TP_RATE_COMMISSION,0) AS TP_RATE_COMMISSION
+			,NVL(A.RATE_COMMISSION,0) AS RATE_COMMISSION
+			,SUM(A.COMMISSION -A.COMMISSION2)  AS SA_COMMISSION
+			FROM (
+				SELECT 
+				 	 A.TEMPLE_CD 
+					,B.TEMPLE_NM
+					,A.END_PRICE
+					,ROUND(DECODE(C.TP_RATE_COMMISSION,NULL,0, (A.END_PRICE * C.TP_RATE_COMMISSION)/ 100),0) AS COMMISSION 
+					,ROUND(DECODE(D.RATE_COMMISSION,NULL,0, (A.END_PRICE * D.RATE_COMMISSION ) / 100),0) AS COMMISSION2
+					,A.PGCODE
+					,A.PGAUTHCODE
+					,A.PGAUTHDATE
+					,C.TP_RATE_COMMISSION
+					,D.RATE_COMMISSION
+				  FROM REC_CARDPAY A 
+				      ,ASP_TEMPLE_MASTER B 
+				      ,ASP_TEMPLE_PG_INFO_HIS C
+				      ,ASP_PG_INFO_HIS D
+				WHERE 1=1
+				  AND A.TEMPLE_CD = B.TEMPLE_CD
+				  AND A.TEMPLE_CD = C.TEMPLE_CD(+)
+				  AND A.PGCODE = C.PGCODE(+)
+				  AND A.PGAUTHDATE >= C.TP_COMMISSION_FROM(+)
+				  AND A.PGAUTHDATE &lt;= DECODE(C.TP_COMMISSION_TO(+),'00000000','99999999',C.TP_COMMISSION_TO(+))
+				  AND A.PGCODE = D.PGCODE(+)
+				  AND A.PGAUTHDATE >= D.COMMISSION_FROM(+)
+				  AND A.PGAUTHDATE &lt;= DECODE(D.COMMISSION_TO(+),'00000000','99999999',D.COMMISSION_TO(+))
+				  AND SUBSTR(A.PGAUTHDATE,1,6) =#{param.YMDATE}
+			)A
+			GROUP BY A.TEMPLE_CD
+			        ,A.TEMPLE_NM
+			        ,A.TEMPLE_NM || '(' || A.TEMPLE_CD || ')'
+			        ,NVL(A.TP_RATE_COMMISSION,0)
+			        ,NVL(A.RATE_COMMISSION,0)
+			ORDER BY TEMPLE_CD
+	</select>
+
+
+</mapper>

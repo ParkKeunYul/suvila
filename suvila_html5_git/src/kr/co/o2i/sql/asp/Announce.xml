@@ -1,0 +1,1205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="AnnounceDAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+	<select id="ASP_ANCSELECT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT   A.TEMPLE_CD
+		        , B.TEMPLE_NM
+		        , A.SEQ_NO
+		        , A.TITLE
+		        , A.CONTENTS
+		        , A.USE_YN
+		        , A.REMARK
+		        , A.CRT_USER
+		        , TO_CHAR(A.CRT_DATE,'YYYY/MM/DD') AS CRT_DATE
+		        , A.UPT_USER
+		        , TO_CHAR(A.UPT_DATE,'YYYY/MM/DD') AS UPT_DATE
+		        , A.REMOTE
+		        , CASE WHEN (SYSDATE-A.CRT_DATE)   &lt; 7 THEN 'Y' ELSE 'N' END NEW_YN
+		        , A.TYPE
+		   FROM   ASP_ANNOUNCE A
+		        , ASP_TEMPLE_MASTER B
+		  WHERE   A.TEMPLE_CD 	= B.TEMPLE_CD
+		    AND   A.TEMPLE_CD 	= '000000'
+			AND   A.USE_YN		='T'
+		 ORDER BY CRT_DATE DESC
+		 	     ,SEQ_NO
+	</select>
+	
+	<select id="ASP_ANCSELECT_TYPE" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT    A.TEMPLE_CD
+		        , B.TEMPLE_NM
+		        , A.SEQ_NO
+		        , A.TITLE
+		        , A.CONTENTS
+		        , A.USE_YN
+		        , A.REMARK
+		        , A.CRT_USER
+		        , TO_CHAR(A.CRT_DATE,'YYYY/MM/DD') AS CRT_DATE
+		        , A.UPT_USER
+		        , TO_CHAR(A.UPT_DATE,'YYYY/MM/DD') AS UPT_DATE
+		        , A.REMOTE
+		        , CASE WHEN (SYSDATE-A.CRT_DATE) &lt; 7 THEN 'Y' ELSE 'N' END NEW_YN
+		        , A.TYPE
+		   FROM   ASP_ANNOUNCE A
+		        , ASP_TEMPLE_MASTER B
+		  WHERE   A.TEMPLE_CD 	= B.TEMPLE_CD
+		    AND   A.TEMPLE_CD 	= '000000'
+			AND   A.USE_YN		='T'
+			AND   NVL(A.TYPE, 'N')	= #{V_TYPE}
+		 ORDER BY CRT_DATE DESC, SEQ_NO
+	</select>
+	
+	<select id="TEMPLE_ANCSELECT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT   A.TEMPLE_CD
+		       , B.TEMPLE_NM
+		       , A.SEQ_NO
+		       , A.TITLE
+		       , A.CONTENTS
+		       , A.USE_YN
+		       , A.REMARK
+		       , A.CRT_USER
+		       , TO_CHAR(A.CRT_DATE,'YYYY/MM/DD') AS CRT_DATE
+		       , A.UPT_USER
+		       , TO_CHAR(A.UPT_DATE,'YYYY/MM/DD') AS UPT_DATE
+		       , A.REMOTE
+		       , CASE WHEN (SYSDATE-A.CRT_DATE) &lt; 7 THEN 'Y' ELSE 'N' END NEW_YN
+		  FROM   ASP_ANNOUNCE A
+		       , ASP_TEMPLE_MASTER B
+		 WHERE   A.TEMPLE_CD 	= B.TEMPLE_CD       
+		   AND   A.TEMPLE_CD 	= #{V_TEMPLE_CD}
+		   AND   A.USE_YN		='T'
+		ORDER BY CRT_DATE DESC, SEQ_NO
+	</select>
+	
+	<select id="SELECT_REQINFOVO" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT   A.TEMPLE_CD        
+	           , E.BUD_NO           
+	           , A.ACCEPT_SEQ      
+	           , A.SEQ              
+	           , A.JESA_GUBUN       
+	           , B.ACCEPT_GBN        
+	           , C.NAME ||'(' ||H.NAME || ')'  AS NAME        
+	           , E.NAME_KOR         
+	           , G.NAME AS LUNAR_SOLAR
+	           , A.EVENT_DATE       
+	           , NVL(A.ACCEPT_YN,'F') AS ACCEPT_YN  
+	           , E.TELNO1          
+	           , E.TELNO2          
+	           , E.TELNO3          
+	           , E.MOBILE_TELNO1   
+	           , E.MOBILE_TELNO2   
+	           , E.MOBILE_TELNO3   
+	           , A.CRT_USER       
+	           , A.CRT_DATE       
+	           , A.UPT_USER       
+	           , A.UPT_DATE       
+	           , A.REMOTE         
+	           , A.REMARK          
+	           , J.NAME_KOR AS DECE_NAME_KOR 
+	           , A.EVENT_TIME  
+	      FROM   REC_FORTY_NINE_JESA_MGT A
+	           , REC_SUB B
+	           , ASP_CODE_MGT C
+	           , REC_MASTER D
+	           , SIN_CARD_MASTER E
+	           , REC_FORTY_NINE_DETAIL F
+	           , ASP_CODE_MGT G
+	           , ASP_CODE_MGT H
+	           , REC_FORTY_NINE_DEATH I
+	           , SIN_CARD_MASTER J
+	     WHERE   F.TEMPLE_CD        = A.TEMPLE_CD
+	       AND   F.ACCEPT_SEQ       = A.ACCEPT_SEQ
+	       AND   F.SEQ              = A.SEQ
+	       AND   F.TEMPLE_CD        = I.TEMPLE_CD
+	       AND   F.ACCEPT_SEQ       = I.ACCEPT_SEQ
+	       AND   F.SEQ              = I.SEQ
+	       AND   I.SORT_SEQ         = '1'
+	       AND   I.TEMPLE_CD        = J.TEMPLE_CD
+	       AND   I.DECE_BUD_NO      = J.BUD_NO
+	       AND   A.TEMPLE_CD        = B.TEMPLE_CD
+	       AND   A.ACCEPT_SEQ       = B.ACCEPT_SEQ
+	       AND   A.SEQ              = B.SEQ
+	       AND   B.TEMPLE_CD        = D.TEMPLE_CD
+	       AND   B.ACCEPT_SEQ       = D.ACCEPT_SEQ
+	       AND   D.TEMPLE_CD        = E.TEMPLE_CD
+	       AND   D.PROPOSAL_BUD_NO  = E.BUD_NO
+	       AND   C.GROUP_CD         ='REC'
+	       AND   G.GROUP_CD         ='LUNAR_SOLAR'
+	       AND   H.GROUP_CD         ='SAGUJESA'
+	       AND   B.ACCEPT_GBN       = C.CODE
+	       AND   A.LUNAR_SOLAR      = G.CODE
+	       AND   A.JESA_GUBUN       = H.CODE
+	       AND   A.LUNAR_SOLAR      = 'F'
+		   AND 	 F.DEL_YN 			= 'F'
+	       AND   A.TEMPLE_CD        = #{V_TEMPLE_CD}
+	       AND   A.EVENT_DATE      >= #{V_P_SDATE} 
+		   AND   A.EVENT_DATE   &lt;= #{V_P_EDATE} 
+	    UNION ALL
+	    SELECT   A.TEMPLE_CD      
+	           , E.BUD_NO         
+	           , A.ACCEPT_SEQ    
+	           , A.SEQ            
+	           , A.JESA_GUBUN     
+	           , B.ACCEPT_GBN     
+	           , C.NAME ||'(' ||H.NAME || ')'  AS NAME        
+	           , E.NAME_KOR       
+	           , G.NAME AS LUNAR_SOLAR
+	           , A.EVENT_DATE     
+	           , NVL(A.ACCEPT_YN,'F') AS ACCEPT_YN  
+	           , E.TELNO1            
+	           , E.TELNO2            
+	           , E.TELNO3            
+	           , E.MOBILE_TELNO1     
+	           , E.MOBILE_TELNO2     
+	           , E.MOBILE_TELNO3     
+	           , A.CRT_USER         
+	           , A.CRT_DATE         
+	           , A.UPT_USER         
+	           , A.UPT_DATE         
+	           , A.REMOTE           
+	           , A.REMARK            
+	           , J.NAME_KOR AS DECE_NAME_KOR
+	           , '' as EVENT_TIME
+	      FROM   REC_FORTY_NINE_JESA_MGT A
+	           , REC_SUB B
+	           , ASP_CODE_MGT C
+	           , REC_MASTER D
+	           , SIN_CARD_MASTER E
+	           , REC_FORTY_NINE_DETAIL F
+	           , ASP_CODE_MGT G
+	           , ASP_CODE_MGT H
+	           , REC_FORTY_NINE_DEATH I
+	           , SIN_CARD_MASTER J
+	     WHERE   F.TEMPLE_CD        = A.TEMPLE_CD
+	       AND   F.ACCEPT_SEQ       = A.ACCEPT_SEQ
+	       AND   F.SEQ              = A.SEQ
+	       AND   F.TEMPLE_CD        = I.TEMPLE_CD
+	       AND   F.ACCEPT_SEQ       = I.ACCEPT_SEQ
+	       AND   F.SEQ              = I.SEQ
+	       AND   I.SORT_SEQ         = '1'
+	       AND   I.TEMPLE_CD        = J.TEMPLE_CD
+	       AND   I.DECE_BUD_NO      = J.BUD_NO
+	       AND   A.TEMPLE_CD        = B.TEMPLE_CD
+	       AND   A.ACCEPT_SEQ       = B.ACCEPT_SEQ
+	       AND   A.SEQ              = B.SEQ
+	       AND   B.TEMPLE_CD        = D.TEMPLE_CD
+	       AND   B.ACCEPT_SEQ       = D.ACCEPT_SEQ
+	       AND   D.TEMPLE_CD        = E.TEMPLE_CD
+	       AND   D.PROPOSAL_BUD_NO  = E.BUD_NO
+	       AND   C.GROUP_CD         ='REC'
+	       AND   G.GROUP_CD         ='LUNAR_SOLAR'
+	       AND   H.GROUP_CD         ='SAGUJESA'   
+	       AND   B.ACCEPT_GBN       = C.CODE
+	       AND   A.LUNAR_SOLAR      = G.CODE
+	       AND   A.JESA_GUBUN       = H.CODE
+	       AND   A.LUNAR_SOLAR      = 'T'
+		   AND 	 F.DEL_YN 			= 'F'
+	       AND   A.TEMPLE_CD        = #{V_TEMPLE_CD}
+	       AND   A.EVENT_DATE      >= #{V_M_SDATE} 
+		   AND   A.EVENT_DATE      &lt;= #{V_M_EDATE} 
+	    UNION ALL
+	    SELECT   A.TEMPLE_CD         
+	           , E.BUD_NO           
+	           , A.ACCEPT_SEQ       
+	           , A.SEQ               
+	           , ' ' AS JESA_GUBUN   
+	           , B.ACCEPT_GBN        
+	           , C.NAME              
+	           , E.NAME_KOR         
+	           , F.NAME AS LUNAR_SOLAR 
+	           , A.EVENT_DATE       
+	           , NVL(A.ACCEPT_YN,'F') AS ACCEPT_YN
+	           , E.TELNO1            
+	           , E.TELNO2            
+	           , E.TELNO3            
+	           , E.MOBILE_TELNO1     
+	           , E.MOBILE_TELNO2     
+	           , E.MOBILE_TELNO3     
+	           , A.CRT_USER         
+	           , A.CRT_DATE         
+	           , A.UPT_USER         
+	           , A.UPT_DATE         
+	           , A.REMOTE           
+	           , A.REMARK            
+	           , H.NAME_KOR AS DECE_NAME_KOR 
+	           , '' as EVENT_TIME 
+	      FROM   REC_GIJE_DETAIL A,
+	             REC_SUB B,
+	             ASP_CODE_MGT C,
+	             REC_MASTER D,
+	             SIN_CARD_MASTER E,
+	             ASP_CODE_MGT F
+	           , REC_GIJE_DEATH G
+	           , SIN_CARD_MASTER H
+	     WHERE   A.TEMPLE_CD        = B.TEMPLE_CD
+	       AND   A.ACCEPT_SEQ       = B.ACCEPT_SEQ
+	       AND   A.SEQ              = B.SEQ
+	       AND   A.TEMPLE_CD        = G.TEMPLE_CD
+	       AND   A.ACCEPT_SEQ       = G.ACCEPT_SEQ
+	       AND   A.SEQ              = G.SEQ
+	       AND   G.SORT_SEQ         = '1'
+	       AND   G.TEMPLE_CD        = H.TEMPLE_CD
+	       AND   G.DECE_BUD_NO      = H.BUD_NO
+	       AND   B.TEMPLE_CD        = D.TEMPLE_CD
+	       AND   B.ACCEPT_SEQ       = D.ACCEPT_SEQ
+	       AND   D.TEMPLE_CD        = E.TEMPLE_CD
+	       AND   D.PROPOSAL_BUD_NO  = E.BUD_NO
+	       AND   C.GROUP_CD         ='REC'
+	       AND   F.GROUP_CD         ='LUNAR_SOLAR'
+	       AND   B.ACCEPT_GBN       = C.CODE
+	       AND   A.LUNAR_SOLAR      = F.CODE
+	       AND   A.LUNAR_SOLAR      = 'F'
+		   AND 	 A.DEL_YN 			= 'F'
+	       AND   A.TEMPLE_CD        = #{V_TEMPLE_CD}
+	       AND   A.EVENT_DATE       >= #{V_P_SDATE} 
+		   AND   A.EVENT_DATE       &lt;= #{V_P_EDATE} 
+	    UNION ALL
+	    SELECT   A.TEMPLE_CD       
+	           , E.BUD_NO         
+	           , A.ACCEPT_SEQ     
+	           , A.SEQ              
+	           , ' ' AS JESA_GUBUN  
+	           , B.ACCEPT_GBN       
+	           , C.NAME            
+	           , E.NAME_KOR        
+	           , F.NAME AS LUNAR_SOLAR 
+	           , A.EVENT_DATE      
+	           , NVL(A.ACCEPT_YN,'F') AS ACCEPT_YN  
+	           , E.TELNO1           
+	           , E.TELNO2           
+	           , E.TELNO3           
+	           , E.MOBILE_TELNO1    
+	           , E.MOBILE_TELNO2    
+	           , E.MOBILE_TELNO3    
+	           , A.CRT_USER        
+	           , A.CRT_DATE        
+	           , A.UPT_USER        
+	           , A.UPT_DATE        
+	           , A.REMOTE          
+	           , A.REMARK           
+	           , H.NAME_KOR AS DECE_NAME_KOR 
+	           , '' as EVENT_TIME 
+	      FROM   REC_GIJE_DETAIL A,
+	             REC_SUB B,
+	             ASP_CODE_MGT C,
+	             REC_MASTER D,
+	             SIN_CARD_MASTER E,
+	             ASP_CODE_MGT F
+	           , REC_GIJE_DEATH G
+	           , SIN_CARD_MASTER H
+	     WHERE   A.TEMPLE_CD        = B.TEMPLE_CD
+	       AND   A.ACCEPT_SEQ       = B.ACCEPT_SEQ
+	       AND   A.SEQ              = B.SEQ
+	       AND   A.TEMPLE_CD        = G.TEMPLE_CD
+	       AND   A.ACCEPT_SEQ       = G.ACCEPT_SEQ
+	       AND   A.SEQ              = G.SEQ
+	       AND   G.SORT_SEQ         = '1'
+	       AND   G.TEMPLE_CD        = H.TEMPLE_CD
+	       AND   G.DECE_BUD_NO      = H.BUD_NO
+	       AND   B.TEMPLE_CD        = D.TEMPLE_CD
+	       AND   B.ACCEPT_SEQ       = D.ACCEPT_SEQ
+	       AND   D.TEMPLE_CD        = E.TEMPLE_CD
+	       AND   D.PROPOSAL_BUD_NO  = E.BUD_NO
+	       AND   C.GROUP_CD         ='REC'
+	       AND   F.GROUP_CD         ='LUNAR_SOLAR'
+	       AND   B.ACCEPT_GBN       = C.CODE
+	       AND   A.LUNAR_SOLAR      = F.CODE
+		   AND 	 A.DEL_YN 			= 'F'
+	       AND   A.LUNAR_SOLAR      = 'T'
+	       AND   A.TEMPLE_CD        = #{V_TEMPLE_CD}
+	       AND   A.EVENT_DATE       >= #{V_M_SDATE} 
+		   AND   A.EVENT_DATE       &lt;= #{V_M_EDATE} 
+	    UNION ALL
+	    SELECT   A.TEMPLE_CD        
+	           , E.BUD_NO          
+	           , A.ACCEPT_SEQ      
+	           , A.SEQ              
+	           , ' ' AS JESA_GUBUN  
+	           , B.ACCEPT_GBN       
+	           , C.NAME            
+	           , E.NAME_KOR        
+	           , F.NAME AS LUNAR_SOLAR 
+	           , A.EVENT_DATE      
+	           , NVL(A.ACCEPT_YN,'F') AS ACCEPT_YN 
+	           , E.TELNO1            
+	           , E.TELNO2            
+	           , E.TELNO3            
+	           , E.MOBILE_TELNO1     
+	           , E.MOBILE_TELNO2     
+	           , E.MOBILE_TELNO3     
+	           , A.CRT_USER         
+	           , A.CRT_DATE         
+	           , A.UPT_USER         
+	           , A.UPT_DATE         
+	           , A.REMOTE           
+	           , A.REMARK            
+	           , H.NAME_KOR AS DECE_NAME_KOR 
+	           , '' as EVENT_TIME
+	      FROM   REC_CHONDOJE_DETAIL A
+	           , REC_SUB B
+	           , ASP_CODE_MGT C
+	           , REC_MASTER D
+	           , SIN_CARD_MASTER E
+	           , ASP_CODE_MGT F
+	           , REC_CHONDOJE_DEATH G
+	           , SIN_CARD_MASTER H
+	     WHERE   A.TEMPLE_CD        = B.TEMPLE_CD
+	       AND   A.ACCEPT_SEQ       = B.ACCEPT_SEQ
+	       AND   A.SEQ              = B.SEQ
+	       AND   A.TEMPLE_CD        = G.TEMPLE_CD
+	       AND   A.ACCEPT_SEQ       = G.ACCEPT_SEQ
+	       AND   A.SEQ              = G.SEQ
+	       AND   G.SORT_SEQ         = '1'
+	       AND   G.TEMPLE_CD        = H.TEMPLE_CD
+	       AND   G.DECE_BUD_NO      = H.BUD_NO
+	       AND   B.TEMPLE_CD        = D.TEMPLE_CD
+	       AND   B.ACCEPT_SEQ       = D.ACCEPT_SEQ
+	       AND   D.TEMPLE_CD        = E.TEMPLE_CD
+	       AND   D.PROPOSAL_BUD_NO  = E.BUD_NO
+	       AND   C.GROUP_CD         ='REC'
+	       AND   F.GROUP_CD         ='LUNAR_SOLAR'
+	       AND   B.ACCEPT_GBN       = C.CODE
+	       AND   A.LUNAR_SOLAR      = F.CODE
+	       AND   A.LUNAR_SOLAR      = 'F'
+		   AND 	 A.DEL_YN 			= 'F'
+	       AND   A.TEMPLE_CD        = #{V_TEMPLE_CD}
+	       AND   A.EVENT_DATE       >= #{V_P_SDATE} 
+		   AND   A.EVENT_DATE       &lt;= #{V_P_EDATE}    
+	    UNION ALL
+	    SELECT   A.TEMPLE_CD         
+	           , E.BUD_NO           
+	           , A.ACCEPT_SEQ       
+	           , A.SEQ               
+	           , ' ' AS JESA_GUBUN   
+	           , B.ACCEPT_GBN        
+	           , C.NAME             
+	           , E.NAME_KOR         
+	           , F.NAME AS LUNAR_SOLAR 
+	           , A.EVENT_DATE       
+	           , NVL(A.ACCEPT_YN,'F') AS ACCEPT_YN  
+	           , E.TELNO1         
+	           , E.TELNO2         
+	           , E.TELNO3         
+	           , E.MOBILE_TELNO1  
+	           , E.MOBILE_TELNO2  
+	           , E.MOBILE_TELNO3  
+	           , A.CRT_USER      
+	           , A.CRT_DATE      
+	           , A.UPT_USER      
+	           , A.UPT_DATE      
+	           , A.REMOTE        
+	           , A.REMARK         
+	           , H.NAME_KOR AS DECE_NAME_KOR 
+	           , '' as EVENT_TIME 
+	      FROM   REC_CHONDOJE_DETAIL A
+	           , REC_SUB B
+	           , ASP_CODE_MGT C
+	           , REC_MASTER D
+	           , SIN_CARD_MASTER E
+	           , ASP_CODE_MGT F
+	           , REC_CHONDOJE_DEATH G
+	           , SIN_CARD_MASTER H
+	     WHERE   A.TEMPLE_CD        = B.TEMPLE_CD
+	       AND   A.ACCEPT_SEQ       = B.ACCEPT_SEQ
+	       AND   A.SEQ              = B.SEQ
+	       AND   A.TEMPLE_CD        = G.TEMPLE_CD
+	       AND   A.ACCEPT_SEQ       = G.ACCEPT_SEQ
+	       AND   A.SEQ              = G.SEQ
+	       AND   G.SORT_SEQ         = '1'
+	       AND   G.TEMPLE_CD        = H.TEMPLE_CD
+	       AND   G.DECE_BUD_NO      = H.BUD_NO
+	       AND   B.TEMPLE_CD        = D.TEMPLE_CD
+	       AND   B.ACCEPT_SEQ       = D.ACCEPT_SEQ
+	       AND   D.TEMPLE_CD        = E.TEMPLE_CD
+	       AND   D.PROPOSAL_BUD_NO  = E.BUD_NO
+	       AND   C.GROUP_CD         ='REC'
+	       AND   F.GROUP_CD         ='LUNAR_SOLAR'
+	       AND   B.ACCEPT_GBN       = C.CODE
+	       AND   A.LUNAR_SOLAR      = F.CODE
+	       AND   A.LUNAR_SOLAR      = 'T'
+		   AND 	 A.DEL_YN 			= 'F'
+	       AND   A.TEMPLE_CD        = #{V_TEMPLE_CD}
+	       AND   A.EVENT_DATE       >= #{V_M_SDATE} 
+		   AND   A.EVENT_DATE       &lt;= #{V_M_EDATE}
+	</select>
+	
+	
+	
+	<select id="SELECT_YEAR" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT DISTINCT MIN(SUBSTR(PLUS_YYYYMMDD,1,4)) AS MIN_YEAR
+		      ,MAX(SUBSTR(PLUS_YYYYMMDD,1,4)) AS MAX_YEAR
+		      ,TO_CHAR(SYSDATE, 'YYYY') AS NOW_YEAR
+		  FROM ASP_PLUS_MINUS_MAPPER
+	</select>
+	
+	<select id="SELECT_MONTH" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT DISTINCT SUBSTR(PLUS_YYYYMMDD,5,2) AS MONTH
+			  ,TO_CHAR(SYSDATE, 'MM') AS NOW_MONTH
+		  FROM ASP_PLUS_MINUS_MAPPER
+		ORDER BY SUBSTR(PLUS_YYYYMMDD,5,2)
+	</select>
+	
+	<select id="SELECT_CALENDER" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT A.PLUS_YYYYMMDD
+			  ,A.LEAP_MONTH
+			  ,A.MINUS_YYYYMMDD
+			  ,A.ETC1, A.ETC2
+			  ,A.ETC3
+			  ,TO_NUMBER(SUBSTR(A.PLUS_YYYYMMDD,7,8)) AS DAY
+			  ,(CASE WHEN 
+			  			LENGTH(A.BUD_EVENT_NAME) > nvl(#{V_S_SIZE},4)  
+			  		 THEN 
+			  		 	SUBSTR(A.BUD_EVENT_NAME,1,nvl(#{V_E_SIZE},4)) || '..'  
+			  		 ELSE 
+			  		 	A.BUD_EVENT_NAME END
+			    ) AS BUD_EVENT_NAME
+		     ,(((ROWNUM + 7)-TO_NUMBER(TO_CHAR(TO_DATE(A.PLUS_YYYYMMDD,'YYYYMMDD'),'D'))
+			   - (SELECT COUNT(*)
+			        FROM ASP_PLUS_MINUS_MAPPER
+			       WHERE PLUS_YYYYMMDD LIKE NVL(#{V_YEAR},TO_CHAR(SYSDATE,'YYYY')) || NVL(#{V_MONTH},SUBSTR(TO_CHAR(SYSDATE,'YYYYMMDD'),5,2)) || '%'
+			         AND PLUS_YYYYMMDD &lt;= (SELECT MIN(PLUS_YYYYMMDD)
+			                                   FROM ASP_PLUS_MINUS_MAPPER
+			                                  WHERE PLUS_YYYYMMDD LIKE NVL(#{V_YEAR},TO_CHAR(SYSDATE,'YYYY')) || NVL(#{V_MONTH},SUBSTR(TO_CHAR(SYSDATE,'YYYYMMDD'),5,2)) || '%'
+			                                    AND TO_CHAR(TO_DATE(PLUS_YYYYMMDD,'YYYYMMDD'),'D') = '7'))) / 7 + 1) ||
+			   TO_CHAR(TO_DATE(A.PLUS_YYYYMMDD,'YYYYMMDD'),'D'
+			 ) AS WEEKDAY
+		    ,(SELECT COUNT(*)
+			    FROM ASP_TEMPLE_DAY_MEMO
+			   WHERE TEMPLE_CD     = #{V_TEMPLE_CD}
+			     AND PLUS_YYYYMMDD = A.PLUS_YYYYMMDD
+			 ) AS MEMO_COUNT
+		    ,(SELECT RTRIM(XMLAGG(XMLELEMENT(x, trim(TITLE), '&lt;br/>')).EXTRACT('//text()'), ',')
+			    FROM ASP_TEMPLE_DAY_MEMO
+			   WHERE TEMPLE_CD     = #{V_TEMPLE_CD}
+			     AND PLUS_YYYYMMDD = A.PLUS_YYYYMMDD
+			 ) as TITLE
+			,( SELECT RTRIM(XMLAGG(XMLELEMENT(x, trim(NAME||'/'||NAME_KOR||'/'||EVENT_TIME), '&lt;br/>')).EXTRACT('//text()'), ',') 
+				FROM (
+			        SELECT A.TEMPLE_CD        		         
+			              , H.NAME AS NAME
+			              , E.NAME_KOR         
+			              , G.NAME AS LUNAR_SOLAR
+			              , A.EVENT_DATE                 
+			              , J.NAME_KOR AS DECE_NAME_KOR  
+			              , (CASE 
+			                  WHEN 
+			                  	LENGTH(A.EVENT_TIME) > 2 
+			                  THEN 
+			                  	SUBSTR(A.EVENT_TIME , 0,2) ||'시'
+			                   ELSE 
+			                   	A.EVENT_TIME
+			                END ) as  EVENT_TIME
+			             ,A.LUNAR_SOLAR as LUNAR_SOLAR_CODE
+			         FROM REC_FORTY_NINE_JESA_MGT A
+			             ,REC_SUB B
+			             ,ASP_CODE_MGT C
+			             ,REC_MASTER D
+			             ,SIN_CARD_MASTER E
+			             ,REC_FORTY_NINE_DETAIL F
+			             ,ASP_CODE_MGT G
+			             ,ASP_CODE_MGT H
+			             ,REC_FORTY_NINE_DEATH I
+			             ,SIN_CARD_MASTER J
+			        WHERE F.TEMPLE_CD          = A.TEMPLE_CD
+			          AND   F.ACCEPT_SEQ       = A.ACCEPT_SEQ
+			          AND   F.SEQ              = A.SEQ
+			          AND   F.TEMPLE_CD        = I.TEMPLE_CD
+			          AND   F.ACCEPT_SEQ       = I.ACCEPT_SEQ
+			          AND   F.SEQ              = I.SEQ
+			          AND   I.SORT_SEQ         = '1'
+			          AND   I.TEMPLE_CD        = J.TEMPLE_CD
+			          AND   I.DECE_BUD_NO      = J.BUD_NO
+			          AND   A.TEMPLE_CD        = B.TEMPLE_CD
+			          AND   A.ACCEPT_SEQ       = B.ACCEPT_SEQ
+			          AND   A.SEQ              = B.SEQ
+			          AND   B.TEMPLE_CD        = D.TEMPLE_CD
+			          AND   B.ACCEPT_SEQ       = D.ACCEPT_SEQ
+			          AND   D.TEMPLE_CD        = E.TEMPLE_CD
+			          AND   D.PROPOSAL_BUD_NO  = E.BUD_NO
+			          AND   C.GROUP_CD         ='REC'
+			          AND   G.GROUP_CD         ='LUNAR_SOLAR'
+			          AND   H.GROUP_CD         ='SAGUJESA'
+			          AND   B.ACCEPT_GBN       = C.CODE
+			          AND   A.LUNAR_SOLAR      = G.CODE
+			          AND   A.JESA_GUBUN       = H.CODE
+			          AND 	F.DEL_YN 		   = 'F'
+			          AND   A.TEMPLE_CD        = #{V_TEMPLE_CD}
+			          AND  (
+			           		   (     A.LUNAR_SOLAR    = 'F' 
+			           		     AND A.EVENT_DATE    >= #{V_P_SDATE} 
+			           		     AND A.EVENT_DATE &lt;= #{V_P_EDATE} )
+			           		OR (     A.LUNAR_SOLAR = 'T' 
+			           		     AND A.EVENT_DATE    >= #{V_P_SDATE_LUNAR} 
+			           		     AND A.EVENT_DATE &lt;= #{V_P_EDATE_LUNAR} 
+			           		    )
+			           )        
+			        UNION ALL
+			        SELECT   A.TEMPLE_CD                   
+			               , C.NAME             
+			               , E.NAME_KOR         
+			               , F.NAME AS LUNAR_SOLAR 
+			               , A.EVENT_DATE    
+			               , H.NAME_KOR AS DECE_NAME_KOR      
+			               , (CASE 
+			                  	WHEN 
+			                  		LENGTH(A.EVENT_TIME) > 2 
+			                  	THEN 
+			                  		SUBSTR(A.EVENT_TIME , 0,2)||'시'
+			                 	ELSE 
+			                 		A.EVENT_TIME
+			                   END ) as  EVENT_TIME 
+			               ,A.LUNAR_SOLAR as LUNAR_SOLAR_CODE
+			          FROM  REC_GIJE_DETAIL A
+			               ,REC_SUB B
+			               ,ASP_CODE_MGT C
+			               ,REC_MASTER D
+			               ,SIN_CARD_MASTER E
+			               ,ASP_CODE_MGT F
+			               ,REC_GIJE_DEATH G
+			               ,SIN_CARD_MASTER H
+			          WHERE A.TEMPLE_CD        = B.TEMPLE_CD
+			            AND A.ACCEPT_SEQ       = B.ACCEPT_SEQ
+			            AND A.SEQ              = B.SEQ
+			            AND A.TEMPLE_CD        = G.TEMPLE_CD
+			            AND A.ACCEPT_SEQ       = G.ACCEPT_SEQ
+			            AND A.SEQ              = G.SEQ
+			            AND G.SORT_SEQ         = '1'
+			            AND G.TEMPLE_CD        = H.TEMPLE_CD
+			            AND G.DECE_BUD_NO      = H.BUD_NO
+			            AND B.TEMPLE_CD        = D.TEMPLE_CD
+			            AND B.ACCEPT_SEQ       = D.ACCEPT_SEQ
+			            AND D.TEMPLE_CD        = E.TEMPLE_CD
+			            AND D.PROPOSAL_BUD_NO  = E.BUD_NO
+			            AND C.GROUP_CD         ='REC'
+			            AND F.GROUP_CD         ='LUNAR_SOLAR'
+			            AND B.ACCEPT_GBN       = C.CODE
+			            AND A.LUNAR_SOLAR      = F.CODE
+			            AND A.DEL_YN 		   = 'F'
+			            AND A.TEMPLE_CD        = #{V_TEMPLE_CD}
+			            AND  (
+			           		   ( 	  A.LUNAR_SOLAR = 'F' 
+			           		      AND A.EVENT_DATE    >= #{V_P_SDATE} 
+			           		      AND A.EVENT_DATE &lt;= #{V_P_EDATE} 
+			           		    )
+			           		OR (      A.LUNAR_SOLAR = 'T' 
+			           		      AND A.EVENT_DATE    >= #{V_P_SDATE_LUNAR}
+			           		      AND A.EVENT_DATE &lt;= #{V_P_EDATE_LUNAR} 
+			           		    )
+			           )
+			        UNION ALL
+			        SELECT   A.TEMPLE_CD                       
+			               , C.NAME
+			               , E.NAME_KOR
+			               , F.NAME AS LUNAR_SOLAR 
+			               , A.EVENT_DATE           
+			               , H.NAME_KOR AS DECE_NAME_KOR   
+			               , (CASE 
+			                  	WHEN 
+			                  		LENGTH(A.EVENT_TIME) > 2 
+			                  	THEN 
+			                  		SUBSTR(A.EVENT_TIME , 0,2)||'시'
+			                 	ELSE
+			                 		A.EVENT_TIME
+			                  END ) as  EVENT_TIME     
+			               ,A.LUNAR_SOLAR as LUNAR_SOLAR_CODE
+			          FROM   REC_CHONDOJE_DETAIL A
+			               , REC_SUB B
+			               , ASP_CODE_MGT C
+			               , REC_MASTER D
+			               , SIN_CARD_MASTER E
+			               , ASP_CODE_MGT F
+			               , REC_CHONDOJE_DEATH G
+			               , SIN_CARD_MASTER H
+			          WHERE   A.TEMPLE_CD        = B.TEMPLE_CD
+			            AND   A.ACCEPT_SEQ       = B.ACCEPT_SEQ
+			            AND   A.SEQ              = B.SEQ
+			            AND   A.TEMPLE_CD        = G.TEMPLE_CD
+			            AND   A.ACCEPT_SEQ       = G.ACCEPT_SEQ
+			            AND   A.SEQ              = G.SEQ
+			            AND   G.SORT_SEQ         = '1'
+			            AND   G.TEMPLE_CD        = H.TEMPLE_CD
+			            AND   G.DECE_BUD_NO      = H.BUD_NO
+			            AND   B.TEMPLE_CD        = D.TEMPLE_CD
+			            AND   B.ACCEPT_SEQ       = D.ACCEPT_SEQ
+			            AND   D.TEMPLE_CD        = E.TEMPLE_CD
+			            AND   D.PROPOSAL_BUD_NO  = E.BUD_NO
+			            AND   C.GROUP_CD         ='REC'
+			            AND   F.GROUP_CD         ='LUNAR_SOLAR'
+			            AND   B.ACCEPT_GBN       = C.CODE
+			            AND   A.LUNAR_SOLAR      = F.CODE
+			            AND   A.DEL_YN 			 = 'F'
+			            AND   A.TEMPLE_CD        = #{V_TEMPLE_CD}
+			            AND  (
+			           		   (    A.LUNAR_SOLAR = 'F' 
+			           		   	 AND A.EVENT_DATE    >= #{V_P_SDATE} 
+			           		   	 AND A.EVENT_DATE &lt;= #{V_P_EDATE} 
+			           		   	)
+			           		OR (     A.LUNAR_SOLAR = 'T' 
+			           			 AND A.EVENT_DATE     >= #{V_P_SDATE_LUNAR} 
+			           			 AND A.EVENT_DATE  &lt;= #{V_P_EDATE_LUNAR} 
+			           			)
+			           )
+		      )
+		      WHERE ( EVENT_DATE  = A.PLUS_YYYYMMDD   AND LUNAR_SOLAR_CODE = 'F')  
+		         OR ( EVENT_DATE  = A.MINUS_YYYYMMDD  AND LUNAR_SOLAR_CODE = 'T')
+		      
+			) as JESA
+			,(
+				SELECT RTRIM(XMLAGG(XMLELEMENT(x, trim(ACCEPT_SEQ||'/'||SEQ||'/'||ACCEPT_GBN||'/'||JESA_GUBUN), '*')).EXTRACT('//text()'), ',')  
+			      FROM (
+				        SELECT   A.TEMPLE_CD         
+				             , B.ACCEPT_SEQ AS ACCEPT_SEQ
+				             , B.SEQ AS SEQ
+				             , B.ACCEPT_GBN AS ACCEPT_GBN
+				             , A.EVENT_DATE       
+				             , A.JESA_GUBUN AS JESA_GUBUN 
+				             , A.LUNAR_SOLAR as LUNAR_SOLAR_CODE
+				        FROM   REC_FORTY_NINE_JESA_MGT A
+				              , REC_SUB B
+				              , ASP_CODE_MGT C
+				              , REC_MASTER D
+				              , SIN_CARD_MASTER E
+				              , REC_FORTY_NINE_DETAIL F
+				              , ASP_CODE_MGT G
+				              , ASP_CODE_MGT H
+				              , REC_FORTY_NINE_DEATH I
+				              , SIN_CARD_MASTER J
+				         WHERE   F.TEMPLE_CD        = A.TEMPLE_CD
+				           AND   F.ACCEPT_SEQ       = A.ACCEPT_SEQ
+				           AND   F.SEQ              = A.SEQ
+				           AND   F.TEMPLE_CD        = I.TEMPLE_CD
+				           AND   F.ACCEPT_SEQ       = I.ACCEPT_SEQ
+				           AND   F.SEQ              = I.SEQ
+				           AND   I.SORT_SEQ         = '1'
+				           AND   I.TEMPLE_CD        = J.TEMPLE_CD
+				           AND   I.DECE_BUD_NO      = J.BUD_NO
+				           AND   A.TEMPLE_CD        = B.TEMPLE_CD
+				           AND   A.ACCEPT_SEQ       = B.ACCEPT_SEQ
+				           AND   A.SEQ              = B.SEQ
+				           AND   B.TEMPLE_CD        = D.TEMPLE_CD
+				           AND   B.ACCEPT_SEQ       = D.ACCEPT_SEQ
+				           AND   D.TEMPLE_CD        = E.TEMPLE_CD
+				           AND   D.PROPOSAL_BUD_NO  = E.BUD_NO
+				           AND   C.GROUP_CD         ='REC'
+				           AND   G.GROUP_CD         ='LUNAR_SOLAR'
+				           AND   H.GROUP_CD         ='SAGUJESA'
+				           AND   B.ACCEPT_GBN       = C.CODE
+				           AND   A.LUNAR_SOLAR      = G.CODE
+				           AND   A.JESA_GUBUN       = H.CODE
+				           AND 	 F.DEL_YN 			= 'F'
+				           AND   A.TEMPLE_CD        = #{V_TEMPLE_CD}
+				           AND  (
+				           		   ( A.LUNAR_SOLAR = 'F' AND A.EVENT_DATE >= #{V_P_SDATE}       AND A.EVENT_DATE &lt;= #{V_P_EDATE} )
+				           		OR ( A.LUNAR_SOLAR = 'T' AND A.EVENT_DATE >= #{V_P_SDATE_LUNAR} AND A.EVENT_DATE &lt;= #{V_P_EDATE_LUNAR} )
+				           )        
+				        UNION ALL
+				        SELECT   A.TEMPLE_CD                
+					            , B.ACCEPT_SEQ AS ACCEPT_SEQ
+					            , B.SEQ AS SEQ
+					            , B.ACCEPT_GBN AS ACCEPT_GBN
+				                , A.EVENT_DATE  
+				                , '0' AS JESA_GUBUN  
+				                , A.LUNAR_SOLAR as LUNAR_SOLAR_CODE
+				          FROM   REC_GIJE_DETAIL A,
+				                 REC_SUB B,
+				                 ASP_CODE_MGT C,
+				                 REC_MASTER D,
+				                 SIN_CARD_MASTER E,
+				                 ASP_CODE_MGT F
+				               , REC_GIJE_DEATH G
+				               , SIN_CARD_MASTER H
+				         WHERE   A.TEMPLE_CD        = B.TEMPLE_CD
+				           AND   A.ACCEPT_SEQ       = B.ACCEPT_SEQ
+				           AND   A.SEQ              = B.SEQ
+				           AND   A.TEMPLE_CD        = G.TEMPLE_CD
+				           AND   A.ACCEPT_SEQ       = G.ACCEPT_SEQ
+				           AND   A.SEQ              = G.SEQ
+				           AND   G.SORT_SEQ         = '1'
+				           AND   G.TEMPLE_CD        = H.TEMPLE_CD
+				           AND   G.DECE_BUD_NO      = H.BUD_NO
+				           AND   B.TEMPLE_CD        = D.TEMPLE_CD
+				           AND   B.ACCEPT_SEQ       = D.ACCEPT_SEQ
+				           AND   D.TEMPLE_CD        = E.TEMPLE_CD
+				           AND   D.PROPOSAL_BUD_NO  = E.BUD_NO
+				           AND   C.GROUP_CD         ='REC'
+				           AND   F.GROUP_CD         ='LUNAR_SOLAR'
+				           AND   B.ACCEPT_GBN       = C.CODE
+				           AND   A.LUNAR_SOLAR      = F.CODE
+				           AND   A.DEL_YN 			= 'F'
+				           AND   A.TEMPLE_CD        = #{V_TEMPLE_CD}
+				           AND  (
+				           		   ( A.LUNAR_SOLAR = 'F' AND A.EVENT_DATE >= #{V_P_SDATE}       AND A.EVENT_DATE &lt;= #{V_P_EDATE} )
+				           		OR ( A.LUNAR_SOLAR = 'T' AND A.EVENT_DATE >= #{V_P_SDATE_LUNAR} AND A.EVENT_DATE &lt;= #{V_P_EDATE_LUNAR} )
+				           )
+				        UNION ALL
+				        SELECT   A.TEMPLE_CD                            
+				             , B.ACCEPT_SEQ AS ACCEPT_SEQ
+				             , B.SEQ AS SEQ
+				             , B.ACCEPT_GBN AS ACCEPT_GBN    
+				             , A.EVENT_DATE      
+				             , '0' AS JESA_GUBUN      
+				             , A.LUNAR_SOLAR as LUNAR_SOLAR_CODE
+				          FROM   REC_CHONDOJE_DETAIL A
+				               , REC_SUB B
+				               , ASP_CODE_MGT C
+				               , REC_MASTER D
+				               , SIN_CARD_MASTER E
+				               , ASP_CODE_MGT F
+				               , REC_CHONDOJE_DEATH G
+				               , SIN_CARD_MASTER H
+				         WHERE   A.TEMPLE_CD        = B.TEMPLE_CD
+				           AND   A.ACCEPT_SEQ       = B.ACCEPT_SEQ
+				           AND   A.SEQ              = B.SEQ
+				           AND   A.TEMPLE_CD        = G.TEMPLE_CD
+				           AND   A.ACCEPT_SEQ       = G.ACCEPT_SEQ
+				           AND   A.SEQ              = G.SEQ
+				           AND   G.SORT_SEQ         = '1'
+				           AND   G.TEMPLE_CD        = H.TEMPLE_CD
+				           AND   G.DECE_BUD_NO      = H.BUD_NO
+				           AND   B.TEMPLE_CD        = D.TEMPLE_CD
+				           AND   B.ACCEPT_SEQ       = D.ACCEPT_SEQ
+				           AND   D.TEMPLE_CD        = E.TEMPLE_CD
+				           AND   D.PROPOSAL_BUD_NO  = E.BUD_NO
+				           AND   C.GROUP_CD         ='REC'
+				           AND   F.GROUP_CD         ='LUNAR_SOLAR'
+				           AND   B.ACCEPT_GBN       = C.CODE
+				           AND   A.LUNAR_SOLAR      = F.CODE
+				           AND 	 A.DEL_YN 			= 'F'
+				           AND   A.TEMPLE_CD        = #{V_TEMPLE_CD}
+				           AND  (
+				           		   ( A.LUNAR_SOLAR = 'F' AND A.EVENT_DATE >= #{V_P_SDATE}       AND A.EVENT_DATE &lt;= #{V_P_EDATE}       )
+				           		OR ( A.LUNAR_SOLAR = 'T' AND A.EVENT_DATE >= #{V_P_SDATE_LUNAR} AND A.EVENT_DATE &lt;= #{V_P_EDATE_LUNAR} )
+				          )
+		      )
+		      WHERE ( EVENT_DATE  = A.PLUS_YYYYMMDD  AND LUNAR_SOLAR_CODE = 'F' )  
+		         OR ( EVENT_DATE  = A.MINUS_YYYYMMDD AND LUNAR_SOLAR_CODE = 'T')   
+			) as ACCEPT_INFO,
+			DECODE(MOD(A.MINUS_YYYYMMDD,5),0,'T',DECODE(SUBSTR(A.MINUS_YYYYMMDD,7),'01','T','F')) AS MINUS_DISPLAY_YN
+		FROM ASP_PLUS_MINUS_MAPPER A
+		WHERE A.PLUS_YYYYMMDD LIKE NVL(#{V_YEAR},TO_CHAR(SYSDATE,'YYYY')) || NVL(#{V_MONTH},SUBSTR(TO_CHAR(SYSDATE,'YYYYMMDD'),5,2)) || '%'
+		ORDER BY A.PLUS_YYYYMMDD
+	</select>
+	
+	<select id="SELECT_DETAIL_SCHEDUEL" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT MEM.TEMPLE_CD
+			  ,MEM.PLUS_YYYYMMDD,
+		       MEM.SEQ_NO, 
+		       MEM.TITLE, 
+		       MEM.CONTENTS, 
+		       MEM.CRT_USER,
+		       CRT.USER_NM AS CRT_NAME,
+		       TO_CHAR(MEM.CRT_DATE,'YYYYMMDD') AS CRT_DATE, 
+		       MEM.UPT_USER, 
+		       UPT.USER_NM AS UPT_NAME,
+		       TO_CHAR(MEM.UPT_DATE,'YYYYMMDD') AS UPT_DATE, 
+		       MEM.REMOTE
+		  FROM ASP_TEMPLE_DAY_MEMO MEM, ASP_TEMPLE_USER CRT, ASP_TEMPLE_USER UPT
+		 WHERE MEM.TEMPLE_CD = CRT.TEMPLE_CD(+)
+		   AND MEM.CRT_USER  = CRT.USER_ID(+)
+		   AND MEM.TEMPLE_CD     = UPT.TEMPLE_CD(+)
+		   AND MEM.UPT_USER      = UPT.USER_ID(+)
+		   AND MEM.TEMPLE_CD     = #{V_TEMPLE_CD}
+		   AND MEM.PLUS_YYYYMMDD = #{V_PLUS_YYYYMMDD}
+	</select>
+	
+	<select id="SELECT_FORTY_NINE_DETAIL" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT '49재 - '||DECODE(A.JESA_GUBUN,'1','반혼제','2','초재','3','2재','4','3재','5','4재','6','5재','7','6재','8','49재','9','백재') AS JESA_NAME
+		      ,A.ACCEPT_SEQ
+		      ,A.TEMPLE_CD
+		      ,FN_CODE_NAME('LUNAR_SOLAR',A.LUNAR_SOLAR) AS LUNAR_SOLAR
+		      ,A.NUMBER_COUNT
+		      ,TO_CHAR(TO_DATE(A.EVENT_DATE,'YYYYMMDD'),'YYYY-MM-DD')||'   '||SUBSTR(A.EVENT_TIME,0,2)||'시'||SUBSTR(A.EVENT_TIME,3,4)||'분' AS EVENT_DATE
+		      ,FN_SINDO_INFO('NAME_KOR',A.TEMPLE_CD,D.PROPOSAL_BUD_NO)||' ('||D.PROPOSAL_BUD_NO||')' AS NAME
+		      ,FN_SINDO_INFO('CEL',A.TEMPLE_CD,D.PROPOSAL_BUD_NO) AS CEL
+		      ,(SELECT SUBSTR(RTRIM(XMLAGG(XMLELEMENT(x, trim(NAME_KOR), '/')).EXTRACT('//text()'), ','),1,LENGTH(RTRIM(XMLAGG(XMLELEMENT(x, trim(NAME_KOR), '/')).EXTRACT('//text()'), ','))-1)
+		          FROM SIN_CARD_MASTER
+		          WHERE TEMPLE_CD= #{V_TEMPLE_CD}
+		            AND BUD_NO IN(SELECT DECE_BUD_NO 
+		        				    FROM REC_FORTY_NINE_DEATH 
+		        				   WHERE ACCEPT_SEQ = #{V_ACCEPT_SEQ} 
+  		        				     AND SEQ        = #{V_SEQ}
+		        				     AND TEMPLE_CD  = #{V_TEMPLE_CD})		             
+		        ) AS YONGA_NAME
+		      ,A.REMARK||' '||B.REMARK AS REMARK
+		      ,TO_CHAR( B.PAYMENT_PLAN_AMT , '999,999,999,999,999') AS PAYMENT_PLAN_AMT
+		      ,TRIM(TO_CHAR( B.PAYMENT_AMT,'999,999,999,999,999')) AS PAYMENT_AMT
+		      ,E.BOKWEJA_NM
+		FROM  REC_FORTY_NINE_JESA_MGT A
+		     ,REC_FORTY_NINE_DETAIL B
+		     ,REC_MASTER D
+		     ,REC_FORTY_NINE_BOKWEJA_MGT E
+		WHERE 
+		     A.ACCEPT_SEQ      = B.ACCEPT_SEQ
+		     AND A.SEQ         = B.SEQ
+		     AND A.ACCEPT_SEQ  = D.ACCEPT_SEQ
+		     AND A.TEMPLE_CD   = D.TEMPLE_CD
+		     AND A.ACCEPT_SEQ  = E.ACCEPT_SEQ
+		     AND A.SEQ         = E.SEQ
+		     AND E.REP_YN      = 'T'
+		     AND A.JESA_GUBUN  = #{V_JESA_GUBUN}
+		     AND A.TEMPLE_CD   = #{V_TEMPLE_CD}
+		     AND D.ACCEPT_SEQ  = #{V_ACCEPT_SEQ}
+		     AND A.SEQ         = #{V_SEQ}
+		     AND E.TEMPLE_CD   = #{V_TEMPLE_CD}
+		     AND E.ACCEPT_SEQ  = #{V_ACCEPT_SEQ}
+		     AND E.SEQ         = #{V_SEQ}
+	</select>
+	
+	<select id="SELECT_JIJE_DETAIL" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT '기제' AS JESA_NAME
+		      ,A.ACCEPT_SEQ
+		      ,A.TEMPLE_CD
+		      ,FN_CODE_NAME('LUNAR_SOLAR',A.LUNAR_SOLAR) AS LUNAR_SOLAR
+		      ,A.NUMBER_COUNT
+		      ,TO_CHAR(TO_DATE(A.EVENT_DATE,'YYYYMMDD'),'YYYY-MM-DD')||'   '||SUBSTR(A.EVENT_TIME,0,2)||'시'||SUBSTR(A.EVENT_TIME,3,4)||'분' AS EVENT_DATE
+		      ,FN_SINDO_INFO('NAME_KOR',A.TEMPLE_CD,C.PROPOSAL_BUD_NO)||' ('||C.PROPOSAL_BUD_NO||')' AS NAME
+		      ,FN_SINDO_INFO('CEL',A.TEMPLE_CD,C.PROPOSAL_BUD_NO) AS CEL
+		      ,(SELECT SUBSTR(RTRIM(XMLAGG(XMLELEMENT(x, trim(NAME_KOR), '/')).EXTRACT('//text()'), ','),1,LENGTH(RTRIM(XMLAGG(XMLELEMENT(x, trim(NAME_KOR), '/')).EXTRACT('//text()'), ','))-1)
+		          FROM SIN_CARD_MASTER
+		         WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		           AND BUD_NO IN(SELECT DECE_BUD_NO 
+		           				   FROM REC_GIJE_DEATH 
+		           				  WHERE ACCEPT_SEQ = #{V_ACCEPT_SEQ} 
+		           				    AND SEQ        = #{V_SEQ} 
+		           				    AND TEMPLE_CD  = #{V_TEMPLE_CD})
+		        ) AS YONGA_NAME
+		      ,A.REMARK AS REMARK
+		      ,TO_CHAR( A.PAYMENT_PLAN_AMT , '999,999,999,999,999') AS PAYMENT_PLAN_AMT
+		      ,TRIM(TO_CHAR( A.PAYMENT_AMT,'999,999,999,999,999')) AS PAYMENT_AMT
+		      ,D.BOKWEJA_NM 
+		FROM  REC_GIJE_DETAIL A
+		     ,REC_MASTER C
+		     ,REC_GIJE_BOKWEJA_MGT D
+		WHERE A.ACCEPT_SEQ     = C.ACCEPT_SEQ
+		     AND A.ACCEPT_SEQ = D.ACCEPT_SEQ
+		     AND A.SEQ        = D.SEQ
+		     AND D.REP_YN     ='T'
+		     AND A.TEMPLE_CD  = #{V_TEMPLE_CD}
+		     AND C.TEMPLE_CD  = #{V_TEMPLE_CD}
+		     AND D.TEMPLE_CD  = #{V_TEMPLE_CD}
+		     AND C.ACCEPT_SEQ = #{V_ACCEPT_SEQ}
+		     AND A.SEQ        = #{V_SEQ}
+	</select>
+	
+	<select id="SELECT_CHONDOJE_DETAIL" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT '천도제' AS JESA_NAME
+		      ,A.ACCEPT_SEQ
+		      ,A.TEMPLE_CD
+		      ,FN_CODE_NAME('LUNAR_SOLAR',A.LUNAR_SOLAR) AS LUNAR_SOLAR
+		      ,A.NUMBER_COUNT
+		      ,TO_CHAR(TO_DATE(A.EVENT_DATE,'YYYYMMDD'),'YYYY-MM-DD')||'   '||SUBSTR(A.EVENT_TIME,0,2)||'시'||SUBSTR(A.EVENT_TIME,3,4)||'분' AS EVENT_DATE
+		      ,FN_SINDO_INFO('NAME_KOR',A.TEMPLE_CD,C.PROPOSAL_BUD_NO)||' ('||C.PROPOSAL_BUD_NO||')' AS NAME
+		      ,FN_SINDO_INFO('CEL',A.TEMPLE_CD,C.PROPOSAL_BUD_NO) AS CEL
+		      ,(SELECT SUBSTR(RTRIM(XMLAGG(XMLELEMENT(x, trim(NAME_KOR), '/')).EXTRACT('//text()'), ','),1,LENGTH(RTRIM(XMLAGG(XMLELEMENT(x, trim(NAME_KOR), '/')).EXTRACT('//text()'), ','))-1)
+		          FROM SIN_CARD_MASTER
+		          WHERE BUD_NO IN( SELECT DECE_BUD_NO 
+		          				     FROM REC_CHONDOJE_DEATH 
+		          				     WHERE ACCEPT_SEQ = #{V_ACCEPT_SEQ} 
+		          				       AND SEQ        = #{V_SEQ}
+		          				       AND TEMPLE_CD  = #{V_TEMPLE_CD}
+		          				   )
+		             AND TEMPLE_CD= #{V_TEMPLE_CD}
+		       ) AS YONGA_NAME
+		      ,A.REMARK AS REMARK
+		      ,TO_CHAR( A.PAYMENT_PLAN_AMT , '999,999,999,999,999') AS PAYMENT_PLAN_AMT
+		      ,TRIM(TO_CHAR( A.PAYMENT_AMT,'999,999,999,999,999')) AS PAYMENT_AMT
+		      ,D.BOKWEJA_NM
+		FROM  REC_CHONDOJE_DETAIL A
+		     ,REC_MASTER C
+		     ,REC_CHONDOJE_BOKWEJA_MGT D
+		WHERE 
+		     A.ACCEPT_SEQ = C.ACCEPT_SEQ
+		     AND A.ACCEPT_SEQ  = D.ACCEPT_SEQ
+		     AND A.SEQ         = D.SEQ
+		     AND D.REP_YN      ='T'
+		     AND A.TEMPLE_CD   = #{V_TEMPLE_CD}
+		     AND C.TEMPLE_CD   = #{V_TEMPLE_CD}
+		     AND D.TEMPLE_CD   = #{V_TEMPLE_CD}
+		     AND C.ACCEPT_SEQ  = #{V_ACCEPT_SEQ}
+		     AND A.SEQ         = #{V_SEQ}
+	</select>
+	
+	
+	<select id="getNextDay" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TO_CHAR(SYSDATE,'YYYYMMDD') DATE1 				
+		      ,TO_CHAR(NEXT_DAY(SYSDATE, 1),'YYYYMMDD') DATE2 
+		      ,TO_CHAR(LAST_DAY (TRUNC (SYSDATE)) + 1 / 24,'YYYYMMDD') As DATE3       
+		      ,TO_CHAR(ADD_MONTHS (TRUNC (SYSDATE, 'MM'), 0) + 1 / 24 ,'YYYYMMDD') as DATE4  		
+		 FROM DUAL
+	</select>
+	
+	<insert id="INSERT_DETAIL_SCHEDUEL" parameterType="java.util.Map">
+		INSERT INTO ASP_TEMPLE_DAY_MEMO (
+		       TEMPLE_CD
+		      ,SEQ_NO
+		      ,TITLE
+		      ,CONTENTS
+		      ,CRT_USER
+		      ,CRT_DATE
+		      ,UPT_USER
+		      ,UPT_DATE
+		      ,REMOTE
+		      ,PLUS_YYYYMMDD
+		) VALUES (
+		       #{TEMPLE_CD}
+		      ,(SELECT NVL(MAX(SEQ_NO)+1,1)
+		          FROM ASP_TEMPLE_DAY_MEMO
+		         WHERE TEMPLE_CD     = #{TEMPLE_CD}
+		           AND PLUS_YYYYMMDD = #{PLUS_YYYYMMDD})
+		      ,#{TITLE}
+		      ,#{CONTENTS}
+		      ,#{V_USER_ID}
+		      ,SYSDATE
+		      ,#{V_USER_ID}
+		      ,SYSDATE
+		      ,#{REMOTE}
+		      ,#{PLUS_YYYYMMDD}
+		)
+	</insert>
+	
+	<delete id="DELETE_DETAIL_SCHEDUEL" parameterType="java.util.Map">
+		DELETE FROM ASP_TEMPLE_DAY_MEMO
+		 WHERE TEMPLE_CD     = #{TEMPLE_CD}
+		   AND SEQ_NO        = #{SEQ_NO}
+		   AND PLUS_YYYYMMDD = #{PLUS_YYYYMMDD}
+	</delete>
+	
+	<update id="UPDATE_DETAIL_SCHEDUEL"  parameterType="java.util.Map">
+		UPDATE ASP_TEMPLE_DAY_MEMO 
+		   SET TEMPLE_CD     = #{TEMPLE_CD}
+		   	  ,SEQ_NO        = #{SEQ_NO}
+		   	  ,TITLE         = #{TITLE}
+		   	  ,CONTENTS      = #{CONTENTS}
+		   	  ,UPT_USER      = #{V_USER_ID}
+		   	  ,UPT_DATE      = SYSDATE
+		   	  ,REMOTE        = #{REMOTE}
+		   	  ,PLUS_YYYYMMDD = #{PLUS_YYYYMMDD}
+ 	     WHERE TEMPLE_CD     = #{TEMPLE_CD}
+   	       AND SEQ_NO        = #{SEQ_NO}
+   		   AND PLUS_YYYYMMDD = #{PLUS_YYYYMMDD}
+	</update>
+	
+	
+	
+	<select id="SELECT_CALENDER_DAY"  parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		 SELECT A.TEMPLE_CD        		         
+		      , H.NAME AS NAME
+		      , E.NAME_KOR         
+		      , G.NAME AS LUNAR_SOLAR
+		      , A.EVENT_DATE                 
+		      , J.NAME_KOR AS DECE_NAME_KOR  
+		      , (CASE 
+				  WHEN 
+					LENGTH(A.EVENT_TIME) > 2 
+				  THEN 
+					SUBSTR(A.EVENT_TIME , 0,2) ||'시'
+				   ELSE 
+					A.EVENT_TIME
+				END ) as  EVENT_TIME
+		     ,A.LUNAR_SOLAR as LUNAR_SOLAR_CODE
+		     ,A.ACCEPT_SEQ
+		     ,A.SEQ		     
+		     ,B.ACCEPT_GBN AS ACCEPT_GBN
+		     ,A.JESA_GUBUN AS JESA_GUBUN
+		 FROM REC_FORTY_NINE_JESA_MGT A
+		     ,REC_SUB B
+		     ,ASP_CODE_MGT C
+		     ,REC_MASTER D
+		     ,SIN_CARD_MASTER E
+		     ,REC_FORTY_NINE_DETAIL F
+		     ,ASP_CODE_MGT G
+		     ,ASP_CODE_MGT H
+		     ,REC_FORTY_NINE_DEATH I
+		     ,SIN_CARD_MASTER J
+		WHERE F.TEMPLE_CD          = A.TEMPLE_CD
+		  AND   F.ACCEPT_SEQ       = A.ACCEPT_SEQ
+		  AND   F.SEQ              = A.SEQ
+		  AND   F.TEMPLE_CD        = I.TEMPLE_CD
+		  AND   F.ACCEPT_SEQ       = I.ACCEPT_SEQ
+		  AND   F.SEQ              = I.SEQ
+		  AND   I.SORT_SEQ         = '1'
+		  AND   I.TEMPLE_CD        = J.TEMPLE_CD
+		  AND   I.DECE_BUD_NO      = J.BUD_NO
+		  AND   A.TEMPLE_CD        = B.TEMPLE_CD
+		  AND   A.ACCEPT_SEQ       = B.ACCEPT_SEQ
+		  AND   A.SEQ              = B.SEQ
+		  AND   B.TEMPLE_CD        = D.TEMPLE_CD
+		  AND   B.ACCEPT_SEQ       = D.ACCEPT_SEQ
+		  AND   D.TEMPLE_CD        = E.TEMPLE_CD
+		  AND   D.PROPOSAL_BUD_NO  = E.BUD_NO
+		  AND   C.GROUP_CD         ='REC'
+		  AND   G.GROUP_CD         ='LUNAR_SOLAR'
+		  AND   H.GROUP_CD         ='SAGUJESA'
+		  AND   B.ACCEPT_GBN       = C.CODE
+		  AND   A.LUNAR_SOLAR      = G.CODE
+		  AND   A.JESA_GUBUN       = H.CODE
+		  AND 	F.DEL_YN 	   = 'F'
+		  AND   A.TEMPLE_CD        = #{V_TEMPLE_CD}
+		  AND  (
+				   (     A.LUNAR_SOLAR = 'F'  AND A.EVENT_DATE    = #{V_P_DAY}  )
+				OR (     A.LUNAR_SOLAR = 'T'  AND A.EVENT_DATE    = #{V_P_DAY_LUNAR} )
+		   )        
+		UNION ALL
+		SELECT   A.TEMPLE_CD                   
+		       , C.NAME             
+		       , E.NAME_KOR         
+		       , F.NAME AS LUNAR_SOLAR 
+		       , A.EVENT_DATE    
+		       , H.NAME_KOR AS DECE_NAME_KOR      
+		       , (CASE 
+					WHEN 
+						LENGTH(A.EVENT_TIME) > 2 
+					THEN 
+						SUBSTR(A.EVENT_TIME , 0,2)||'시'
+					ELSE 
+						A.EVENT_TIME
+				   END ) as  EVENT_TIME 
+		       ,A.LUNAR_SOLAR as LUNAR_SOLAR_CODE
+		       ,A.ACCEPT_SEQ
+		       ,A.SEQ
+		       ,B.ACCEPT_GBN AS ACCEPT_GBN
+		       ,'0' AS JESA_GUBUN
+		  FROM  REC_GIJE_DETAIL A
+		       ,REC_SUB B
+		       ,ASP_CODE_MGT C
+		       ,REC_MASTER D
+		       ,SIN_CARD_MASTER E
+		       ,ASP_CODE_MGT F
+		       ,REC_GIJE_DEATH G
+		       ,SIN_CARD_MASTER H
+		  WHERE A.TEMPLE_CD        = B.TEMPLE_CD
+		    AND A.ACCEPT_SEQ       = B.ACCEPT_SEQ
+		    AND A.SEQ              = B.SEQ
+		    AND A.TEMPLE_CD        = G.TEMPLE_CD
+		    AND A.ACCEPT_SEQ       = G.ACCEPT_SEQ
+		    AND A.SEQ              = G.SEQ
+		    AND G.SORT_SEQ         = '1'
+		    AND G.TEMPLE_CD        = H.TEMPLE_CD
+		    AND G.DECE_BUD_NO      = H.BUD_NO
+		    AND B.TEMPLE_CD        = D.TEMPLE_CD
+		    AND B.ACCEPT_SEQ       = D.ACCEPT_SEQ
+		    AND D.TEMPLE_CD        = E.TEMPLE_CD
+		    AND D.PROPOSAL_BUD_NO  = E.BUD_NO
+		    AND C.GROUP_CD         ='REC'
+		    AND F.GROUP_CD         ='LUNAR_SOLAR'
+		    AND B.ACCEPT_GBN       = C.CODE
+		    AND A.LUNAR_SOLAR      = F.CODE
+		    AND A.DEL_YN 		   = 'F'
+		    AND A.TEMPLE_CD        = #{V_TEMPLE_CD}
+		    AND  (
+				   ( 	  A.LUNAR_SOLAR = 'F'  AND A.EVENT_DATE    = #{V_P_DAY}  )
+				OR (      A.LUNAR_SOLAR = 'T'  AND A.EVENT_DATE    = #{V_P_DAY_LUNAR} )
+		   )
+		UNION ALL
+		SELECT   A.TEMPLE_CD                       
+		       , C.NAME
+		       , E.NAME_KOR
+		       , F.NAME AS LUNAR_SOLAR 
+		       , A.EVENT_DATE           
+		       , H.NAME_KOR AS DECE_NAME_KOR   
+		       , (CASE 
+					WHEN 
+						LENGTH(A.EVENT_TIME) > 2 
+					THEN 
+						SUBSTR(A.EVENT_TIME , 0,2)||'시'
+					ELSE
+						A.EVENT_TIME
+				  END ) as  EVENT_TIME     
+		       ,A.LUNAR_SOLAR as LUNAR_SOLAR_CODE
+		       ,A.ACCEPT_SEQ
+		       ,A.SEQ
+		       ,B.ACCEPT_GBN AS ACCEPT_GBN
+		       ,'0' AS JESA_GUBUN
+		  FROM   REC_CHONDOJE_DETAIL A
+		       , REC_SUB B
+		       , ASP_CODE_MGT C
+		       , REC_MASTER D
+		       , SIN_CARD_MASTER E
+		       , ASP_CODE_MGT F
+		       , REC_CHONDOJE_DEATH G
+		       , SIN_CARD_MASTER H
+		  WHERE   A.TEMPLE_CD        = B.TEMPLE_CD
+		    AND   A.ACCEPT_SEQ       = B.ACCEPT_SEQ
+		    AND   A.SEQ              = B.SEQ
+		    AND   A.TEMPLE_CD        = G.TEMPLE_CD
+		    AND   A.ACCEPT_SEQ       = G.ACCEPT_SEQ
+		    AND   A.SEQ              = G.SEQ
+		    AND   G.SORT_SEQ         = '1'
+		    AND   G.TEMPLE_CD        = H.TEMPLE_CD
+		    AND   G.DECE_BUD_NO      = H.BUD_NO
+		    AND   B.TEMPLE_CD        = D.TEMPLE_CD
+		    AND   B.ACCEPT_SEQ       = D.ACCEPT_SEQ
+		    AND   D.TEMPLE_CD        = E.TEMPLE_CD
+		    AND   D.PROPOSAL_BUD_NO  = E.BUD_NO
+		    AND   C.GROUP_CD         ='REC'
+		    AND   F.GROUP_CD         ='LUNAR_SOLAR'
+		    AND   B.ACCEPT_GBN       = C.CODE
+		    AND   A.LUNAR_SOLAR      = F.CODE
+		    AND   A.DEL_YN 	         = 'F'
+		    AND   A.TEMPLE_CD        = #{V_TEMPLE_CD}
+		    AND  (
+				   (    A.LUNAR_SOLAR = 'F'  AND A.EVENT_DATE    = #{V_P_DAY}  )
+				OR (    A.LUNAR_SOLAR = 'T'  AND A.EVENT_DATE    = #{V_P_DAY_LUNAR}  )
+		    )
+	</select>
+	
+	
+	<update id="SinInfoUpdate" parameterType="java.util.Map">
+		UPDATE   SIN_CARD_MASTER 
+		   SET   TELNO1			= #{TELNO1}
+		       , TELNO2         = #{TELNO2}
+		       , TELNO3         = #{TELNO3}
+		       , MOBILE_TELNO1  = #{MOBILE_TELNO1}
+		       , MOBILE_TELNO2  = #{MOBILE_TELNO2}
+		       , MOBILE_TELNO3  = #{MOBILE_TELNO3}
+		       , UPT_USER       = #{UPT_USER}
+		       , UPT_DATE       = SYSDATE
+		       , REMOTE         = #{REMOTE}
+		 WHERE   TEMPLE_CD      = #{TEMPLE_CD}
+		   AND   BUD_NO		    = #{BUD_NO}
+	</update>
+	
+	
+	<update id="ReqInfoUpdate5" parameterType="java.util.Map">
+		UPDATE   REC_FORTY_NINE_JESA_MGT 
+		   SET   ACCEPT_YN    	= #{ACCEPT_YN}
+		       , UPT_USER     	= #{UPT_USER}
+		       , UPT_DATE     	= SYSDATE
+		       , REMARK     	= #{REMARK}
+		       , REMOTE       	= #{REMOTE}
+		 WHERE   TEMPLE_CD    	= #{TEMPLE_CD}
+		   AND   ACCEPT_SEQ   	= #{ACCEPT_SEQ}
+		   AND   SEQ          	= #{SEQ}
+		   AND   JESA_GUBUN   	= #{JESA_GUBUN}
+	</update>
+	
+	<update id="ReqInfoUpdate6" parameterType="java.util.Map">
+		UPDATE   REC_GIJE_DETAIL 
+		   SET   ACCEPT_YN      = #{ACCEPT_YN}
+		       , UPT_USER       = #{UPT_USER}
+		       , UPT_DATE       = SYSDATE
+		       , REMARK     	= #{REMARK}
+		       , REMOTE         = #{REMOTE}
+		 WHERE   TEMPLE_CD      = #{TEMPLE_CD}
+		   AND   ACCEPT_SEQ     = #{ACCEPT_SEQ}
+		   AND   SEQ            = #{SEQ}
+	</update>
+	
+	<update id="ReqInfoUpdate7" parameterType="java.util.Map">
+		UPDATE   REC_CHONDOJE_DETAIL 
+		   SET   ACCEPT_YN      = #{ACCEPT_YN}
+		       , UPT_USER       = #{UPT_USER}
+		       , UPT_DATE       = SYSDATE
+		       , REMARK     	= #{REMARK}
+		       , REMOTE         = #{REMOTE}
+		 WHERE   TEMPLE_CD      = #{TEMPLE_CD}
+		   AND   ACCEPT_SEQ     = #{ACCEPT_SEQ}
+		   AND   SEQ            = #{SEQ}
+	</update>
+</mapper>

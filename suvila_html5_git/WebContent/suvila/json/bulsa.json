@@ -1,0 +1,19 @@
+{"msg":"성공",
+"data":{
+	"list":[{"UPT_USER":"matrix59",
+		"CRT_USER":"matrix59",
+		"bulsaSeq":1,
+		"prodCode":5281,
+		"templeCd":"000008",
+		"useYn":"T",
+		"acptFdate":"20170302",
+		"prodAmt":30000,
+		"bulsaNm":"기와",
+		"acptClose":"F",
+		"CRT_DATE":"20170303",
+		"ACPT_EDATE":"20170331",
+		"bulsaDetail":"기와",
+		"REMOTE":"127.0.0.1",
+		"UPT_DATE":"20170303"}]
+},
+"success":true}

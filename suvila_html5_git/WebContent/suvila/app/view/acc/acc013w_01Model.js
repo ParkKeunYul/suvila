@@ -1,0 +1,43 @@
+Ext.define('ExFrm.view.acc.acc013w_01Model', {
+    extend:'Ext.app.ViewModel', 
+    alias: 'viewmodel.acc013w_01', 
+    stores:{ 
+    	ds_main:{
+        	fields:['REMARK'],
+        	proxy:{
+                type:'ajax',
+                url:'/acc/ACC006W_01/selectChongmu.suvila',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'
+                }
+            }
+            ,autoLoad:false
+        },
+        ds_acctGbn:{
+        	fields:['CODE'],
+        	proxy:{
+                type:'ajax',
+                url:'/asp/CodeSearch/acctGbn.suvila',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'
+                }
+            }
+            ,autoLoad:true
+        },
+        ds_approval:{
+        	fields:['CODE'],
+        	proxy:{
+                type:'ajax',
+                url:'/acc/ACC001W_01/approval.suvila',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'
+                }
+            }
+            ,autoLoad:true
+        } 
+        
+    }
+});

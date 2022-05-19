@@ -1,0 +1,18 @@
+{
+   "success":true,
+   "data":{
+       "list":[
+        {"custNo":undefined,"custName":undefined,"birth":undefined,"point":undefined,"addr":undefined },
+        {"custNo":undefined,"custName":undefined,"birth":undefined,"point":undefined,"addr":undefined },
+        {"custNo":undefined,"custName":undefined,"birth":undefined,"point":undefined,"addr":undefined },
+        {"custNo":undefined,"custName":undefined,"birth":undefined,"point":undefined,"addr":undefined },
+        {"custNo":undefined,"custName":undefined,"birth":undefined,"point":undefined,"addr":undefined },
+        {"custNo":undefined,"custName":undefined,"birth":undefined,"point":undefined,"addr":undefined },
+        {"custNo":undefined,"custName":undefined,"birth":undefined,"point":undefined,"addr":undefined },
+        {"custNo":undefined,"custName":undefined,"birth":undefined,"point":undefined,"addr":undefined },
+        {"custNo":undefined,"custName":undefined,"birth":undefined,"point":undefined,"addr":undefined },
+        {"custNo":undefined,"custName":undefined,"birth":undefined,"point":undefined,"addr":undefined }],
+       "listTotalSize":20,
+   },
+   "msg":""
+}

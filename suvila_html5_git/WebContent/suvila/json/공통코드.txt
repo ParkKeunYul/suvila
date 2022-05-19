@@ -1,0 +1,20 @@
+{
+ "msg":"성공",
+ "data":[
+	{"CODE":"1","SEQ":1,"NAME":"기도접수"},
+	{"CODE":"2","SEQ":1,"NAME":"인등접수"},
+	{"CODE":"4","SEQ":1,"NAME":"연등접수"},
+	{"CODE":"3","SEQ":1,"NAME":"불사접수"},
+	{"CODE":"13","SEQ":1,"NAME":"상시접수"},
+	{"CODE":"5","SEQ":1,"NAME":"49재"},
+	{"CODE":"6","SEQ":1,"NAME":"기제"},
+	{"CODE":"7","SEQ":1,"NAME":"천도제"},
+	{"CODE":"8","SEQ":1,"NAME":"위패접수"},
+	{"CODE":"9","SEQ":1,"NAME":"후원접수"},
+	{"CODE":"10","SEQ":1,"NAME":"불전함"},
+	{"CODE":"11","SEQ":1,"NAME":"템플/수련"},
+	{"CODE":"12","SEQ":1,"NAME":"원불/봉안"},
+	{"CODE":"14","SEQ":1,"NAME":"영탑접수"},
+	{"CODE":"15","SEQ":1,"NAME":"관리비"}],
+ "success":"true"
+}

@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SIN001p_05DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+	
+	<update id="UPDATE_SIN_CARD_MASTER_DETAIL" parameterType="kr.co.o2i.util.CommonMap">
+		UPDATE SIN_CARD_MASTER
+		   SET SORT_SEQ		   = '${SORT_SEQ}'
+		      ,DAEJU_BUD_NO	   = '${DAEJU_BUD_NO}'
+		      ,REPRESEN_REL    = '${REPRESEN_REL}'
+		      ,NAME_KOR        = '${NAME_KOR}'
+		      ,NAME_HAN        = '${NAME_HAN}'
+		      ,SACRED_KOR      = '${SACRED_KOR}'
+		      ,SACRED_HAN      = '${SACRED_HAN}'
+		      ,JUMIN_NO        = '${JUMIN_NO}'
+		      ,ZIP_CD          = '${ZIP_CD}'
+		      ,ADDR1           = '${ADDR1}'
+		      ,ADDR2           = '${ADDR2}'
+		      ,TELNO1          = '${TELNO1}'
+		      ,TELNO2          = '${TELNO2}'
+		      ,TELNO3          = '${TELNO3}'
+		      ,MOBILE_TELNO1   = '${MOBILE_TELNO1}'
+		      ,MOBILE_TELNO2   = '${MOBILE_TELNO2}'
+		      ,MOBILE_TELNO3   = '${MOBILE_TELNO3}'
+		      ,EMAIL           = '${EMAIL1}' || '@' ||'${EMAIL2}'
+		      ,LAST_SCHOLA     = '${LAST_SCHOLA}'
+		      ,INTEREST        = '${INTEREST}'
+		      ,SKILL           = '${SKILL}'
+		      ,COMPANY_NAME    = '${COMPANY_NAME}'
+		      ,COMPANY_POS     = '${COMPANY_POS}'
+		      ,COMPANY_TEL1    = '${COMPANY_TEL1  }'
+		      ,COMPANY_TEL2    = '${COMPANY_TEL2  }'
+		      ,COMPANY_TEL3    = '${COMPANY_TEL3  }'
+		      ,ENTRANCE_CD     = '${ENTRANCE_CD   }'		      
+		      ,QUALIFICATION   = '${QUALIFICATION }'
+		      ,SACHAL_NAME     = '${SACHAL_NAME   }'		      
+		      ,MEMO            = '${MEMO 		 }'
+		      ,SEXAGENARY      = '${SEXAGENARY 	 }'
+		      ,LEAP_MONTH      = '${LEAP_MONTH 	 }'
+		      ,LUNAR_SOLAR     = '${LUNAR_SOLAR 	 }'
+		      ,BIRTHTIME       = '${BIRTHTIME 	 }'
+		      ,BIRTHDAY        = '${BIRTHDAY 	 }'
+		      ,SEX_GBN         = '${SEX_GBN 		 }'
+		      ,SINDO_GBN       = '${SINDO_GBN 	 }'
+		      ,HWAJU_BUD_NO    = '${HWAJU_BUD_NO }'
+		      ,CARD_ISSUE_DATE = '${CARD_ISSUE_DATE }'
+		      ,CARD_ISSUE_CNT  = '${CARD_ISSUE_CNT }'
+		      ,UPT_USER 	   = '${V_USER_ID}'
+		      ,UPT_DATE		   = SYSDATE
+		      ,REMOTE 		   = '${V_REMOTE}'
+		      ,ETC1 		   = '${ETC1 }'
+		      ,BLDG_NUM        = '${BLDG_NUM }'
+		      ,HWAJU_YN        = DECODE('${HWAJU_YN        }' ,'1','T','F')
+		      ,NEWS_YN         = DECODE('${NEWS_YN         }' ,'1','T','F')
+		      ,POST_TRANS      = DECODE('${POST_TRANS      }' ,'1','T','F')	      
+		      ,SMS_TRANS       = DECODE('${SMS_TRANS       }' ,'1','T','F')
+		      ,SMS_GROUP_TRANS = DECODE('${SMS_GROUP_TRANS }' ,'1','T','F')
+			  ,SMS_BIRTH_TRANS = DECODE('${SMS_BIRTH_TRANS }' ,'1','T','F')		
+		 WHERE TEMPLE_CD       = '${V_TEMPLE_CD}'
+		   AND BUD_NO          = '${BUD_NO}'
+	</update>
+	
+	
+	<select id="SELECT_SIN_GROUP_HIS" parameterType="kr.co.o2i.util.CommonMap" resultType="java.util.Map">
+		SELECT A.TEMPLE_CD
+		      ,A.BUD_NO
+		      ,A.ORG_CD
+		      ,B.ORG_NAME
+		      ,A.ENTRY_DATE
+		      ,A.OUT_YN
+		      ,A.DEL_DATE
+		      ,A.POSTION_CODE
+		      ,A.MEMO
+		      ,A.CRT_USER
+		      ,to_char(A.CRT_DATE , 'YYYYMMDD') CRT_DATE
+		      ,to_char(A.UPT_DATE , 'YYYYMMDD') UPT_DATE
+		      ,A.UPT_USER
+		      ,A.REMOTE
+		 FROM SIN_GROUP_HIS A
+		     ,SIN_GROUP_MGT B
+		WHERE A.TEMPLE_CD  = B.TEMPLE_CD
+		  AND A.ORG_CD     = B.ORG_CD
+		  AND B.USE_YN     = 'T'
+		  AND A.OUT_YN     = 'F'
+		  AND A.TEMPLE_CD  = #{V_TEMPLE_CD}
+		  AND A.BUD_NO     = #{V_BUD_NO}
+	</select>
+	
+	<select id="SELECT_SINDO_CARD_MASTER_DETAIL" parameterType="kr.co.o2i.util.CommonMap" resultType="java.util.Map">
+		 SELECT	 TEMPLE_CD																																		
+				,BUD_NO																																			
+				,BUD_CODE																																		
+				,SORT_SEQ																																		
+				,DAEJU_BUD_NO																																	
+				,REPRESEN_REL																																	
+				,NAME_KOR																																		
+				,NAME_HAN																																		
+				,SACRED_KOR																																		
+				,SACRED_HAN																																		
+				,JUMIN_NO																																		
+				,ZIP_CD																																			
+				,ADDR1																																			
+				,ADDR2																																			
+				,TELNO1																																			
+				,TELNO2																																			
+				,TELNO3																																			
+				,MOBILE_TELNO1																																	
+				,MOBILE_TELNO2																																	
+				,MOBILE_TELNO3																																	
+				,EMAIL																																			
+				,SUBSTR(EMAIL,1,INSTR(EMAIL,'@')-1) AS EMAIL1																									
+				,SUBSTR(EMAIL,INSTR(EMAIL,'@')+1)  AS EMAIL2																									
+				,LAST_SCHOLA																																	
+				,INTEREST																																		
+				,SKILL																																			
+				,COMPANY_NAME																																	
+				,COMPANY_POS																																	
+				,COMPANY_TEL1																																	
+				,COMPANY_TEL2																																	
+				,COMPANY_TEL3																																	
+				,ENTRANCE_CD																																	
+				,TO_NUMBER(DECODE(NEWS_YN,'T',1,'F',0)) AS NEWS_YN																								
+				,QUALIFICATION																																	
+				,SACHAL_NAME																																	
+				,TO_NUMBER(DECODE(POST_TRANS,'T',1,'F',0)) AS POST_TRANS																						
+				,TO_NUMBER(DECODE(EMAIL_TRANS,'T',1,'F',0)) AS EMAIL_TRANS 																						
+				,TO_NUMBER(DECODE(SMS_TRANS,'T',1,'F',0)) AS SMS_TRANS
+				,TO_NUMBER(DECODE(SMS_BIRTH_TRANS,'T',1,'F',0)) AS SMS_BIRTH_TRANS
+				,TO_NUMBER(DECODE(SMS_GROUP_TRANS,'T',1,'F',0)) AS SMS_GROUP_TRANS
+				,MEMO																									
+				,SEXAGENARY																																		
+				,LEAP_MONTH																																		
+				,LUNAR_SOLAR																																	
+				,BIRTHTIME																																		
+				,DECODE(LENGTH(NVL(BIRTHTIME,'')),4,SUBSTR(BIRTHTIME,1,2),'') AS BIRTHTIME1																		
+				,DECODE(LENGTH(NVL(BIRTHTIME,'')),4,SUBSTR(BIRTHTIME,3),'') AS BIRTHTIME2																		
+				,ISSUE_DATE																																		
+				,BIRTHDAY																																		
+				,SEX_GBN																																		
+				,SINDO_GBN																																		
+				,TO_NUMBER(DECODE(HWAJU_YN,'T',1,'F',0)) AS HWAJU_YN																							
+				,HWAJU_BUD_NO																																	
+				,FN_GET_NM('BUD',TEMPLE_CD,HWAJU_BUD_NO)AS HWAJU_BUD_NAME																						
+				,CARD_ISSUE_DATE																															
+				,CARD_ISSUE_CNT																																	
+				,CRT_USER																																		
+				,CRT_DATE																																		
+				,UPT_USER																																		
+				,UPT_DATE																																		
+				,REMOTE																																			
+				,ETC1																																			
+		        ,BLDG_NUM                                                                     
+		        ,FN_ADDR_BLDG2(BLDG_NUM) ADDR3                                                                     					
+		    FROM SIN_CARD_MASTER																																
+		   WHERE TEMPLE_CD = #{V_TEMPLE_CD}																							
+			 AND BUD_NO   = #{V_BUD_NO}		
+	</select>
+	
+</mapper>

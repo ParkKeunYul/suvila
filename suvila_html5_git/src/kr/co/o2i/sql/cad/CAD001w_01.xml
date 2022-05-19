@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="CAD001w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+
+	<!--  # 명함 기본정보 조회# -->
+	<select id="SELECT_NAME_CARD" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT TEMPLE_CD
+		      ,USER_ID
+		      ,SORT_SEQ
+		      ,NAME_KOR
+		      ,SACRED_KOR
+		      ,ZIP_CD
+		      ,ADDR1
+		      ,ADDR2
+		      ,ADDR1 || ' ' || ADDR2 as ADDR
+		      ,TELNO1
+		      ,TELNO2
+		      ,TELNO3
+		      ,replace(TELNO1 ||'-'|| TELNO2|| '-'||TELNO3,'--', '') AS TELNO
+		      ,MOBILE_TELNO1
+		      ,MOBILE_TELNO2
+		      ,MOBILE_TELNO3
+		      ,replace(MOBILE_TELNO1 ||'-'|| MOBILE_TELNO2|| '-'||MOBILE_TELNO3,'--', '') AS MOBILE_TELNO
+		      ,COMPANY_NAME
+		      ,COMPANY_POS
+		      ,COMPANY_TEL1
+		      ,COMPANY_TEL2
+		      ,COMPANY_TEL3
+		      ,FAXNO1
+		      ,FAXNO2
+		      ,FAXNO3
+		      ,EMAIL
+		      ,SACHAL_NM
+		      ,MEMO
+		      ,'F' AS CHECK_P
+		      ,BLDG_NUM
+		      ,FN_ADDR_BLDG2(BLDG_NUM) ADDR3
+		      ,'S' as SQL_MODE
+		 FROM ASP_NAME_CARD_MASTER
+		WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		  AND USER_ID   = #{V_USER_ID}
+		AND DEL_YN      = 'F'
+		<if test='V_KEYWORD != nul and  V_KEYWORD != "" '>
+			AND NAME_KOR LIKE '%' ||  #{V_KEYWORD} || '%'
+		</if>
+		<if test='V_CLASS_CD != 0 '>
+			AND SORT_SEQ IN (	SELECT SORT_SEQ FROM ASP_NAME_CARD_INFO		
+								 WHERE TEMPLE_CD = #{V_TEMPLE_CD}				
+								   AND USER_ID   = #{V_USER_ID}					
+								   AND CLASS_CD  = #{V_CLASS_CD}   )												 
+		</if>
+	</select>
+
+
+	<!-- 명함 기본정보 입력 -->
+	<insert id="INSERT_NAME_CARD" parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO ASP_NAME_CARD_MASTER (
+			 TEMPLE_CD
+			,USER_ID
+			,SORT_SEQ
+			,NAME_KOR
+			,SACRED_KOR
+			,ZIP_CD
+			,ADDR1
+			,ADDR2
+			,TELNO1
+			,TELNO2
+			,TELNO3
+			,MOBILE_TELNO1
+			,MOBILE_TELNO2
+			,MOBILE_TELNO3
+			,COMPANY_NAME
+			,COMPANY_TEL1
+			,COMPANY_TEL2
+			,COMPANY_TEL3
+			,COMPANY_POS
+			,FAXNO1
+			,FAXNO2
+			,FAXNO3
+			,EMAIL
+			,MEMO
+			,SACHAL_NM
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+			,DEL_YN
+			,BLDG_NUM
+		) VALUES (
+			 #{V_TEMPLE_CD}
+			,#{V_USER_ID}
+			,(   
+				SELECT NVL(MAX(SORT_SEQ),0)+1 
+				  FROM ASP_NAME_CARD_MASTER
+				 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+				   AND USER_ID   = #{V_USER_ID} 
+			 )
+			,#{NAME_KOR      ,jdbcType=VARCHAR}
+			,#{SACRED_KOR    ,jdbcType=VARCHAR}
+			,#{ZIP_CD        ,jdbcType=VARCHAR}
+			,#{ADDR1         ,jdbcType=VARCHAR}
+			,#{ADDR2         ,jdbcType=VARCHAR}
+			,#{TELNO1        ,jdbcType=VARCHAR}
+			,#{TELNO2        ,jdbcType=VARCHAR}
+			,#{TELNO3        ,jdbcType=VARCHAR}
+			,#{MOBILE_TELNO1 ,jdbcType=VARCHAR}
+			,#{MOBILE_TELNO2 ,jdbcType=VARCHAR}
+			,#{MOBILE_TELNO3 ,jdbcType=VARCHAR}
+			,#{COMPANY_NAME  ,jdbcType=VARCHAR}
+			,#{COMPANY_TEL1  ,jdbcType=VARCHAR}
+			,#{COMPANY_TEL2  ,jdbcType=VARCHAR}
+			,#{COMPANY_TEL3  ,jdbcType=VARCHAR}
+			,#{COMPANY_POS   ,jdbcType=VARCHAR}
+			,#{FAXNO1 		 ,jdbcType=VARCHAR}
+			,#{FAXNO2 		 ,jdbcType=VARCHAR}
+			,#{FAXNO3 		 ,jdbcType=VARCHAR} 
+			,#{EMAIL 		 ,jdbcType=VARCHAR}
+			,#{MEMO 		 ,jdbcType=VARCHAR}
+			,#{SACHAL_NM 	 ,jdbcType=VARCHAR}
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_REMOTE}
+			,'F'
+			,#{BLDG_NUM 	 ,jdbcType=VARCHAR}
+		)
+	</insert>
+
+	<!-- 명함 기본정보 수정 -->
+	<update id="UPDATE_NAME_CARD" parameterType="kr.co.o2i.util.CommonMap">
+		UPDATE ASP_NAME_CARD_MASTER 
+		   SET NAME_KOR      = #{NAME_KOR}
+		      ,SACRED_KOR    = #{SACRED_KOR     ,jdbcType=VARCHAR}
+		      ,ZIP_CD        = #{ZIP_CD         ,jdbcType=VARCHAR}
+		      ,ADDR1         = #{ADDR1          ,jdbcType=VARCHAR}
+		      ,ADDR2         = #{ADDR2          ,jdbcType=VARCHAR}
+		      ,TELNO1        = #{TELNO1         ,jdbcType=VARCHAR}
+		      ,TELNO2        = #{TELNO2         ,jdbcType=VARCHAR}
+		      ,TELNO3        = #{TELNO3         ,jdbcType=VARCHAR}
+		      ,MOBILE_TELNO1 = #{MOBILE_TELNO1  ,jdbcType=VARCHAR}
+		      ,MOBILE_TELNO2 = #{MOBILE_TELNO2  ,jdbcType=VARCHAR}
+		      ,MOBILE_TELNO3 = #{MOBILE_TELNO3  ,jdbcType=VARCHAR}
+		      ,COMPANY_NAME  = #{COMPANY_NAME   ,jdbcType=VARCHAR}
+		      ,COMPANY_TEL1  = #{COMPANY_TEL1   ,jdbcType=VARCHAR}
+		      ,COMPANY_TEL2  = #{COMPANY_TEL2   ,jdbcType=VARCHAR}
+		      ,COMPANY_TEL3  = #{COMPANY_TEL3   ,jdbcType=VARCHAR}
+		      ,COMPANY_POS   = #{COMPANY_POS    ,jdbcType=VARCHAR}
+		      ,FAXNO1        = #{FAXNO1         ,jdbcType=VARCHAR}
+		      ,FAXNO2        = #{FAXNO2         ,jdbcType=VARCHAR}
+		      ,FAXNO3        = #{FAXNO3         ,jdbcType=VARCHAR}
+		      ,EMAIL         = #{EMAIL          ,jdbcType=VARCHAR}
+		      ,MEMO          = #{MEMO           ,jdbcType=VARCHAR}
+		      ,SACHAL_NM     = #{SACHAL_NM      ,jdbcType=VARCHAR}
+		      ,UPT_USER      = #{V_USER_ID      ,jdbcType=VARCHAR}
+		      ,UPT_DATE      = SYSDATE
+		      ,REMOTE        = #{V_REMOTE       ,jdbcType=VARCHAR}
+		      ,BLDG_NUM      = #{BLDG_NUM       ,jdbcType=VARCHAR}
+	     WHERE TEMPLE_CD     = #{V_TEMPLE_CD}
+	       AND USER_ID       = #{V_USER_ID}
+	       AND SORT_SEQ      = #{SORT_SEQ}
+	</update>
+	
+	<!-- 명함 기본정보 삭제 -->
+	<update id="DELETE_NAME_CARD" parameterType="kr.co.o2i.util.CommonMap">
+		UPDATE ASP_NAME_CARD_MASTER 
+		   SET NAME_KOR      = #{NAME_KOR 	   ,jdbcType=VARCHAR}
+		      ,SACRED_KOR    = #{SACRED_KOR    ,jdbcType=VARCHAR}
+		      ,ZIP_CD        = #{ZIP_CD 	   ,jdbcType=VARCHAR}
+		      ,ADDR1         = #{ADDR1 		   ,jdbcType=VARCHAR}
+		      ,ADDR2         = #{ADDR2 		   ,jdbcType=VARCHAR}
+		      ,TELNO1        = #{TELNO1        ,jdbcType=VARCHAR}
+		      ,TELNO2        = #{TELNO2 	   ,jdbcType=VARCHAR}
+		      ,TELNO3        = #{TELNO3        ,jdbcType=VARCHAR}
+		      ,MOBILE_TELNO1 = #{MOBILE_TELNO1 ,jdbcType=VARCHAR}
+		      ,MOBILE_TELNO2 = #{MOBILE_TELNO2 ,jdbcType=VARCHAR}
+		      ,MOBILE_TELNO3 = #{MOBILE_TELNO3 ,jdbcType=VARCHAR}
+		      ,COMPANY_NAME  = #{COMPANY_NAME  ,jdbcType=VARCHAR}
+		      ,COMPANY_TEL1  = #{COMPANY_TEL1  ,jdbcType=VARCHAR}
+		      ,COMPANY_TEL2  = #{COMPANY_TEL2  ,jdbcType=VARCHAR}
+		      ,COMPANY_TEL3  = #{COMPANY_TEL3  ,jdbcType=VARCHAR}
+		      ,COMPANY_POS   = #{COMPANY_POS   ,jdbcType=VARCHAR}
+		      ,FAXNO1        = #{FAXNO1        ,jdbcType=VARCHAR}
+		      ,FAXNO2        = #{FAXNO2 	   ,jdbcType=VARCHAR}
+		      ,FAXNO3        = #{FAXNO3 	   ,jdbcType=VARCHAR}
+		      ,EMAIL         = #{EMAIL 		   ,jdbcType=VARCHAR}
+		      ,MEMO          = #{MEMO 		   ,jdbcType=VARCHAR}
+		      ,SACHAL_NM     = #{SACHAL_NM 	   ,jdbcType=VARCHAR}
+		      ,UPT_USER      = #{V_USER_ID     ,jdbcType=VARCHAR}
+		      ,UPT_DATE      = SYSDATE
+		      ,REMOTE        = #{V_REMOTE      ,jdbcType=VARCHAR}
+		      ,DEL_YN		 = 'T'
+		      ,BLDG_NUM      = #{BLDG_NUM      ,jdbcType=VARCHAR}
+	     WHERE TEMPLE_CD     = #{V_TEMPLE_CD}
+	       AND USER_ID       = #{V_USER_ID}
+	       AND SORT_SEQ      = #{SORT_SEQ}
+	</update>
+	
+	<!-- 명함 기본정보 조회 -->
+	<select id="SELECT_NAME_CARD_GROUP" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT 0 AS CLASS_CD
+		      ,'전체' AS  CLASS_NAME
+		      ,'T' AS  USE_YN
+		      ,''  AS REMARK
+		  FROM DUAL
+		 UNION ALL
+		SELECT CLASS_CD
+		      ,CLASS_NAME
+		      ,USE_YN
+		      ,REMARK
+		 FROM ASP_NAME_CARD_GROUP_MGT
+		WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		  AND USER_ID   = #{V_USER_ID}
+		  AND USE_YN    = 'T'
+	</select>
+	
+	<!-- 그룹 가입정보 조회 -->
+	<select id="SELECT_NAME_CARD_INFO" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT B.CLASS_CD
+		      ,B.CLASS_NAME
+		      ,B.USE_YN
+		      ,B.REMARK
+		 FROM ASP_NAME_CARD_INFO A
+		     ,ASP_NAME_CARD_GROUP_MGT B
+		WHERE A.TEMPLE_CD = B.TEMPLE_CD
+		  AND A.USER_ID   = B.USER_ID
+		  AND A.CLASS_CD  = B.CLASS_CD
+		  AND A.TEMPLE_CD = #{V_TEMPLE_CD}
+		  AND A.USER_ID   = #{V_USER_ID}
+		  AND A.SORT_SEQ  = #{V_SORT_SEQ}
+		ORDER BY B.CLASS_CD, A.SORT_SEQ
+	</select>
+	
+	<select id="getExistAspNameCardInfo" parameterType="kr.co.o2i.util.CommonMap" resultType="Integer">
+		SELECT COUNT(*)				
+		  FROM ASP_NAME_CARD_INFO		
+		 WHERE TEMPLE_CD  = #{V_TEMPLE_CD}	
+		   AND USER_ID    = #{V_USER_ID} 				
+		   AND SORT_SEQ   = #{V_SORT_SEQ} 			
+		   AND CLASS_CD   = #{V_CLASS_CD}		
+	</select>
+	
+	<insert id="insertAspNameCardInfo" parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO ASP_NAME_CARD_INFO (  		
+			 TEMPLE_CD
+			,USER_ID
+			,CLASS_CD
+			,SORT_SEQ
+			,CRT_USER
+			,CRT_DATE
+			,UPT_DATE
+			,UPT_USER
+			,REMOTE		
+		) VALUES (  							
+			 #{V_TEMPLE_CD}
+			,#{V_USER_ID}
+			,#{V_CLASS_CD}
+			,#{V_SORT_SEQ}
+			,#{V_USER_ID}
+			,SYSDATE
+			,SYSDATE
+			,#{V_USER_ID}
+			,#{V_REMOTE}		
+		)  										
+	</insert>
+
+</mapper>

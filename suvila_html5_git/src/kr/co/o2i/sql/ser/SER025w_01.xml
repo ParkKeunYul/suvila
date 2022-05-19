@@ -1,0 +1,798 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SER025w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="SEL_YN" column="SEL_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 		
+	</resultMap>
+
+
+	<select id="SELECT_REC" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT MST.TEMPLE_CD
+			  ,MST.ACCEPT_SEQ
+			  ,MST.ACCEPT_DATE
+			  ,SUB.SEQ
+			  ,SUB.ACCEPT_GBN
+			  ,COD.NAME AS ACCEPT_NAME
+			  ,MST.PROPOSAL_BUD_NO
+			  ,CAD.NAME_KOR AS PROPOSAL_BUD_NM
+			  ,DET.PROD_CODE
+			  ,NVL(DET.PROD_NAME,COD.NAME) AS PROD_NAME
+			  ,DET.PAYMENT_PLAN_AMT
+			  ,SUM(HIS.AMOUNT) AS PAYMENT_AMT
+			  ,DET.PAYMENT_PLAN_AMT - SUM(HIS.AMOUNT) AS MISU_AMT
+			  ,MST.WHAJUBOSAL
+			  ,WHA.NAME_KOR AS WHAJUBOSAL_NM
+			  ,MST.KWONSUN_NO
+			  ,MST.PAYMENT_GBN
+			  ,(CASE WHEN MST.APPROVAL_GBN > 2
+		             THEN PAY.NAME
+		        ELSE '' END) AS PAYMENT_GBN_NM
+		      ,MST.TOT_PAYMENT_PLAN_AMT
+		      ,MST.SMS_YN
+		      ,MST.APPROVAL_GBN
+		      ,APP.NAME AS APPROVAL_GBN_NM
+		      ,MST.BUNNAB_DAY
+		      ,MST.BANK_NO
+		      ,BNK.NAME AS BANK_NM
+		      ,MST.ACCOUNT_NUMBER
+		      ,MST.VIRTUAL_BANK_NO
+		      ,BNK.NAME AS VIRTUAL_BANK_NM
+		      ,MST.VIRTUAL_ACCOUNT_NUMBER
+		      ,MST.JUMIN_NO
+		      ,MST.CLOSE_YN
+		      ,MST.CLOSE_DATE
+		      ,MST.CLOSE_USER
+		      ,MST.DEL_YN
+		      ,MST.CRT_USER
+		      ,FN_GET_DATE_FORMAT(TO_CHAR(MST.CRT_DATE,'YYYYMMDD')) AS CRT_DATE
+		      ,FN_GET_DATE_FORMAT(TO_CHAR(MST.UPT_DATE,'YYYYMMDD')) AS UPT_DATE
+		      ,MST.UPT_USER
+		      ,MST.REMOTE
+		      ,MST.MEMO
+		      ,DECODE(MST.MEMO,NULL,'','메모 - ' || MST.MEMO) || DECODE(MST.MEMO,NULL,'',chr(13)) || DECODE(DET.REMARK ,'',NULL,'비고 - ' || DET.REMARK) AS REMARK
+		      ,DET.PRAY_GBN
+		      ,DET.FDATE
+		      ,DET.JUNGAK_CD
+		      ,DET.LIGHT_NO
+		      ,DET.ACPT_FDATE
+		      ,DET.BULSA_SEQ
+		      ,DET.EVENT_CD
+		      ,DET.EVENT_DATE
+		      ,DET.WEPAECNT
+		      ,CAD.BUD_CODE
+		      ,CAD.MOBILE_TELNO1
+		      ,CAD.MOBILE_TELNO2
+		      ,CAD.MOBILE_TELNO3
+		      ,'F' AS SEL_YN
+		  FROM REC_MASTER MST
+		      ,SIN_CARD_MASTER CAD
+		      ,REC_SUB SUB
+		      ,REC_PAYMENT_HIS HIS
+		      ,ASP_CODE_MGT COD
+		      ,SIN_CARD_MASTER WHA
+		      ,ASP_CODE_MGT PAY
+		      ,ASP_CODE_MGT APP
+		      ,ASP_CODE_MGT BNK
+		      ,ASP_CODE_MGT VNK
+		      ,(
+		<if test='V_ACCEPT_GBN == 1'>
+		 		SELECT DET.TEMPLE_CD
+		 		      ,DET.ACCEPT_SEQ
+		 		      ,DET.SEQ
+		 		      ,TO_CHAR(DET.PRAY_CODE) AS PROD_CODE
+		 		      ,MGT.PRAY_NM AS PROD_NAME
+		 		      ,DET.PAYMENT_PLAN_AMT
+		 		      ,DET.REMARK
+		 		      ,DET.PRAY_GBN
+		 		      ,DET.FDATE
+		 		      ,0 AS ACCEPT_GBN
+		 		      ,0 AS JUNGAK_CD
+		 		      ,0 AS LIGHT_NO
+		 		      ,'' AS ACPT_FDATE
+		 		      ,0 AS BULSA_SEQ
+		 		      ,                      
+			           0 AS EVENT_CD,                       
+                       '' AS EVENT_DATE,                    
+                       0 AS WEPAECNT                        
+                  FROM REC_PRAY_DETAIL DET, REC_PRAY_MGT MGT 
+                 WHERE DET.TEMPLE_CD  = MGT.TEMPLE_CD       
+                   AND DET.PRAY_GBN   = MGT.PRAY_GBN        
+                   AND DET.PRAY_CODE  = MGT.PRAY_CODE       
+                   AND DET.FDATE      = MGT.FDATE           
+                   AND DET.DEL_YN     = 'T'           		 
+                   AND DET.TEMPLE_CD  = #{V_TEMPLE_CD} 
+		 </if>
+		 <if test='V_ACCEPT_GBN == 2'>
+		 	 SELECT                                      
+                       DET.TEMPLE_CD,                       
+                       DET.ACCEPT_SEQ,                      
+                       DET.SEQ,                             
+                       DET.INDEUNG_GBN AS PROD_CODE,        
+                       MGT.LIGHT_NM || ' (' || DET.INDEUNG_PERIOD || '개월)' AS PROD_NAME, 
+                       DET.PAYMENT_PLAN_AMT,                
+                       DET.REMARK,                          
+			           '' AS PRAY_GBN,                      
+                       '' AS FDATE,                         
+			           DET.ACCEPT_GBN,                      
+                       DET.JUNGAK_CD,                       
+                       DET.LIGHT_NO,                        
+			           '' AS ACPT_FDATE,                    
+                       0 AS BULSA_SEQ,                      
+			           0 AS EVENT_CD,                       
+                       '' AS EVENT_DATE,                    
+                       0 AS WEPAECNT                        
+                  FROM REC_INDEUNG_DETAIL DET, REC_DEUNG_CLASS_MGT MGT  
+                 WHERE DET.TEMPLE_CD  = MGT.TEMPLE_CD       
+                   AND DET.INDEUNG_GBN= MGT.LIGHT_CODE      
+                   AND DET.ACCEPT_GBN = MGT.ACCEPT_GBN      
+                   AND DET.DEL_YN     = 'T'           		 
+                   AND DET.TEMPLE_CD  = #{V_TEMPLE_CD} 
+		 </if>
+		 <if test='V_ACCEPT_GBN == 3'>
+		 	 SELECT DET.TEMPLE_CD
+		 	       ,DET.ACCEPT_SEQ
+		 	       ,DET.SEQ
+		 	       ,TO_CHAR(DET.BULSA_CD) AS PROD_CODE
+		 	       ,MGT.BULSA_NM || ' - ' || MGT.BULSA_DETAIL || ' (' || FN_GET_DATE_FORMAT(MGT.ACPT_FDATE) || ')' AS PROD_NAME
+		 	       ,DET.PAYMENT_PLAN_AMT
+		 	       ,DET.REMARK
+		 	       ,'' AS PRAY_GBN
+		 	       ,'' AS FDATE
+		 	       ,0 AS ACCEPT_GBN
+		 	       ,0 AS JUNGAK_CD
+		 	       ,0 AS LIGHT_NO
+		 	       ,DET.ACPT_FDATE
+		 	       ,DET.BULSA_SEQ
+		 	       ,0 AS EVENT_CD
+		 	       ,'' AS EVENT_DATE
+		 	       ,0 AS WEPAECNT                        
+               FROM REC_BULSA_DETAIL DET
+                   ,(SELECT MGT.TEMPLE_CD
+                           ,MGT.BULSA_CD
+                           ,DGT.BULSA_SEQ
+                           ,MGT.ACPT_FDATE
+                           ,SGT.BULSA_NM
+                           ,DGT.BULSA_DETAIL             
+                      FROM REC_BULSA_MGT        MGT
+                          ,REC_BULSA_MGT        SGT
+                          ,REC_BULSA_DETAIL_MGT DGT 
+                     WHERE MGT.TEMPLE_CD  = SGT.TEMPLE_CD  
+                       AND MGT.BULSA_CD   = SGT.BULSA_CD   
+                       AND SGT.ACPT_FDATE = '-1'           
+                       AND MGT.TEMPLE_CD  = DGT.TEMPLE_CD  
+                       AND MGT.BULSA_CD   = DGT.BULSA_CD    
+                       AND MGT.TEMPLE_CD  = #{V_TEMPLE_CD}  ) MGT 
+                 WHERE DET.TEMPLE_CD  = MGT.TEMPLE_CD       
+                   AND DET.BULSA_CD   = MGT.BULSA_CD        
+                   AND DET.ACPT_FDATE = MGT.ACPT_FDATE      
+                   AND DET.BULSA_SEQ  = MGT.BULSA_SEQ       
+                   AND DET.DEL_YN     = 'T'           		 
+                   AND DET.TEMPLE_CD  = #{V_TEMPLE_CD} 
+		 </if>
+		 <if test='V_ACCEPT_GBN == 4'>
+		 	 SELECT DET.TEMPLE_CD
+		 	       ,DET.ACCEPT_SEQ
+		 	       ,DET.SEQ
+		 	       ,DET.YEONDEUNG_GBN AS PROD_CODE
+		 	       ,MGT.LIGHT_NM AS PROD_NAME
+		 	       ,DET.PAYMENT_PLAN_AMT
+		 	       ,DET.REMARK
+		 	       ,'' AS PRAY_GBN
+		 	       ,'' AS FDATE
+		 	       ,DET.ACCEPT_GBN
+		 	       ,DET.JUNGAK_CD
+		 	       ,DET.LIGHT_NO
+		 	       ,'' AS ACPT_FDATE
+		 	       ,0 AS BULSA_SEQ
+		 	       ,0 AS EVENT_CD
+		 	       ,'' AS EVENT_DATE
+		 	       ,0 AS WEPAECNT                      	
+              FROM REC_YEONDEUNG_DETAIL DET
+                  ,REC_DEUNG_CLASS_MGT  MGT 
+             WHERE DET.TEMPLE_CD     = MGT.TEMPLE_CD       
+               AND DET.YEONDEUNG_GBN = MGT.LIGHT_CODE    
+               AND DET.ACCEPT_GBN    = MGT.ACCEPT_GBN      
+               AND DET.DEL_YN        = 'T'           		 
+               AND DET.TEMPLE_CD     = #{V_TEMPLE_CD} 
+		 </if>
+		 <if test='V_ACCEPT_GBN == 5'>
+		 	 SELECT DET.TEMPLE_CD
+		 	       ,DET.ACCEPT_SEQ
+		 	       ,DET.SEQ
+		 	       ,'' AS PROD_CODE
+		 	       ,'' AS PROD_NAME
+		 	       ,DET.PAYMENT_PLAN_AMT
+		 	       ,DET.REMARK
+		 	       ,'' AS PRAY_GBN
+		 	       ,'' AS FDATE
+		 	       ,0 AS ACCEPT_GBN
+		 	       ,0 AS JUNGAK_CD
+		 	       ,0 AS LIGHT_NO
+		 	       ,'' AS ACPT_FDATE
+		 	       ,0 AS BULSA_SEQ
+		 	       ,0 AS EVENT_CD
+		 	       ,'' AS EVENT_DATE
+		 	       ,0 AS WEPAECNT                        
+               FROM REC_FORTY_NINE_DETAIL DET            
+              WHERE DET.TEMPLE_CD  = #{V_TEMPLE_CD}
+                AND DET.DEL_YN     = 'T'           	 
+		 </if>
+		 <if test='V_ACCEPT_GBN == 6'>
+		 	 SELECT DET.TEMPLE_CD
+		 	       ,DET.ACCEPT_SEQ
+		 	       ,DET.SEQ
+		 	       ,'' AS PROD_CODE
+		 	       ,'' AS PROD_NAME
+		 	       ,DET.PAYMENT_PLAN_AMT
+		 	       ,DET.REMARK
+		 	       ,'' AS PRAY_GBN
+		 	       ,'' AS FDATE
+		 	       ,0 AS ACCEPT_GBN
+		 	       ,0 AS JUNGAK_CD
+		 	       ,0 AS LIGHT_NO
+		 	       ,'' AS ACPT_FDATE
+		 	       ,0 AS BULSA_SEQ
+		 	       ,0 AS EVENT_CD
+		 	       ,'' AS EVENT_DATE
+		 	       ,0 AS WEPAECNT                        
+              FROM REC_GIJE_DETAIL DET                  
+             WHERE DET.TEMPLE_CD  = #{V_TEMPLE_CD}
+               AND DET.DEL_YN     = 'T'           		  
+		 </if>
+		 <if test='V_ACCEPT_GBN == 7'>
+		 	 SELECT DET.TEMPLE_CD
+		 	       ,DET.ACCEPT_SEQ
+		 	       ,DET.SEQ
+		 	       ,'' AS PROD_CODE
+		 	       ,'' AS PROD_NAME
+		 	       ,DET.PAYMENT_PLAN_AMT
+		 	       ,DET.REMARK
+		 	       ,'' AS PRAY_GBN
+		 	       ,'' AS FDATE
+		 	       ,0 AS ACCEPT_GBN
+		 	       ,0 AS JUNGAK_CD
+		 	       ,0 AS LIGHT_NO
+		 	       ,'' AS ACPT_FDATE
+		 	       ,0 AS BULSA_SEQ
+		 	       ,0 AS EVENT_CD
+		 	       ,'' AS EVENT_DATE
+		 	       ,0 AS WEPAECNT                        
+               FROM REC_CHONDOJE_DETAIL DET              
+              WHERE DET.TEMPLE_CD  = #{V_TEMPLE_CD}
+                AND DET.DEL_YN     = 'T'           		 
+		 </if>
+		 <if test='V_ACCEPT_GBN == 8'>
+		 	  SELECT DET.TEMPLE_CD
+		 	        ,DET.ACCEPT_SEQ
+		 	        ,DET.SEQ
+		 	        ,TO_CHAR(DET.EVENT_CD) AS PROD_CODE
+		 	        ,MGT.EVENT_NAME || ' (' || FN_GET_DATE_FORMAT(DET.EVENT_DATE) || ')' AS PROD_NAME
+		 	        ,DET.PAYMENT_PLAN_AMT
+		 	        ,DET.MEMO AS REMARK
+		 	        ,'' AS PRAY_GBN
+		 	        ,'' AS FDATE
+		 	        ,0 AS ACCEPT_GBN
+		 	        ,0 AS JUNGAK_CD
+		 	        ,0 AS LIGHT_NO
+		 	        ,'' AS ACPT_FDATE
+		 	        ,0 AS BULSA_SEQ
+		 	        ,DET.EVENT_CD
+		 	        ,DET.EVENT_DATE
+		 	        ,DET.WEPAECNT                          
+                FROM REC_WEPAE_CHONHON_DETAIL DET
+                    ,REC_WEPAE_CHONHON_MGT    MGT 
+               WHERE DET.TEMPLE_CD  = MGT.TEMPLE_CD       
+                 AND DET.EVENT_CD   = MGT.EVENT_CD        
+                 AND DET.DEL_YN     = 'T'           		 
+                 AND DET.TEMPLE_CD  = #{V_TEMPLE_CD} 
+		 </if>
+		 <if test='V_ACCEPT_GBN == 9'>
+		 	 SELECT DET.TEMPLE_CD
+		 	       ,DET.ACCEPT_SEQ
+		 	       ,DET.SEQ
+		 	       ,TO_CHAR(DET.SUPPORT_CODE) AS PROD_CODE
+		 	       ,MGT.SUPPORT_NM AS PROD_NAME
+		 	       ,DET.PAYMENT_AMT AS PAYMENT_PLAN_AMT
+		 	       ,DET.REMARK
+		 	       ,'' AS PRAY_GBN
+		 	       ,'' AS FDATE
+		 	       ,0  AS ACCEPT_GBN
+		 	       ,0  AS JUNGAK_CD
+		 	       ,0  AS LIGHT_NO
+		 	       ,'' AS ACPT_FDATE
+		 	       ,0  AS BULSA_SEQ
+		 	       ,0  AS EVENT_CD
+		 	       ,'' AS EVENT_DATE
+		 	       ,0  AS WEPAECNT                        
+               FROM REC_SUPPORT_DETAIL DET
+                   ,REC_SUPPORT_MGT    MGT 
+                WHERE DET.TEMPLE_CD    = MGT.TEMPLE_CD      
+                  AND DET.SUPPORT_CODE = MGT.SUPPORT_CODE   
+                   AND DET.DEL_YN      = 'T'           		 
+                  AND DET.TEMPLE_CD    = #{V_TEMPLE_CD} 
+		 </if>
+		 <if test='V_ACCEPT_GBN == 11'>
+		 	  SELECT DET.TEMPLE_CD
+		 	        ,DET.ACCEPT_SEQ
+		 	        ,DET.SEQ
+		 	        ,TO_CHAR(DET.TEMPLE_STAY_CD) AS PROD_CODE
+		 	        ,MGT.TEMPLE_STAY_NM AS PROD_NAME
+		 	        ,DET.PAYMENT_PLAN_AMT AS PAYMENT_PLAN_AMT
+		 	        ,DET.REMARK
+		 	        ,'' AS PRAY_GBN
+		 	        ,DET.FDATE
+		 	        ,0  AS ACCEPT_GBN
+		 	        ,0  AS JUNGAK_CD
+		 	        ,0  AS LIGHT_NO
+		 	        ,'' AS ACPT_FDATE
+		 	        ,0  AS BULSA_SEQ
+		 	        ,0  AS EVENT_CD
+		 	        ,'' AS EVENT_DATE
+		 	        ,0  AS WEPAECNT                        
+               FROM REC_TEMPLE_STAY_DETAIL DET
+                   ,REC_TEMPLE_STAY_MGT    MGT 
+              WHERE DET.TEMPLE_CD       = MGT.TEMPLE_CD      
+                AND DET.TEMPLE_STAY_CD  = MGT.TEMPLE_STAY_CD 
+                AND DET.DEL_YN          = 'T'           		 
+                AND DET.TEMPLE_CD       = #{V_TEMPLE_CD} 
+		 </if>
+		 <if test='V_ACCEPT_GBN == 12'>
+		 	 SELECT DET.TEMPLE_CD
+		 	       ,DET.ACCEPT_SEQ
+		 	       ,DET.SEQ
+		 	       ,DET.WONBUL_GBN AS PROD_CODE
+		 	       ,MGT.LIGHT_NM AS PROD_NAME
+		 	       ,DET.PAYMENT_PLAN_AMT
+		 	       ,DET.REMARK
+		 	       ,'' AS PRAY_GBN
+		 	       ,'' AS FDATE
+		 	       ,DET.ACCEPT_GBN
+		 	       ,DET.JUNGAK_CD
+		 	       ,DET.LIGHT_NO
+		 	       ,'' AS ACPT_FDATE
+		 	       ,0 AS BULSA_SEQ
+		 	       ,0 AS EVENT_CD
+		 	       ,'' AS EVENT_DATE
+		 	       ,0 AS WEPAECNT                      	
+               FROM REC_WONBUL_DETAIL DET
+                   ,REC_DEUNG_CLASS_MGT MGT 
+              WHERE DET.TEMPLE_CD  = MGT.TEMPLE_CD    
+                AND DET.WONBUL_GBN= MGT.LIGHT_CODE    
+                AND DET.ACCEPT_GBN = MGT.ACCEPT_GBN   
+                AND DET.DEL_YN     = 'T'           		 
+                AND DET.TEMPLE_CD  = #{V_TEMPLE_CD} 
+		 </if>
+		 <if test='V_ACCEPT_GBN == 13'>
+		 	 SELECT DET.TEMPLE_CD
+		 	       ,DET.ACCEPT_SEQ
+		 	       ,DET.SEQ
+		 	       ,TO_CHAR(DET.PRAY_CODE) AS PROD_CODE
+		 	       ,MGT.PRAY_NM AS PROD_NAME
+		 	       ,DET.PAYMENT_PLAN_AMT AS PAYMENT_PLAN_AMT
+		 	       ,DET.REMARK
+		 	       ,'' AS PRAY_GBN
+		 	       ,'' AS FDATE
+		 	       ,0  AS ACCEPT_GBN
+		 	       ,0  AS JUNGAK_CD
+		 	       ,0  AS LIGHT_NO
+		 	       ,'' AS ACPT_FDATE
+		 	       ,0  AS BULSA_SEQ
+		 	       ,0  AS EVENT_CD
+		 	       ,'' AS EVENT_DATE
+		 	       ,0  AS WEPAECNT                        
+              FROM REC_ALWAYS_PRAY_DETAIL DET
+                  ,REC_ALWAYS_PRAY_MGT    MGT 
+             WHERE DET.TEMPLE_CD    = MGT.TEMPLE_CD      
+               AND DET.PRAY_CODE    = MGT.PRAY_CODE         
+               AND DET.DEL_YN       = 'T'           		 
+               AND DET.TEMPLE_CD    = #{V_TEMPLE_CD} 
+		 </if> 
+		 <if test='V_ACCEPT_GBN == 14'>
+		 </if>
+		 
+		 <if test='V_ACCEPT_GBN == null  or V_ACCEPT_GBN == "" '>
+		 	SELECT DET.TEMPLE_CD
+		 	      ,DET.ACCEPT_SEQ
+		 	      ,DET.SEQ
+		 	      ,TO_CHAR(DET.PRAY_CODE) AS PROD_CODE
+		 	      ,MGT.PRAY_NM AS PROD_NAME
+		 	      ,DET.PAYMENT_PLAN_AMT
+		 	      ,DET.REMARK
+		 	      ,DET.PRAY_GBN
+		 	      ,DET.FDATE
+		 	      ,0 AS ACCEPT_GBN
+		 	      ,0 AS JUNGAK_CD
+		 	      ,0 AS LIGHT_NO
+		 	      ,'' AS ACPT_FDATE
+		 	      ,0 AS BULSA_SEQ
+		 	      ,0 AS EVENT_CD
+		 	      ,'' AS EVENT_DATE
+		 	      ,0 AS WEPAECNT                        
+              FROM REC_PRAY_DETAIL DET
+                  ,REC_PRAY_MGT    MGT 
+             WHERE DET.TEMPLE_CD  = MGT.TEMPLE_CD       
+               AND DET.PRAY_GBN   = MGT.PRAY_GBN        
+               AND DET.PRAY_CODE  = MGT.PRAY_CODE       
+               AND DET.FDATE      = MGT.FDATE           
+               AND DET.DEL_YN     = 'T'           		 
+               AND DET.TEMPLE_CD  = #{V_TEMPLE_CD}
+             UNION ALL                                    
+            SELECT DET.TEMPLE_CD
+                  ,DET.ACCEPT_SEQ
+                  ,DET.SEQ
+                  ,DET.INDEUNG_GBN AS PROD_CODE
+                  ,MGT.LIGHT_NM || ' (' || DET.INDEUNG_PERIOD || '개월)' AS PROD_NAME
+                  ,DET.PAYMENT_PLAN_AMT
+                  ,DET.REMARK
+                  ,'' AS PRAY_GBN
+                  ,'' AS FDATE
+                  ,DET.ACCEPT_GBN
+                  ,DET.JUNGAK_CD
+                  ,DET.LIGHT_NO
+                  ,'' AS ACPT_FDATE
+                  ,0 AS BULSA_SEQ
+                  ,0 AS EVENT_CD
+                  ,'' AS EVENT_DATE
+                  ,0 AS WEPAECNT                        
+              FROM REC_INDEUNG_DETAIL DET
+                  ,REC_DEUNG_CLASS_MGT MGT 
+             WHERE DET.TEMPLE_CD  = MGT.TEMPLE_CD       
+               AND DET.INDEUNG_GBN= MGT.LIGHT_CODE      
+               AND DET.ACCEPT_GBN = MGT.ACCEPT_GBN      
+               AND DET.DEL_YN     = 'T'           		 
+               AND DET.TEMPLE_CD  = #{V_TEMPLE_CD}
+             UNION ALL                                    
+            SELECT DET.TEMPLE_CD
+                  ,DET.ACCEPT_SEQ
+                  ,DET.SEQ
+                  ,DET.YEONDEUNG_GBN AS PROD_CODE
+                  ,MGT.LIGHT_NM AS PROD_NAME
+                  ,DET.PAYMENT_PLAN_AMT
+                  ,DET.REMARK
+                  ,'' AS PRAY_GBN
+                  ,'' AS FDATE
+                  ,DET.ACCEPT_GBN
+                  ,DET.JUNGAK_CD
+                  , DET.LIGHT_NO
+                  ,'' AS ACPT_FDATE
+                  ,0 AS BULSA_SEQ
+                  ,0 AS EVENT_CD
+                  ,'' AS EVENT_DATE
+                  ,0 AS WEPAECNT                      	
+              FROM REC_YEONDEUNG_DETAIL DET
+                  ,REC_DEUNG_CLASS_MGT  MGT 
+             WHERE DET.TEMPLE_CD     = MGT.TEMPLE_CD       
+               AND DET.YEONDEUNG_GBN = MGT.LIGHT_CODE    
+               AND DET.ACCEPT_GBN = MGT.ACCEPT_GBN      
+               AND DET.DEL_YN     = 'T'           		 
+               AND DET.TEMPLE_CD  = #{V_TEMPLE_CD}
+             UNION ALL                                    
+            SELECT DET.TEMPLE_CD
+                  ,DET.ACCEPT_SEQ
+                  ,DET.SEQ
+                  ,TO_CHAR(DET.BULSA_CD) AS PROD_CODE
+                  ,MGT.BULSA_NM || ' - ' || MGT.BULSA_DETAIL || ' (' || FN_GET_DATE_FORMAT(MGT.ACPT_FDATE) ||')'  AS PROD_NAME
+                  ,DET.PAYMENT_PLAN_AMT
+                  ,DET.REMARK
+                  ,'' AS PRAY_GBN
+                  ,'' AS FDATE
+                  ,0 AS ACCEPT_GBN
+                  ,0 AS JUNGAK_CD
+                  ,0 AS LIGHT_NO
+                  ,DET.ACPT_FDATE
+                  ,DET.BULSA_SEQ
+                  ,0 AS EVENT_CD
+                  ,'' AS EVENT_DATE
+                  ,0 AS WEPAECNT                        
+              FROM REC_BULSA_DETAIL DET
+                  ,(SELECT MGT.TEMPLE_CD
+                          ,MGT.BULSA_CD
+                          ,DGT.BULSA_SEQ
+                          ,MGT.ACPT_FDATE
+                          ,SGT.BULSA_NM
+                          ,DGT.BULSA_DETAIL             
+                      FROM REC_BULSA_MGT        MGT
+                          ,REC_BULSA_MGT        SGT
+                          ,REC_BULSA_DETAIL_MGT DGT 
+                     WHERE MGT.TEMPLE_CD  = SGT.TEMPLE_CD  
+                       AND MGT.BULSA_CD   = SGT.BULSA_CD   
+                       AND SGT.ACPT_FDATE = '-1'           
+                       AND MGT.TEMPLE_CD  = DGT.TEMPLE_CD  
+                       AND MGT.BULSA_CD   = DGT.BULSA_CD   
+                       AND MGT.TEMPLE_CD  =  #{V_TEMPLE_CD} 
+                     ) MGT 
+              WHERE DET.TEMPLE_CD  = MGT.TEMPLE_CD       
+                AND DET.BULSA_CD   = MGT.BULSA_CD        
+                AND DET.ACPT_FDATE = MGT.ACPT_FDATE      
+                AND DET.BULSA_SEQ  = MGT.BULSA_SEQ       
+                AND DET.DEL_YN     = 'T'           		 
+                AND DET.TEMPLE_CD  = #{V_TEMPLE_CD}
+              UNION ALL                                    
+             SELECT DET.TEMPLE_CD
+                   ,DET.ACCEPT_SEQ
+                   ,DET.SEQ
+                   ,'' AS PROD_CODE
+                   ,'' AS PROD_NAME
+                   ,DET.PAYMENT_PLAN_AMT
+                   ,DET.REMARK
+                   ,'' AS PRAY_GBN
+                   ,'' AS FDATE
+                   ,0 AS ACCEPT_GBN
+                   ,0 AS JUNGAK_CD
+                   ,0 AS LIGHT_NO
+                   ,'' AS ACPT_FDATE
+                   ,0 AS BULSA_SEQ
+                   ,0 AS EVENT_CD
+                   ,'' AS EVENT_DATE
+                   ,0 AS WEPAECNT                        
+              FROM REC_FORTY_NINE_DETAIL DET            
+             WHERE DET.TEMPLE_CD  = #{V_TEMPLE_CD}
+               AND DET.DEL_YN     = 'T'           		 
+             UNION ALL                                    
+            SELECT DET.TEMPLE_CD
+                  ,DET.ACCEPT_SEQ
+                  ,DET.SEQ
+                  ,'' AS PROD_CODE
+                  ,'' AS PROD_NAME
+                  , DET.PAYMENT_PLAN_AMT
+                  ,DET.REMARK
+                  ,'' AS PRAY_GBN
+                  ,'' AS FDATE
+                  ,0 AS ACCEPT_GBN
+                  ,0 AS JUNGAK_CD
+                  ,0 AS LIGHT_NO
+                  ,'' AS ACPT_FDATE
+                  ,0 AS BULSA_SEQ
+                  ,0 AS EVENT_CD
+                  ,'' AS EVENT_DATE
+                  ,0 AS WEPAECNT                        
+             FROM REC_GIJE_DETAIL DET                  
+            WHERE DET.TEMPLE_CD  = #{V_TEMPLE_CD}
+              AND DET.DEL_YN     = 'T'           		 
+            UNION ALL                                    
+           SELECT DET.TEMPLE_CD
+                 ,DET.ACCEPT_SEQ
+                 ,DET.SEQ
+                 ,'' AS PROD_CODE
+                 ,'' AS PROD_NAME
+                 ,DET.PAYMENT_PLAN_AMT
+                 ,DET.REMARK
+                 ,'' AS PRAY_GBN
+                 ,'' AS FDATE
+                 ,0 AS ACCEPT_GBN
+                 ,0 AS JUNGAK_CD
+                 ,0 AS LIGHT_NO
+                 ,'' AS ACPT_FDATE
+                 ,0 AS BULSA_SEQ
+                 ,0 AS EVENT_CD
+                 ,'' AS EVENT_DATE
+                 ,0 AS WEPAECNT                        
+             FROM REC_CHONDOJE_DETAIL DET              
+            WHERE DET.TEMPLE_CD  = #{V_TEMPLE_CD}
+              AND DET.DEL_YN     = 'T'           		 
+            UNION ALL                                    
+           SELECT DET.TEMPLE_CD
+                 ,DET.ACCEPT_SEQ
+                 ,DET.SEQ
+                 ,TO_CHAR(DET.EVENT_CD) AS PROD_CODE
+                 ,MGT.EVENT_NAME || ' (' || FN_GET_DATE_FORMAT(DET.EVENT_DATE) || ')' AS PROD_NAME
+                 ,DET.PAYMENT_PLAN_AMT
+                 ,DET.MEMO AS REMARK
+                 ,'' AS PRAY_GBN
+                 ,'' AS FDATE
+                 ,0 AS ACCEPT_GBN
+                 ,0 AS JUNGAK_CD
+                 ,0 AS LIGHT_NO
+                 ,'' AS ACPT_FDATE
+                 ,0 AS BULSA_SEQ
+                 ,DET.EVENT_CD
+                 ,DET.EVENT_DATE
+                 ,DET.WEPAECNT                         
+             FROM REC_WEPAE_CHONHON_DETAIL DET
+                 ,REC_WEPAE_CHONHON_MGT MGT 
+            WHERE DET.TEMPLE_CD  = MGT.TEMPLE_CD       
+              AND DET.EVENT_CD   = MGT.EVENT_CD        
+              AND DET.DEL_YN     = 'T'           		 
+              AND DET.TEMPLE_CD  = #{V_TEMPLE_CD}
+            UNION ALL                                    
+           SELECT DET.TEMPLE_CD
+                 ,DET.ACCEPT_SEQ
+                 ,DET.SEQ
+                 ,TO_CHAR(DET.SUPPORT_CODE) AS PROD_CODE
+                 ,MGT.SUPPORT_NM AS PROD_NAME
+                 ,DET.PAYMENT_AMT AS PAYMENT_PLAN_AMT
+                 ,DET.REMARK
+                 ,'' AS PRAY_GBN
+                 ,'' AS FDATE
+                 ,0  AS ACCEPT_GBN
+                 ,0  AS JUNGAK_CD
+                 ,0  AS LIGHT_NO
+                 ,'' AS ACPT_FDATE
+                 ,0  AS BULSA_SEQ
+                 ,0  AS EVENT_CD
+                 ,'' AS EVENT_DATE
+                 ,0  AS WEPAECNT                        
+             FROM REC_SUPPORT_DETAIL DET
+                 ,REC_SUPPORT_MGT MGT  
+            WHERE DET.TEMPLE_CD    = MGT.TEMPLE_CD      
+              AND DET.SUPPORT_CODE = MGT.SUPPORT_CODE   
+              AND DET.DEL_YN       = 'T'           		 
+              AND DET.TEMPLE_CD    = #{V_TEMPLE_CD} 
+            UNION ALL                                    
+           SELECT DET.TEMPLE_CD
+                 ,DET.ACCEPT_SEQ
+                 ,DET.SEQ
+                 ,TO_CHAR(DET.TEMPLE_STAY_CD) AS PROD_CODE
+                 ,MGT.TEMPLE_STAY_NM AS PROD_NAME
+                 ,DET.PAYMENT_PLAN_AMT AS PAYMENT_PLAN_AMT
+                 ,DET.REMARK
+                 ,'' AS PRAY_GBN
+                 ,DET.FDATE
+                 ,0  AS ACCEPT_GBN
+                 ,0  AS JUNGAK_CD
+                 ,0  AS LIGHT_NO
+                 ,'' AS ACPT_FDATE
+                 ,0  AS BULSA_SEQ
+                 ,0  AS EVENT_CD
+                 ,'' AS EVENT_DATE
+                 ,0  AS WEPAECNT                        
+            FROM REC_TEMPLE_STAY_DETAIL DET
+                ,REC_TEMPLE_STAY_MGT MGT 
+           WHERE DET.TEMPLE_CD      = MGT.TEMPLE_CD      
+             AND DET.TEMPLE_STAY_CD = MGT.TEMPLE_STAY_CD 
+             AND DET.DEL_YN         = 'T'           		 
+             AND DET.TEMPLE_CD      = #{V_TEMPLE_CD} 
+           UNION ALL                                    
+          SELECT DET.TEMPLE_CD
+                ,DET.ACCEPT_SEQ
+                ,DET.SEQ
+                ,DET.WONBUL_GBN AS PROD_CODE
+                ,MGT.LIGHT_NM AS PROD_NAME
+                ,DET.PAYMENT_PLAN_AMT
+                ,DET.REMARK
+                ,'' AS PRAY_GBN
+                ,'' AS FDATE
+                ,DET.ACCEPT_GBN
+                ,DET.JUNGAK_CD
+                ,DET.LIGHT_NO
+                ,'' AS ACPT_FDATE
+                ,0 AS BULSA_SEQ
+                ,0 AS EVENT_CD
+                ,'' AS EVENT_DATE
+                ,0 AS WEPAECNT                      	
+            FROM REC_WONBUL_DETAIL   DET
+                ,REC_DEUNG_CLASS_MGT MGT 
+           WHERE DET.TEMPLE_CD   = MGT.TEMPLE_CD    
+             AND DET.WONBUL_GBN  = MGT.LIGHT_CODE    
+             AND DET.ACCEPT_GBN  = MGT.ACCEPT_GBN   
+             AND DET.DEL_YN     = 'T'           		 
+             AND DET.TEMPLE_CD  = #{V_TEMPLE_CD} 
+           UNION ALL                                    
+          SELECT DET.TEMPLE_CD
+                ,DET.ACCEPT_SEQ
+                ,DET.SEQ
+                ,TO_CHAR(DET.PRAY_CODE) AS PROD_CODE
+                ,MGT.PRAY_NM AS PROD_NAME
+                ,DET.PAYMENT_PLAN_AMT AS PAYMENT_PLAN_AMT
+                ,DET.REMARK
+                ,'' AS PRAY_GBN
+                ,'' AS FDATE
+                ,0  AS ACCEPT_GBN
+                ,0  AS JUNGAK_CD
+                ,0  AS LIGHT_NO
+                ,'' AS ACPT_FDATE
+                ,0  AS BULSA_SEQ
+                ,0  AS EVENT_CD
+                ,'' AS EVENT_DATE
+                ,0  AS WEPAECNT                        
+           FROM REC_ALWAYS_PRAY_DETAIL DET
+               ,REC_ALWAYS_PRAY_MGT MGT 
+          WHERE DET.TEMPLE_CD    = MGT.TEMPLE_CD      
+            AND DET.PRAY_CODE    = MGT.PRAY_CODE         
+            AND DET.DEL_YN       = 'T'           		 
+            AND DET.TEMPLE_CD    = #{V_TEMPLE_CD} 
+		 </if>
+		 		) DET
+		 WHERE MST.TEMPLE_CD       = SUB.TEMPLE_CD
+		   AND MST.ACCEPT_SEQ      = SUB.ACCEPT_SEQ
+		   AND MST.TEMPLE_CD       = CAD.TEMPLE_CD(+)
+		   AND MST.PROPOSAL_BUD_NO = CAD.BUD_NO(+)
+		   AND MST.TEMPLE_CD       = WHA.TEMPLE_CD(+)
+		   AND MST.WHAJUBOSAL      = WHA.BUD_NO(+)
+		   AND SUB.TEMPLE_CD       = HIS.TEMPLE_CD
+		   AND SUB.ACCEPT_SEQ      = HIS.ACCEPT_SEQ
+		   AND SUB.SEQ             = HIS.SEQ
+		   AND SUB.TEMPLE_CD       = DET.TEMPLE_CD
+		   AND SUB.ACCEPT_SEQ      = DET.ACCEPT_SEQ
+		   AND SUB.SEQ             = DET.SEQ
+		   AND SUB.DEL_YN          = 'T'
+		   AND COD.GROUP_CD(+)     = 'REC'
+		   AND SUB.ACCEPT_GBN      = COD.CODE(+)
+		   AND PAY.GROUP_CD(+)     = 'PAYGBN'
+		   AND MST.PAYMENT_GBN     = PAY.CODE(+)
+		   AND APP.GROUP_CD(+)     = 'APPROV'
+		   AND MST.APPROVAL_GBN    = APP.CODE(+)
+		   AND BNK.GROUP_CD(+)     = 'BANK'
+		   AND MST.BANK_NO         = BNK.CODE(+)
+		   AND VNK.GROUP_CD(+)     = 'BANK'
+		   AND MST.VIRTUAL_BANK_NO = VNK.CODE(+)
+		   AND MST.TEMPLE_CD       = #{V_TEMPLE_CD}
+		   <![CDATA[
+		   AND MST.ACCEPT_DATE 	  >= #{V_ACCEPT_SDATE}
+		   AND MST.ACCEPT_DATE    <= #{V_ACCEPT_EDATE}
+		   ]]>
+		GROUP BY MST.TEMPLE_CD       , MST.ACCEPT_SEQ             , MST.ACCEPT_DATE   , SUB.SEQ         , SUB.ACCEPT_GBN   , COD.NAME,
+		         MST.PROPOSAL_BUD_NO , CAD.NAME_KOR               , PROD_CODE         , PROD_NAME       , PAYMENT_PLAN_AMT ,
+		         MST.WHAJUBOSAL      , WHA.NAME_KOR               , MST.KWONSUN_NO    , MST.PAYMENT_GBN , PAY.NAME         , MST.TOT_PAYMENT_PLAN_AMT,
+		         MST.SMS_YN          , MST.APPROVAL_GBN           , APP.NAME          , MST.BUNNAB_DAY  , MST.BANK_NO      , BNK.NAME, MST.ACCOUNT_NUMBER, 
+		         MST.VIRTUAL_BANK_NO , MST.VIRTUAL_ACCOUNT_NUMBER , VNK.NAME          , MST.JUMIN_NO    , MST.CLOSE_YN     ,
+		         MST.CLOSE_DATE      , MST.CLOSE_USER             , MST.DEL_YN        , MST.CRT_USER    , MST.CRT_DATE     , MST.UPT_DATE, 
+		         MST.UPT_USER        , MST.REMOTE                 , MST.MEMO          , DET.REMARK      , DET.PRAY_GBN     , DET.FDATE, DET.JUNGAK_CD, DET.LIGHT_NO,
+		         DET.ACPT_FDATE      , DET.BULSA_SEQ              , DET.EVENT_CD      , DET.EVENT_DATE  , DET.WEPAECNT     , CAD.BUD_CODE, 
+		         CAD.MOBILE_TELNO1   , CAD.MOBILE_TELNO2          , CAD.MOBILE_TELNO3
+		ORDER BY MST.ACCEPT_SEQ DESC, SUB.SEQ, SUB.ACCEPT_GBN
+	</select>
+	
+	<update id="UPDAET_CANCEL" parameterType="kr.co.o2i.util.CommonMap" >
+		UPDATE REC_SUB
+		   SET DEL_YN = 'F'
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		   AND ACCEPT_SEQ = #{ACCEPT_SEQ}
+		   AND SEQ        = #{SEQ}
+		   AND ACCEPT_GBN = #{ACCEPT_GBN}
+	</update>
+	
+	<update id="UPDAET_CANCEL_DETAIL" parameterType="kr.co.o2i.util.CommonMap" >
+		 <if test='ACCEPT_GBN == 1'>
+		 	UPDATE REC_PRAY_DETAIL
+		 </if>
+		 <if test='ACCEPT_GBN == 2'>
+		 	UPDATE REC_INDEUNG_DETAIL
+		 </if>
+		 <if test='ACCEPT_GBN == 3'>
+		 	UPDATE REC_BULSA_DETAIL
+		 </if>
+		 <if test='ACCEPT_GBN == 4'>
+		 	UPDATE REC_YEONDEUNG_DETAIL
+		 </if>
+		 <if test='ACCEPT_GBN == 5'>
+		 	UPDATE REC_FORTY_NINE_DETAIL
+		 </if>
+		 <if test='ACCEPT_GBN == 6'>
+		 	UPDATE REC_GIJE_DETAIL
+		 </if>
+		 <if test='ACCEPT_GBN == 7'>
+		 	UPDATE REC_CHONDOJE_DETAIL
+		 </if>
+		 <if test='ACCEPT_GBN == 8'>
+		 	UPDATE REC_WEPAE_CHONHON_DETAIL
+		 </if>
+		 <if test='ACCEPT_GBN == 9'>
+		 	UPDATE REC_SUPPORT_DETAIL
+		 </if>
+		 <if test='ACCEPT_GBN == 11'>
+		 	UPDATE REC_TEMPLE_STAY_DETAIL
+		 </if>
+		 <if test='ACCEPT_GBN == 12'>
+		 	UPDATE REC_WONBUL_DETAIL
+		 </if>
+		 <if test='ACCEPT_GBN == 13'>
+		 	UPDATE REC_ALWAYS_PRAY_DETAIL
+		 </if> 
+		 <if test='ACCEPT_GBN == 14'>
+		 	UPDATE REC_WEPAE_CHONHON_DETAIL
+		 </if>
+			SET DEL_YN    = 'F'
+			   ,UPT_USER  = #{UPT_USER}
+			   ,UPT_DATE  = SYSDATE
+			   ,REMOTE    = #{REMOTE}
+	     WHERE TEMPLE_CD  = #{TEMPLE_CD}
+	   	   AND ACCEPT_SEQ = #{ACCEPT_SEQ}
+	   	   AND SEQ        = #{SEQ}
+	</update>
+
+	
+</mapper>

@@ -1,0 +1,64 @@
+{
+	userInfo:[
+	{
+		name:'사용자조회',
+		url:'MemberApp.view.user.UserInfoShow',
+		leaf:true
+	},{
+		name:'사용자목록조회',
+		url:'MemberApp.view.user.UserListShow',
+		leaf:true
+	},{
+		name:'사용자등록',
+		url:'MemberApp.view.user.UserInfoReg',
+		leaf:true
+	},{
+		name:'사용자수정',
+		url:'MemberApp.view.user.UserInfoUpd',
+		leaf:true
+	}]
+}	
+	
+{
+	'userInfo':[
+	{
+		'name':'사용자',
+		'url':'',
+		'leaf': false,
+		'children':[
+			{
+				'name':'사용자조회',
+				'url':'MemberApp.view.user.UserInfoShow',
+				'leaf':true
+			},{
+				'name':'사용자목록조회',
+				'url':'MemberApp.view.user.UserListShow',
+				'leaf':true
+			},{
+				'name':'사용자등록',
+				'url':'MemberApp.view.user.UserInfoReg',
+				'leaf':true
+			},{
+				'name':'사용자수정',
+				'url':'MemberApp.view.user.UserInfoUpd',
+				'leaf':true
+			}
+		]
+	},	
+	{
+		'name':'기타',
+		'url':'',
+		'leaf': false,
+		'children':[
+			{
+				'name':'사용자조회',
+				'url':'MemberApp.view.user.UserInfoShow',
+				'leaf':true
+			},{
+				'name':'사용자목록조회',
+				'url':'MemberApp.view.user.UserListShow',
+				leaf:true
+			}
+		]
+	}]		
+}	

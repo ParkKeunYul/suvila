@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.o2i.dao.rec.REC002W_10DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+
+	<!--  전각정보 -->
+	<select id="SELECT_Jungak" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD,
+		       ACCEPT_GBN,
+		       JUNGAK_CD,
+		       JUNGAK_GBN,
+		       JUNGAK_NM,
+		       USE_YN,
+		       REMARK,
+		       CRT_USER,
+		       CRT_DATE,
+		       UPT_DATE,
+		       UPT_USER,
+		       REMOTE,
+		       ( CASE
+		   			WHEN NVL(SORT_SEQ, 0) = 0 THEN ROWNUM
+		   			ELSE SORT_SEQ
+		   	  	END ) SORT_SEQ
+		  FROM ASP_JUNGAK_MGT
+		WHERE TEMPLE_CD  = ${param.V_TEMPLE_CD}
+		  AND ACCEPT_GBN = #{param.V_ACCEPT_GBN}
+		<if test='param.V_JUNGAK_GBN != "" and param.V_JUNGAK_GBN != null '>
+			AND JUNGAK_GBN = #{param.V_JUNGAK_GBN}
+		</if>
+		<if test='param.JUNGAK_GBN != "" and param.JUNGAK_GBN != null '>
+			AND JUNGAK_GBN = #{param.V_JUNGAK_GBN} 
+		</if>  
+		ORDER BY   SORT_SEQ ASC
+		         , USE_YN DESC 
+		         , JUNGAK_CD ASC
+	
+	<!-- 
+	<![CDATA[
+	]]>
+	 -->
+	</select>
+	
+	<!--  등급정보 -->
+	<select id="SELECT_Grade" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD,
+		       ACCEPT_GBN,
+		       LIGHT_CODE,
+		       LIGHT_NM,
+		       AMOUNT,
+		       CRT_USER,
+		       USE_YN,
+		       REMARK,
+		       CRT_DATE,
+		       UPT_USER,
+		       UPT_DATE,
+		       REMOTE,
+		       FAMILY_YN,
+		       ACCT_GBN, 
+		       IE_GBN,
+		       KWAN,
+		       HANG,
+		       MOK,
+		       FN_ACC_NAME(TEMPLE_CD, ACCT_GBN, IE_GBN, KWAN, HANG, MOK , 'MOK')  AS ACCNAME,
+		       DEATH_YN,
+			   PERIOD,
+			   ( CASE
+			   		WHEN NVL(SORT_SEQ, 0) = 0 THEN ROWNUM
+			   		ELSE SORT_SEQ
+			   	  END ) SORT_SEQ
+		  FROM REC_DEUNG_CLASS_MGT
+		WHERE TEMPLE_CD  = ${param.V_TEMPLE_CD}
+		  AND ACCEPT_GBN = #{param.V_ACCEPT_GBN}
+		ORDER BY  SORT_SEQ ASC
+		         ,USE_YN DESC 
+		         ,LIGHT_CODE ASC
+	</select>
+	
+	
+	<!-- 금액관리정보 -->
+	<select id="SELECT_REC_DEUNG_PRICE_MGT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT
+			TEMPLE_CD,
+			ACCEPT_GBN, 
+			LIGHT_CODE, 
+			START_YYYYMM, 
+			END_YYYYMM, 
+			AMOUNT, 
+			REMARK 
+		FROM REC_DEUNG_PRICE_MGT
+		WHERE TEMPLE_CD = ${param.V_TEMPLE_CD}
+		AND ACCEPT_GBN  = #{param.V_ACCEPT_GBN}
+		AND LIGHT_CODE  = #{param.V_LIGHT_CODE}
+		ORDER BY START_YYYYMM
+	</select>
+	
+	
+	<!-- # 등번호 정보 #  -->
+	<select id="SELECT_Deng_NEW" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT  A.TEMPLE_CD,
+		        A.ACCEPT_GBN,
+			    A.JUNGAK_CD,
+			    B.LIGHT_NO, 
+			    NVL(DECODE(B.USE_YN , 'F' , 'A' , DECODE(B.RESERVATION_YN,'T','E',C.BG_COLOR)),'B')   AS  BG_COLOR,
+			    D.NAME_KOR   																		  AS  BUD_NAME,
+			    CEIL ((B.LIGHT_NO / (A.VER_LINE + 0.001)))   AS X,
+			    LPAD(DECODE(MOD(b.light_no , a.VER_LINE ) , 0 , a.VER_LINE, MOD(b.light_no , a.VER_LINE )),2,'0') AS Y
+		FROM REC_BUILDING_MGT A,
+		     REC_DEUNG_MGT    B,
+		    (SELECT A.TEMPLE_CD,
+		            A.JUNGAK_CD,
+		            A.ACCEPT_GBN,
+		            A.LIGHT_NO,
+		            B.PROPOSAL_BUD_NO,
+		            DECODE( SIGN(A.PAYMENT_PLAN_AMT - (SELECT SUM(AMOUNT) FROM REC_PAYMENT_HIS WHERE A.TEMPLE_CD = TEMPLE_CD AND A.ACCEPT_SEQ = ACCEPT_SEQ AND A.SEQ = SEQ)) , 1 , 'C' ,  'D' ) BG_COLOR
+		            <if test="param.V_ACCEPT_GBN == 2 or param.V_ACCEPT_GBN == '2'">
+		            	FROM REC_INDEUNG_DETAIL   A ,
+		            </if>
+		            <if test="param.V_ACCEPT_GBN == 4 or param.V_ACCEPT_GBN == '4'">
+		            	FROM REC_YEONDEUNG_DETAIL A ,
+		            </if>
+		            <if test="param.V_ACCEPT_GBN == 12 or param.V_ACCEPT_GBN == '12'">
+		            	FROM REC_WONBUL_DETAIL A ,
+		            </if>
+		            <if test="param.V_ACCEPT_GBN == 14 or param.V_ACCEPT_GBN == '14'">
+		            	FROM REC_YOUNGTOP_DETAIL A ,
+		            </if>
+		           REC_MASTER           B
+		     WHERE A.TEMPLE_CD       = B.TEMPLE_CD
+		       AND  A.ACCEPT_SEQ     = B.ACCEPT_SEQ
+		       AND  A.TEMPLE_CD      = ${param.V_TEMPLE_CD}
+		       AND  A.CLOSE_YN     != 'T'
+		       AND  A.DEL_YN       != 'T') C ,
+		     SIN_CARD_MASTER      D
+		WHERE A.TEMPLE_CD     = B.TEMPLE_CD
+		AND B.TEMPLE_CD       = C.TEMPLE_CD(+)
+		AND C.TEMPLE_CD       = D.TEMPLE_CD(+)
+		AND C.PROPOSAL_BUD_NO = D.BUD_NO(+)
+		AND A.ACCEPT_GBN  = B.ACCEPT_GBN
+		AND A.JUNGAK_CD   = B.JUNGAK_CD	
+		AND B.ACCEPT_GBN  = C.ACCEPT_GBN(+)
+		AND B.JUNGAK_CD   = C.JUNGAK_CD(+)
+		AND B.LIGHT_NO    = C.LIGHT_NO(+)
+		AND B.ADD_FLAG    = 'P'              
+		AND B.TEMPLE_CD   = ${param.V_TEMPLE_CD}
+		AND B.ACCEPT_GBN  = #{param.V_ACCEPT_GBN}
+		AND B.JUNGAK_CD   = #{param.V_JUNGAK_CD}
+		ORDER BY B.LIGHT_NO ASC
+	</select>
+	
+	
+	<!-- # 등번호 신도정보 #  -->
+	<select id="SELECT_SindoInfo" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT  
+		    B.JUNGAK_NM , 
+		    A.LIGHT_NO , 
+		    A.PAYMENT_PLAN_AMT , 
+		    (SELECT SUM(AMOUNT) FROM REC_PAYMENT_HIS WHERE A.TEMPLE_CD = TEMPLE_CD AND A.ACCEPT_SEQ = ACCEPT_SEQ AND A.SEQ = SEQ) AS PAYMENT_AMT ,    
+		    C.PROPOSAL_BUD_NO , 
+		    FN_BUD_NAME( A.TEMPLE_CD ,A.ACCEPT_GBN ,A.JUNGAK_CD, A.LIGHT_NO )  AS  BUD_NAME,
+		 		A.ACCEPT_SEQ,
+		    A.SEQ,
+		    to_char(A.CRT_DATE, 'YYYY/MM/DD') as CRT_DATE,
+		    (SELECT ADDR1||' '||ADDR2 FROM SIN_CARD_MASTER WHERE BUD_NO = C.PROPOSAL_BUD_NO AND TEMPLE_CD = A.TEMPLE_CD AND  rownum=1) AS  ADDR,
+		    <if test="param.V_ACCEPT_GBN == 2 ">
+            	(CASE WHEN A.INDEUNG_PERIOD = 0  THEN 0 ELSE A.PAYMENT_PLAN_AMT - (SELECT SUM(AMOUNT) FROM REC_PAYMENT_HIS WHERE A.TEMPLE_CD = TEMPLE_CD AND A.ACCEPT_SEQ = ACCEPT_SEQ AND A.SEQ = SEQ) END)AS MISU_AMT  
+            	FROM REC_INDEUNG_DETAIL   A,
+            </if>
+            <if test="param.V_ACCEPT_GBN == 4 ">
+            	A.PAYMENT_PLAN_AMT - (SELECT SUM(AMOUNT) FROM REC_PAYMENT_HIS WHERE A.TEMPLE_CD = TEMPLE_CD AND A.ACCEPT_SEQ = ACCEPT_SEQ AND A.SEQ = SEQ) AS MISU_AMT 
+            	FROM REC_YEONDEUNG_DETAIL   A,
+            </if>
+            <if test="param.V_ACCEPT_GBN == 12 ">
+            	A.PAYMENT_PLAN_AMT - (SELECT SUM(AMOUNT) FROM REC_PAYMENT_HIS WHERE A.TEMPLE_CD = TEMPLE_CD AND A.ACCEPT_SEQ = ACCEPT_SEQ AND A.SEQ = SEQ) AS MISU_AMT  
+            	FROM REC_WONBUL_DETAIL      A,
+            </if>
+            <if test="param.V_ACCEPT_GBN == 14 ">
+            	A.PAYMENT_PLAN_AMT - (SELECT SUM(AMOUNT) FROM REC_PAYMENT_HIS WHERE A.TEMPLE_CD = TEMPLE_CD AND A.ACCEPT_SEQ = ACCEPT_SEQ AND A.SEQ = SEQ) AS MISU_AMT  
+            	FROM REC_YOUNGTOP_DETAIL      A, 
+            </if>
+			  ASP_JUNGAK_MGT     B ,
+		      REC_MASTER         C
+		WHERE A.TEMPLE_CD  = B.TEMPLE_CD(+)
+		AND  A.ACCEPT_GBN  = B.ACCEPT_GBN(+)
+		AND  A.JUNGAK_CD   = B.JUNGAK_CD(+)
+		AND  A.TEMPLE_CD   = C.TEMPLE_CD(+)
+		AND  A.ACCEPT_SEQ  = C.ACCEPT_SEQ(+)
+		AND  A.TEMPLE_CD   = ${param.V_TEMPLE_CD}
+		AND  A.ACCEPT_GBN  = #{param.V_ACCEPT_GBN}
+		AND  A.JUNGAK_CD   = #{param.V_JUNGAK_CD}
+		AND  A.LIGHT_NO    = #{param.V_LIGHT_NO}
+	<![CDATA[
+		AND  A.CLOSE_YN    <> 'T'
+		AND  A.DEL_YN      <> 'T'
+	]]>
+	</select>
+	
+	<!-- # 등번호관리 ( 행 열관리 ) # -->
+	<select id="SELECT_Building" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD,
+		       ACCEPT_GBN,
+		       JUNGAK_CD,
+		       ( SELECT JUNGAK_NM
+		    		   FROM ASP_JUNGAK_MGT
+		    		 WHERE TEMPLE_CD  = ${param.V_TEMPLE_CD}
+		    		   AND ACCEPT_GBN = #{param.V_ACCEPT_GBN}
+		    		   AND JUNGAK_CD  = #{param.V_JUNGAK_CD} ) AS JUNGAK_NM,
+		       HOZ_LINE,
+		       VER_LINE,
+		       USE_YN,
+		       CRT_USER,
+		       CRT_DATE,
+		       UPT_DATE,
+		       UPT_USER,
+		       REMOTE
+		  FROM REC_BUILDING_MGT
+		WHERE TEMPLE_CD  = ${param.V_TEMPLE_CD}
+		  AND ACCEPT_GBN = #{param.V_ACCEPT_GBN}
+		  AND JUNGAK_CD  = #{param.V_JUNGAK_CD}
+	</select>
+</mapper>

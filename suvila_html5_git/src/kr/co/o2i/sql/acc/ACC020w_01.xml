@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ACC020w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+<!--
+	<resultMap id="acc006w_01a" type="java.util.Map"> 
+		<result  property="CHECK_P" column="CHECK_P"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+	</resultMap>
+-->
+	<select id="SELECT_DAY" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT AMM.TEMPLE_CD
+		      ,AMM.ACCT_GBN
+	          ,( CASE
+	      			WHEN AMM.IE_GBN = 'I' THEN '세입'
+	      			ELSE '세출'
+	      		 END ) IE_GBN
+		      ,AMM.KWAN
+		      ,AMM.HANG
+		      ,AMM.MOK
+		      ,AMM.ACCT_NM
+		      ,AMM.KWAN_NAME
+		      ,AMM.HANG_NAME
+		      ,AMM.MOK_NAME
+		      ,AMM.I_AMOUNT
+		      ,AMM.O_AMOUNT
+		      ,(SELECT USER_NM FROM ASP_TEMPLE_USER WHERE TEMPLE_CD = AMM.TEMPLE_CD AND USER_ID = AMM.USER_ID) AS USER_NM
+		      ,REMARK
+		FROM ( SELECT AMM.TEMPLE_CD
+		             ,AMM.ACCT_GBN
+		             ,AMM.IE_GBN
+		             ,AMM.KWAN
+		             ,AMM.HANG
+		             ,AMM.MOK
+		             ,AAC.ACCT_NM
+		             ,AAC.KWAN_NAME
+		             ,AAC.HANG_NAME
+		             ,AAC.MOK_NAME
+		             ,DECODE(AMM.IE_GBN,'I',AMM.AMOUNT,0) AS I_AMOUNT
+		             ,DECODE(AMM.IE_GBN,'O',AMM.AMOUNT,0) AS O_AMOUNT
+		             ,AMM.USER_ID
+		             ,AMM.REMARK
+			    FROM ACC_MONEY_MGT  AMM
+			        ,ACC_ACCOUNTS   AAC
+			   WHERE AMM.TEMPLE_CD    = AAC.TEMPLE_CD
+			     AND AMM.ACCT_GBN     = AAC.ACCT_GBN
+			     AND AMM.IE_GBN       = AAC.IE_GBN
+			     AND AMM.KWAN         = AAC.KWAN
+			     AND AMM.HANG         = AAC.HANG
+			     AND AMM.MOK          = AAC.MOK
+			     AND AMM.TEMPLE_CD    = #{V_TEMPLE_CD}
+			     AND AMM.ACT_DATE     = #{V_SDATE}
+			     <if test='V_ACCT_GBN != 0  and V_ACCT_GBN != "0" '>
+			     	AND AMM.ACCT_GBN = #{V_ACCT_GBN}
+			     </if>
+				) AMM
+		  ORDER BY AMM.ACCT_GBN
+		          ,AMM.IE_GBN
+		          ,AMM.KWAN
+		          ,AMM.HANG
+		          ,AMM.MOK
+	</select>
+	
+	
+	<select id="SELECT_MONTH" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT AMM.TEMPLE_CD
+		      ,AMM.ACCT_GBN
+		      <!-- ,AMM.IE_GBN -->
+		      ,( CASE
+	      			WHEN AMM.IE_GBN = 'I' THEN '세입'
+	      			ELSE '세출'
+	      		 END ) IE_GBN
+		      ,AMM.KWAN
+		      ,AMM.HANG
+		      ,AMM.MOK
+		      ,AMM.ACCT_NM
+		      ,AMM.KWAN_NAME
+		      ,AMM.HANG_NAME
+		      ,AMM.MOK_NAME
+		      ,SUM(AMM.I_AMOUNT) AS I_AMOUNT
+		      ,SUM(AMM.O_AMOUNT) AS O_AMOUNT
+		 FROM( SELECT AMM.TEMPLE_CD
+		             ,AMM.ACCT_GBN
+		             ,AMM.IE_GBN
+		             ,AMM.KWAN
+		             ,AMM.HANG
+		             ,AMM.MOK
+		             ,AAC.ACCT_NM
+		             ,AAC.KWAN_NAME
+		             ,AAC.HANG_NAME
+		             ,AAC.MOK_NAME
+		             ,DECODE(AMM.IE_GBN,'I',AMM.AMOUNT,0) AS I_AMOUNT
+		             ,DECODE(AMM.IE_GBN,'O',AMM.AMOUNT,0) AS O_AMOUNT
+		         FROM ACC_MONEY_MGT  AMM
+		             ,ACC_ACCOUNTS   AAC
+		        WHERE AMM.TEMPLE_CD     = AAC.TEMPLE_CD
+		    	  AND AMM.ACCT_GBN      = AAC.ACCT_GBN
+		    	  AND AMM.IE_GBN        = AAC.IE_GBN
+		    	  AND AMM.KWAN          = AAC.KWAN
+		    	  AND AMM.HANG          = AAC.HANG
+		    	  AND AMM.MOK           = AAC.MOK
+		    	  AND AMM.TEMPLE_CD     = #{V_TEMPLE_CD}
+		    	  AND AMM.ACT_DATE LIKE #{V_SDATE} || '%'
+		    	  <if test='V_ACCT_GBN != 0  and V_ACCT_GBN != "0" '>
+		    	  		AND AMM.ACCT_GBN = #{V_ACCT_GBN} 
+		    	  </if>
+				) AMM
+		GROUP BY AMM.TEMPLE_CD
+		     ,AMM.ACCT_GBN
+		     ,AMM.IE_GBN
+		     ,AMM.KWAN
+		     ,AMM.HANG
+		     ,AMM.MOK
+		     ,AMM.ACCT_NM
+		     ,AMM.KWAN_NAME
+		     ,AMM.HANG_NAME
+		     ,AMM.MOK_NAME
+		ORDER BY AMM.ACCT_GBN
+		        ,AMM.IE_GBN
+		        ,AMM.KWAN
+		        ,AMM.HANG
+		        ,AMM.MOK
+	</select>
+	
+	
+	<select id="SELECT_DAY_CHARGE" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT NVL(SUM(NVL(DECODE(IE_GBN,'I',AMOUNT, AMOUNT*-1),0)),0) AS AMOUNT
+		  FROM ACC_MONEY_MGT AMM
+		 WHERE TEMPLE_CD       = #{V_TEMPLE_CD}
+		   AND ACT_DATE       >= SUBSTR(#{V_SDATE},1,4) || '0101'
+		   AND ACT_DATE      &lt;  #{V_SDATE}
+		   <if test='V_ACCT_GBN != 0  and V_ACCT_GBN != "0" '>
+		   		AND AMM.ACCT_GBN = #{V_ACCT_GBN} 
+		   </if>
+	</select>
+	
+	<select id="SELECT_MONTH_CHARGE" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT NVL(SUM(NVL(DECODE(IE_GBN,'I',AMOUNT, AMOUNT*-1),0)),0) AS AMOUNT
+		  FROM ACC_MONEY_MGT AMM
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		 <choose>
+		 	<when test='V_DATE_GBN == "6"'>
+		 		AND ACT_DATE   >= SUBSTR(#{V_SDATE},1,4) || '0101'
+		 		AND ACT_DATE &lt; SUBSTR(#{V_SDATE},1,6) || '01'
+		 	</when>
+		 	<otherwise>
+		 		AND 1 = 0
+		 	</otherwise>
+		 </choose>
+		 <if test='V_ACCT_GBN != 0  and V_ACCT_GBN != "0" '>
+		 		AND AMM.ACCT_GBN = #{V_ACCT_GBN} 
+		 </if>
+	</select>
+	
+</mapper>

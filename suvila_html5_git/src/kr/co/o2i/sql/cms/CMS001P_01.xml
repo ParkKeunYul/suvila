@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="CMS001p_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+    
+	
+
+	<select id="SELECT_CMS_UPT_HIS" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		 SELECT SCUH.SEQ
+			  ,SCUH.TEMPLE_CD
+			  ,SCUH.CMS_TRADE_CD
+			  ,SCUH.NEW_CMS_TRADE_CD
+			  ,SCUH.MEMBER_ID
+			  ,( CASE
+			  	   WHEN STATUS = 'D' THEN '해지'
+			  	   ELSE '변경'
+			   END ) as STATUS
+			  ,SCUH.CAUSE_TYPE
+			  ,SCUH.OLD_BANK_CD
+			  ,(SELECT   NAME FROM ASP_CODE_MGT WHERE GROUP_CD  = upper('bank') AND USE_YN = 'Y' AND CODE = SCUH.OLD_BANK_CD ) AS OLD_BANK_NM
+			  ,SCUH.OLD_ACCOUNT_NO
+			  ,SCUH.NEW_BANK_CD
+			  ,(SELECT   NAME FROM ASP_CODE_MGT WHERE GROUP_CD  = upper('bank') AND USE_YN = 'Y' AND CODE = SCUH.NEW_BANK_CD ) AS NEW_BANK_NM
+			  ,SCUH.NEW_ACCOOUNT_NO
+		  	  ,TO_CHAR(SCUH.REG_DATE,'YYYYMMDD') AS REG_DATE
+			  ,SCUH.REMARK
+			  ,TO_CHAR(UPT_DATE,'YYYY/MM/DD') AS UPT_DATE	  
+			  ,SCUH.OLD_ACCOUNT_SEQ
+		      ,SCUH.NEW_ACCOUNT_SEQ
+		  FROM SIN_CMS_UPT_HIS SCUH
+		 WHERE SCUH.TEMPLE_CD    = #{V_TEMPLE_CD}
+		   AND SCUH.CMS_TRADE_CD = #{V_CMS_TRADE_CD}
+		   AND SCUH.MEMBER_ID    = #{V_IF_MEMBER_ID}
+		   AND SCUH.STATE        = 2
+		ORDER by SCUH.seq asc
+	</select>
+			
+		
+	
+</mapper>

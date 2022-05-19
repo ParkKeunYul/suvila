@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ACC003w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+<!--
+	<resultMap id="acc006w_01a" type="java.util.Map"> 
+		<result  property="CHECK_P" column="CHECK_P"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+	</resultMap>
+-->
+
+	<select id="SELECT_ACC" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT A.*
+              ,RATIO_TO_REPORT(A.AMOUNT) over() * 100 PER
+        FROM (
+			SELECT
+			<choose>
+				<when test="V_DATE_GBN == 4 or V_DATE_GBN == '4'">
+					AMM.KWAN AS CODE,
+					ACC.KWAN_NAME AS  NAME,
+				</when>
+				<otherwise>
+					AMM.HANG AS CODE,
+					ACC.HANG_NAME AS  NAME, 
+				</otherwise>
+			</choose>
+			       SUM(AMM.AMOUNT) as AMOUNT
+			  FROM ACC_MONEY_MGT AMM, ACC_ACCOUNTS ACC
+			 WHERE AMM.TEMPLE_CD = #{V_TEMPLE_CD}
+			   AND AMM.ACCT_GBN  = #{V_ACCT_GBN}
+			   AND AMM.IE_GBN    = #{V_IE_GBN}
+			   <choose>
+				<when test="V_DATE_GBN == 6 or V_DATE_GBN == '6'">
+					AND AMM.ACT_DATE  BETWEEN #{V_ACT_DATE_01} || '01' AND #{V_ACT_DATE_02} || '31'
+				</when>
+				<when test="V_DATE_GBN == 4 or V_DATE_GBN == '4'">
+					AND AMM.ACT_DATE  BETWEEN #{V_ACT_DATE_01} || '0101' AND #{V_ACT_DATE_02} || '1231'
+				</when>
+				<otherwise>
+					AND AMM.ACT_DATE  BETWEEN #{V_ACT_DATE_01} AND #{V_ACT_DATE_02}
+				</otherwise>
+			</choose>
+		   AND AMM.TEMPLE_CD = ACC.TEMPLE_CD
+		   AND AMM.ACCT_GBN  = ACC.ACCT_GBN
+		   AND AMM.IE_GBN    = ACC.IE_GBN
+		   AND AMM.KWAN      = ACC.KWAN
+		   AND AMM.HANG      = ACC.HANG 
+		   AND AMM.MOK       = ACC.MOK
+	   		<choose>
+				<when test="V_DATE_GBN == 4 or V_DATE_GBN == '4'">
+					GROUP BY AMM.KWAN, ACC.KWAN_NAME
+				</when>
+				<otherwise>
+					GROUP BY AMM.KWAN, ACC.KWAN_NAME, AMM.HANG, ACC.HANG_NAME
+				</otherwise>
+			</choose>
+		) A
+	</select>
+
+	
+</mapper>

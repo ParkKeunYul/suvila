@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="CMS001w_03DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+	
+	<select id="SELECT_CMS_UPT_LIST" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT   SIN.TEMPLE_CD
+		        ,SIN.BUD_NO           
+		        ,(SELECT name FROM ASP_CODE_MGT WHERE GROUP_CD = 'BANK' AND CODE = CMS.IF_PAYMENT_BANK_CD ) as BANK_NAME
+		        ,SIN.NAME_KOR
+		        ,SIN.MOBILE_TELNO1
+		        ,SIN.MOBILE_TELNO2
+		        ,SIN.MOBILE_TELNO3
+		        ,to_char( CMS.REG_DATE , 'YYYY/MM/DD' ) as REG_DATE
+		        ,CMS.REMARK
+		        ,CMS.IF_PAYMENT_ACCOUNT
+		        ,CMS.ACCOUNT_SEQ
+		        ,CMS.CMS_PAYMENT_DAY
+		        ,CMS_TRADE_CD
+		 FROM SIN_CARD_MASTER SIN
+		     ,(
+		        SELECT SCUH.* 
+		              ,SCI.BUD_NO                            
+		              ,SCI.IF_PAYMENT_ACCOUNT             
+		              ,SCI.CMS_ACCOUNT_STATUS                            
+		              ,SCI.CMS_PAYMENT_DAY
+		              ,SCI.IF_PAYMENT_BANK_CD
+		              ,SCI.ACCOUNT_SEQ              
+		        FROM SIN_CMS_UPT_HIS SCUH
+		        LEFT JOIN SIN_CMS_INFO SCI 
+		          on SCUH.TEMPLE_CD        = SCI.TEMPLE_CD AND SCUH.MEMBER_ID = SCI.IF_MEMBER_ID
+		        WHERE SCUH.TEMPLE_CD       = #{V_TEMPLE_CD}
+		        AND SCUH.STATUS            = 'D'     
+		     ) CMS
+		WHERE SIN.TEMPLE_CD  = CMS.TEMPLE_CD
+		  AND SIN.BUD_NO         = CMS.BUD_NO
+		  AND SIN.TEMPLE_CD      = #{V_TEMPLE_CD}
+		 <if test='V_BUD_NO != nul and  V_BUD_NO != "" '>
+				AND SIN.BUD_NO = #{V_BUD_NO} 
+		  </if>
+		  ORDER by CMS.REG_DATE desc
+	</select>
+
+	
+</mapper>

@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC001w_10DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="USE_YN" column="USE_YN"   typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+		<result  property="FAMILY_YN" column="FAMILY_YN"   typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+		<result  property="DEATH_YN" column="DEATH_YN"   typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+	</resultMap>
+
+	<select id="SELECT_Jungak" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD,
+		       ACCEPT_GBN,
+		       JUNGAK_CD,
+		       JUNGAK_GBN,
+		       JUNGAK_NM,
+		       USE_YN,
+		       REMARK,
+		       CRT_USER,
+		       CRT_DATE,
+		       UPT_DATE,
+		       UPT_USER,
+		       REMOTE,		      
+		       ( CASE
+		   			WHEN NVL(SORT_SEQ, 0) = 0 THEN ROWNUM
+		   			ELSE SORT_SEQ
+		   	  	END ) SORT_SEQ
+		  FROM ASP_JUNGAK_MGT
+		WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+		  AND ACCEPT_GBN = #{V_ACCEPT_GBN}
+		  <if test='V_JUNGAK_GBN != null and V_JUNGAK_GBN != "" '>
+		  	AND JUNGAK_GBN = #{V_JUNGAK_GBN}
+		  </if>
+		  <if test='V_USE_YN != null and V_USE_YN != "" '>
+		  	AND USE_YN     = #{V_USE_YN}
+		  </if>
+		ORDER BY   SORT_SEQ ASC
+		         , USE_YN DESC 
+		         , JUNGAK_CD ASC 
+	</select>
+	
+	<select id="SELECT_Grade" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+			  ,ACCEPT_GBN
+			  ,LIGHT_CODE
+			  ,LIGHT_NM
+			  ,AMOUNT
+			  ,CRT_USER
+			  ,USE_YN
+			  ,REMARK
+			  ,CRT_DATE
+			  ,UPT_USER
+			  ,UPT_DATE
+			  ,REMOTE
+			  ,FAMILY_YN
+			  ,ACCT_GBN
+			  ,IE_GBN
+			  ,KWAN
+			  ,HANG
+			  ,MOK
+			  ,FN_ACC_NAME(TEMPLE_CD, ACCT_GBN, IE_GBN, KWAN, HANG, MOK , 'MOK')  AS ACCNAME
+			  ,DEATH_YN
+			  ,PERIOD
+			  ,(CASE WHEN NVL(SORT_SEQ, 0) = 0 THEN ROWNUM
+			   		 ELSE SORT_SEQ
+			    END) SORT_SEQ
+		  FROM REC_DEUNG_CLASS_MGT
+		 WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND ACCEPT_GBN = #{V_ACCEPT_GBN}
+		 ORDER BY SORT_SEQ ASC
+		         ,USE_YN DESC 
+		         ,LIGHT_CODE ASC
+	</select>
+	
+	<select id="SELECT_REC_DEUNG_PRICE_MGT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+			  ,ACCEPT_GBN
+			  ,LIGHT_CODE
+			  ,START_YYYYMM
+			  ,END_YYYYMM
+			  ,AMOUNT
+			  ,REMARK 
+	     FROM REC_DEUNG_PRICE_MGT
+	    WHERE TEMPLE_CD   = #{V_TEMPLE_CD}
+	      AND ACCEPT_GBN  = #{V_ACCEPT_GBN}
+	   	  AND LIGHT_CODE  = #{V_LIGHT_CODE}
+	    ORDER BY START_YYYYMM
+	</select>
+	
+	<select id="SELECT_Building" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD,
+		       ACCEPT_GBN,
+		       JUNGAK_CD,
+		       ( SELECT JUNGAK_NM
+		    		   FROM ASP_JUNGAK_MGT
+		    		 WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+		    		   AND ACCEPT_GBN = #{V_ACCEPT_GBN}
+		    		   AND JUNGAK_CD  = #{V_JUNGAK_CD} ) AS JUNGAK_NM,
+		       HOZ_LINE,
+		       VER_LINE,
+		       USE_YN,
+		       CRT_USER,
+		       CRT_DATE,
+		       UPT_DATE,
+		       UPT_USER,
+		       REMOTE
+		  FROM REC_BUILDING_MGT
+		WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+		  AND ACCEPT_GBN = #{V_ACCEPT_GBN}
+		  AND JUNGAK_CD  = #{V_JUNGAK_CD}
+	</select>
+	
+	<select id="SELECT_SindoInfo" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT  B.JUNGAK_NM , 
+			    A.LIGHT_NO , 
+			    A.PAYMENT_PLAN_AMT , 
+			    (SELECT SUM(AMOUNT) FROM REC_PAYMENT_HIS WHERE A.TEMPLE_CD = TEMPLE_CD AND A.ACCEPT_SEQ = ACCEPT_SEQ AND A.SEQ = SEQ) AS PAYMENT_AMT ,    
+			    C.PROPOSAL_BUD_NO , 
+			    FN_BUD_NAME( A.TEMPLE_CD ,A.ACCEPT_GBN ,A.JUNGAK_CD, A.LIGHT_NO )  AS  BUD_NAME,
+			 		A.ACCEPT_SEQ,
+			    A.SEQ,
+			    to_char(A.CRT_DATE, 'YYYY/MM/DD') as CRT_DATE,
+			    (SELECT ADDR1||' '||ADDR2 FROM SIN_CARD_MASTER WHERE BUD_NO = C.PROPOSAL_BUD_NO AND TEMPLE_CD = A.TEMPLE_CD AND  rownum=1) AS  ADDR,
+			    <if test='V_ACCEPT_GBN == 2 '>
+				   (CASE WHEN A.INDEUNG_PERIOD = 0  THEN 0 ELSE A.PAYMENT_PLAN_AMT - (SELECT SUM(AMOUNT) FROM REC_PAYMENT_HIS WHERE A.TEMPLE_CD = TEMPLE_CD AND A.ACCEPT_SEQ = ACCEPT_SEQ AND A.SEQ = SEQ) END)AS MISU_AMT,
+				   A.INDEUNG_PERIOD  as PERIOD 
+				   FROM REC_INDEUNG_DETAIL   A,
+			    </if>
+			    <if test='V_ACCEPT_GBN == 4 '>
+			    	A.PAYMENT_PLAN_AMT - (SELECT SUM(AMOUNT) FROM REC_PAYMENT_HIS WHERE A.TEMPLE_CD = TEMPLE_CD AND A.ACCEPT_SEQ = ACCEPT_SEQ AND A.SEQ = SEQ) AS MISU_AMT 
+			    	FROM REC_YEONDEUNG_DETAIL   A,
+			    </if>
+			    <if test='V_ACCEPT_GBN == 12 '>
+			    	A.PAYMENT_PLAN_AMT - (SELECT SUM(AMOUNT) FROM REC_PAYMENT_HIS WHERE A.TEMPLE_CD = TEMPLE_CD AND A.ACCEPT_SEQ = ACCEPT_SEQ AND A.SEQ = SEQ) AS MISU_AMT  
+			    	FROM REC_WONBUL_DETAIL      A,
+			    </if>
+			    <if test='V_ACCEPT_GBN == 14 '>
+			    	A.PAYMENT_PLAN_AMT - (SELECT SUM(AMOUNT) FROM REC_PAYMENT_HIS WHERE A.TEMPLE_CD = TEMPLE_CD AND A.ACCEPT_SEQ = ACCEPT_SEQ AND A.SEQ = SEQ) AS MISU_AMT  
+			    	FROM REC_YOUNGTOP_DETAIL      A, 
+			    </if>
+				ASP_JUNGAK_MGT     B ,
+			    REC_MASTER         C
+			WHERE A.TEMPLE_CD  = B.TEMPLE_CD(+)
+			AND  A.ACCEPT_GBN  = B.ACCEPT_GBN(+)
+			AND  A.JUNGAK_CD   = B.JUNGAK_CD(+)
+			AND  A.TEMPLE_CD   = C.TEMPLE_CD(+)
+			AND  A.ACCEPT_SEQ  = C.ACCEPT_SEQ(+)
+			AND  A.TEMPLE_CD   = #{V_TEMPLE_CD}
+			AND  A.ACCEPT_GBN  = #{V_ACCEPT_GBN}
+			AND  A.JUNGAK_CD   = #{V_JUNGAK_CD}
+			AND  A.LIGHT_NO    = #{V_LIGHT_NO}
+			AND  A.CLOSE_YN    &lt;> 'T'
+			AND  A.DEL_YN      &lt;> 'T'
+	</select>
+	
+	<select id="SELECT_SindoInfo2" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT  B.JUNGAK_NM , 
+			    A.LIGHT_NO , 
+			    A.PAYMENT_PLAN_AMT , 
+			    (SELECT SUM(AMOUNT) FROM REC_PAYMENT_HIS WHERE A.TEMPLE_CD = TEMPLE_CD AND A.ACCEPT_SEQ = ACCEPT_SEQ AND A.SEQ = SEQ) AS PAYMENT_AMT ,
+			   
+			    (CASE 
+			        WHEN 
+			          A.INDEUNG_PERIOD = 0  THEN 0
+			        ELSE
+			          A.PAYMENT_PLAN_AMT - (SELECT SUM(AMOUNT) FROM REC_PAYMENT_HIS WHERE A.TEMPLE_CD = TEMPLE_CD AND A.ACCEPT_SEQ = ACCEPT_SEQ AND A.SEQ = SEQ) 
+			      END)AS MISU_AMT,
+			    C.PROPOSAL_BUD_NO , 
+			    FN_BUD_NAME( A.TEMPLE_CD ,A.ACCEPT_GBN ,A.JUNGAK_CD, A.LIGHT_NO )  AS  BUD_NAME,
+			 		A.ACCEPT_SEQ,
+			    A.SEQ,
+			    to_char(A.CRT_DATE, 'YYYY/MM/DD') as CRT_DATE,
+			    (SELECT ADDR1||' '||ADDR2 FROM SIN_CARD_MASTER WHERE BUD_NO = C.PROPOSAL_BUD_NO AND TEMPLE_CD = A.TEMPLE_CD AND  rownum=1) AS  ADDR
+			   ,(CASE
+			        WHEN (SELECT DEATH_YN  FROM REC_DEUNG_CLASS_MGT WHERE TEMPLE_CD  = A.TEMPLE_CD AND ACCEPT_GBN = A.ACCEPT_GBN AND LIGHT_CODE = A.INDEUNG_GBN ) = 'F'
+			          THEN FN_GET_NM('BUD',A.TEMPLE_CD, (SELECT DONGCHAM_BUD_NO 
+			                                                FROM REC_INDEUNG_JOIN_MGT 
+			                                              WHERE A.TEMPLE_CD = TEMPLE_CD AND A.ACCEPT_SEQ = ACCEPT_SEQ AND A.JUNGAK_CD = JUNGAK_CD AND A.LIGHT_NO = LIGHT_NO AND SEQ = A.SEQ
+			                                                and SORT_SEQ = (SELECT min(SORT_SEQ)FROM REC_INDEUNG_JOIN_MGT WHERE  A.TEMPLE_CD = TEMPLE_CD AND A.ACCEPT_SEQ = ACCEPT_SEQ AND A.JUNGAK_CD = JUNGAK_CD AND A.LIGHT_NO = LIGHT_NO ) 
+			                                              ) )
+			        ELSE ''
+			      END) 
+			      || 
+			     (CASE 
+			        WHEN (SELECT count(temple_cd) FROM REC_INDEUNG_JOIN_MGT WHERE A.TEMPLE_CD = TEMPLE_CD AND A.ACCEPT_SEQ = ACCEPT_SEQ AND A.JUNGAK_CD = JUNGAK_CD AND A.LIGHT_NO = LIGHT_NO AND SEQ = A.SEQ ) >1
+			          THEN '외 '|| ( (SELECT count(temple_cd) FROM REC_INDEUNG_JOIN_MGT WHERE A.TEMPLE_CD = TEMPLE_CD AND A.ACCEPT_SEQ = ACCEPT_SEQ AND A.JUNGAK_CD = JUNGAK_CD AND A.LIGHT_NO = LIGHT_NO AND SEQ = A.SEQ )-1) ||'건'
+			        ELSE ''
+			        END ) as CHUK_NAME,
+			        A.INDEUNG_PERIOD  as PERIOD
+			FROM REC_INDEUNG_DETAIL   A
+				,ASP_JUNGAK_MGT       B 
+				,REC_MASTER           C
+			WHERE A.TEMPLE_CD  = B.TEMPLE_CD(+)
+			AND  A.ACCEPT_GBN  = B.ACCEPT_GBN(+)
+			AND  A.JUNGAK_CD   = B.JUNGAK_CD(+)
+			AND  A.TEMPLE_CD   = C.TEMPLE_CD(+)
+			AND  A.ACCEPT_SEQ  = C.ACCEPT_SEQ(+)
+			AND  A.TEMPLE_CD   = #{V_TEMPLE_CD}
+			AND  A.ACCEPT_GBN  = #{V_ACCEPT_GBN}
+			AND  A.JUNGAK_CD   = #{V_JUNGAK_CD}
+			AND  A.LIGHT_NO    = #{V_LIGHT_NO}
+			AND  A.CLOSE_YN    &lt;> 'T'
+			AND  A.DEL_YN      &lt;> 'T'
+	</select>
+	
+	<!-- 
+	<update id="REC_002W_10_A" statementType="CALLABLE" parameterType="kr.co.o2i.util.CommonMap">
+		{
+			call REC_002W_10_A(
+				 #{V_TEMPLE_CD}
+				,#{V_ACCEPT_GBN}
+				,#{V_JUNGAK_CD}
+				,#{V_LIGHT_NO}
+				,#{V_USER_ID}
+				,#{V_REMOTE}
+		    )
+		}
+	</update>
+	
+	<update id="REC_002W_10_B" statementType="CALLABLE" parameterType="kr.co.o2i.util.CommonMap">
+		{
+			call REC_002W_10_B(
+				 #{V_TEMPLE_CD}
+				,#{V_ACCEPT_GBN}
+				,#{V_JUNGAK_CD}
+				,#{V_LIGHT_NO}
+				,#{V_USER_ID}
+				,#{V_REMOTE}
+		    )
+		}
+	</update>
+	 -->
+	<select id="REC_002W_10_A" statementType="CALLABLE"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		{call REC_002W_10_A(#{V_TEMPLE_CD},#{V_ACCEPT_GBN},#{V_JUNGAK_CD},#{V_LIGHT_NO},#{V_USER_ID},#{V_REMOTE})}
+	</select>
+	
+	<select id="REC_002W_10_B" statementType="CALLABLE"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		{call REC_002W_10_B(#{V_TEMPLE_CD},#{V_ACCEPT_GBN},#{V_JUNGAK_CD},#{V_LIGHT_NO},#{V_USER_ID},#{V_REMOTE})}
+	</select>
+	
+	<select id="REC_002W_10_INDEUNG_D" statementType="CALLABLE"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		{call REC_002W_10_INDEUNG_D(#{V_TEMPLE_CD},#{V_ACCEPT_GBN},#{V_JUNGAK_CD},#{V_LIGHT_NO},#{V_USER_ID},#{V_REMOTE})}
+	</select>
+	
+	<select id="REC_002W_10_YEONDEUNG_D" statementType="CALLABLE"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		{call REC_002W_10_YEONDEUNG_D(#{V_TEMPLE_CD},#{V_ACCEPT_GBN},#{V_JUNGAK_CD},#{V_LIGHT_NO},#{V_USER_ID},#{V_REMOTE})}
+	</select>
+	
+	<select id="REC_002W_10_WONBUL_D" statementType="CALLABLE"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		{call REC_002W_10_WONBUL_D(#{V_TEMPLE_CD},#{V_ACCEPT_GBN},#{V_JUNGAK_CD},#{V_LIGHT_NO},#{V_USER_ID},#{V_REMOTE})}
+	</select>
+	
+	<select id="REC_002W_10_YOUNGTOP_D" statementType="CALLABLE"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		{call REC_002W_10_YOUNGTOP_D(#{V_TEMPLE_CD},#{V_ACCEPT_GBN},#{V_JUNGAK_CD},#{V_LIGHT_NO},#{V_USER_ID},#{V_REMOTE})}
+	</select>
+	
+	
+	<select id="REC_002W_10_INDEUNG_C" statementType="CALLABLE"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		{call REC_002W_10_INDEUNG_C(#{V_TEMPLE_CD},#{V_ACCEPT_GBN},#{V_JUNGAK_CD},#{V_LIGHT_NO},#{V_CHANGE_LIGHT_NO},#{V_USER_ID},#{V_REMOTE},#{V_ACCEPT_SEQ},#{V_SEQ})}
+	</select>
+	
+	<select id="REC_002W_10_YEONDEUNG_C" statementType="CALLABLE"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		{call REC_002W_10_YEONDEUNG_C(#{V_TEMPLE_CD},#{V_ACCEPT_GBN},#{V_JUNGAK_CD},#{V_LIGHT_NO},#{V_CHANGE_LIGHT_NO},#{V_USER_ID},#{V_REMOTE},#{V_ACCEPT_SEQ},#{V_SEQ})}
+	</select>
+	
+	<select id="REC_002W_10_WONBUL_C" statementType="CALLABLE"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		{call REC_002W_10_WONBUL_C(#{V_TEMPLE_CD},#{V_ACCEPT_GBN},#{V_JUNGAK_CD},#{V_LIGHT_NO},#{V_CHANGE_LIGHT_NO},#{V_USER_ID},#{V_REMOTE},#{V_ACCEPT_SEQ},#{V_SEQ})}
+	</select>
+	
+	<select id="REC_002W_10_YOUNGTOP_C" statementType="CALLABLE"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		{call REC_002W_10_YOUNGTOP_C(#{V_TEMPLE_CD},#{V_ACCEPT_GBN},#{V_JUNGAK_CD},#{V_LIGHT_NO},#{V_CHANGE_LIGHT_NO},#{V_USER_ID},#{V_REMOTE},#{V_ACCEPT_SEQ},#{V_SEQ})}
+	</select>
+	
+	<select id="SELECT_DEUNG_PERIOD_INFO" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT  A.TEMPLE_CD
+			  , A.ACCEPT_SEQ
+			  , A.SEQ
+			  , A.LIGHT_NO 
+			  , A.PAYMENT_PLAN_AMT 
+			  , (SELECT SUM(AMOUNT) FROM REC_PAYMENT_HIS WHERE A.TEMPLE_CD = TEMPLE_CD AND A.ACCEPT_SEQ = ACCEPT_SEQ AND A.SEQ = SEQ) AS PAYMENT_AMT 
+			  , A.PAYMENT_PLAN_AMT - (SELECT SUM(AMOUNT) FROM REC_PAYMENT_HIS WHERE A.TEMPLE_CD = TEMPLE_CD AND A.ACCEPT_SEQ = ACCEPT_SEQ AND A.SEQ = SEQ) AS MISU_AMT 
+			  , A.INDEUNG_YEAR
+			  , A.INDEUNG_MONTH
+			  , A.INDEUNG_YEAR || LPAD(A.INDEUNG_MONTH,2,'0') AS START_MONTH
+			  , A.INDEUNG_PERIOD
+			  , 0 AS DEFAULT_AMT
+			  , 0 AS ADD_PERIOD
+			  , PAYMENT_PLAN_AMT AS TOTAL_PLAN_AMT
+			  , A.INDEUNG_PERIOD AS TOTAL_PERIOD
+			  , 0 AS TOTAL_MISU_AMT
+			  , LIMIT_YN
+		 FROM  REC_INDEUNG_DETAIL    A
+		WHERE  A.TEMPLE_CD   = #{V_TEMPLE_CD}
+		  AND  A.ACCEPT_GBN  = #{V_ACCEPT_GBN}
+		  AND  A.JUNGAK_CD   = #{V_JUNGAK_CD}
+		  AND  A.LIGHT_NO    = #{V_LIGHT_NO}
+		  AND  A.CLOSE_YN    &lt;&gt; 'T'
+		  AND  A.DEL_YN      &lt;&gt; 'T'
+	</select>
+	
+	<update id="UPDATE_REC_INDEUNG_DETAIL_PEROID" parameterType="java.util.Map" >
+		UPDATE REC_INDEUNG_DETAIL
+		   SET PAYMENT_PLAN_AMT 	= #{TOTAL_PLAN_AMT}
+		   	  ,INDEUNG_PERIOD		= #{TOTAL_PERIOD}
+		   	  ,UPT_USER				= #{V_USER_ID}
+		   	  ,UPT_DATE				= SYSDATE
+		   	  ,REMOTE				= #{V_REMOTE}
+		WHERE TEMPLE_CD 			= #{V_TEMPLE_CD}
+		  AND ACCEPT_SEQ 			= #{ACCEPT_SEQ}
+		  AND SEQ 					= #{SEQ}
+	</update>
+	
+</mapper>

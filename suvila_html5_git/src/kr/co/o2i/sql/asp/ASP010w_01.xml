@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ASP010w_01DAO">
+
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+	</resultMap>
+	
+	
+	<select id="SELECT_CMS_INFO" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT TEMPLE_CD
+			  ,CMS_TRADE_CD
+			  ,NEW_CMS_TRADE_CD
+			  ,CMS_TRADE_PW
+			  ,CMS_CUSTOMER_COMMENT
+			  ,CMS_ENTRANCE_FEE
+			  ,USE_YN
+			  ,MISU_METHOD
+			  ,MONTH_LIMIT_AMOUNT
+			  ,ONCE_MAX_AMOUNT
+			  ,REMARK
+			  ,'S' AS SQL_MODE
+		FROM ASP_TEMPLE_CMS_INFO
+	   WHERE TEMPLE_CD = #{V_TEMPLE}
+	</select>
+	
+	
+	
+	<update id="UPDATE_CMS_INFO" parameterType="kr.co.o2i.util.CommonMap" >
+		UPDATE ASP_TEMPLE_CMS_INFO 
+		   SET CMS_TRADE_PW 			= #{CMS_TRADE_PW}
+		      ,CMS_CUSTOMER_COMMENT 	= #{CMS_CUSTOMER_COMMENT}
+		      ,CMS_ENTRANCE_FEE 		= #{CMS_ENTRANCE_FEE}
+		      ,USE_YN 					= #{USE_YN}
+		      ,MISU_METHOD				= #{MISU_METHOD}
+		      ,MONTH_LIMIT_AMOUNT		= #{MONTH_LIMIT_AMOUNT}
+		      ,ONCE_MAX_AMOUNT			= #{ONCE_MAX_AMOUNT}
+		      ,REMARK					= #{REMARK}
+		      ,UPT_USER 				= #{V_USER_ID}
+		      ,UPT_DATE 				= SYSDATE
+		      ,REMOTE 					= #{V_REMOTE}
+		      ,NEW_CMS_TRADE_CD         = #{NEW_CMS_TRADE_CD}
+		WHERE TEMPLE_CD                 = #{TEMPLE_CD}
+		  AND CMS_TRADE_CD              = #{CMS_TRADE_CD}
+	</update>
+	
+	<insert id="INSERT_CMS_INFO" parameterType="kr.co.o2i.util.CommonMap" >
+		INSERT INTO ASP_TEMPLE_CMS_INFO(
+			 TEMPLE_CD
+			,CMS_TRADE_CD
+			,NEW_CMS_TRADE_CD
+			,CMS_TRADE_PW
+			,CMS_CUSTOMER_COMMENT
+			,CMS_ENTRANCE_FEE
+			,MISU_METHOD
+			,USE_YN
+			,MONTH_LIMIT_AMOUNT
+			,ONCE_MAX_AMOUNT
+			,REMARK
+			,ACCT_GBN
+			,IE_GBN
+			,KWAN
+			,HANG
+			,MOK
+			,SMS_FORMAT
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+		)VALUES(
+			 #{TEMPLE_CD}
+			,#{CMS_TRADE_CD}
+			,#{NEW_CMS_TRADE_CD}
+			,#{CMS_TRADE_PW}
+			,#{CMS_CUSTOMER_COMMENT}
+			,#{CMS_ENTRANCE_FEE}
+			,'2'
+			,#{USE_YN}
+			,#{MONTH_LIMIT_AMOUNT}
+			,#{ONCE_MAX_AMOUNT}
+			,#{REMARK ,jdbcType=VARCHAR}
+			,'1'
+			,'O'
+			,'9'
+			,'2'
+			,'1'
+			,(SELECT SMS_FORMAT FROM ASP_TEMPLE_CMS_INFO WHERE TEMPLE_CD = '000000' AND ROWNUM = 1)
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_REMOTE}
+		)
+	</insert>
+	
+	<insert id="INSERT_CMS_PAYMENT_DAY_MGT" parameterType="kr.co.o2i.util.CommonMap" >
+		INSERT INTO ASP_TEMPLE_CMS_PAYMENT_DAY_MGT(
+			TEMPLE_CD
+			,CMS_TRADE_CD
+			,CMS_PAYMENT_DAY
+			,CMS_REQUEST_GBN
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+		)(
+			SELECT
+				 #{TEMPLE_CD}
+				,#{CMS_TRADE_CD}
+				,CODE
+				,'01'
+				,#{V_USER_ID}
+				,SYSDATE
+				,#{V_USER_ID}
+				,SYSDATE
+				,#{V_REMOTE}
+			FROM ASP_CODE_MGT
+			WHERE GROUP_CD = 'TRAN_WISH_DATE'
+			AND USE_YN = 'Y'
+			AND CODE != '-1'
+		)
+	
+	</insert>
+	
+	<select  id="SELECT_PAYMENT_DAY" parameterType="java.util.Map" resultMap="boardMap">
+		SELECT
+			 TEMPLE_CD
+			,CMS_TRADE_CD
+			,CMS_PAYMENT_DAY
+			,CMS_REQUEST_GBN
+			,REMARK
+		FROM ASP_TEMPLE_CMS_PAYMENT_DAY_MGT
+	   WHERE TEMPLE_CD    = #{V_TEMPLE}
+		 AND CMS_TRADE_CD = #{V_CMS_TRADE_CD}
+	   ORDER BY CMS_PAYMENT_DAY		
+	</select>
+	
+	<update id="UPDATE_ASP_TEMPLE_CMS_PAYMENT_DAY_MGT" parameterType="java.util.Map" >
+		UPDATE ASP_TEMPLE_CMS_PAYMENT_DAY_MGT 
+		   SET CMS_REQUEST_GBN	= #{CMS_REQUEST_GBN}
+		      ,REMARK			= #{REMARK ,jdbcType=VARCHAR}
+		      ,UPT_DATE			= SYSDATE
+		 WHERE TEMPLE_CD        = #{TEMPLE_CD}
+		   AND CMS_TRADE_CD     = #{CMS_TRADE_CD}
+		   AND CMS_PAYMENT_DAY  = #{CMS_PAYMENT_DAY}
+	</update>
+	
+	
+	
+</mapper>

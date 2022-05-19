@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC024w_06DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="CHECK_P" column="SEL_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+	
+	<select id="SELECT_GDREC" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT RPD.TEMPLE_CD
+			  ,RPD.SEQ
+			  ,RPD.DEL_YN
+			  ,RPD.ACCEPT_SEQ
+			  ,RPD.PRAY_CODE
+			  ,RPM.PRAY_NM
+			  ,RM.PROPOSAL_BUD_NO
+			  ,PRO_SIN.NAME_KOR
+			  ,RPD.CRT_USER
+			  ,RPD.ACCEPT_SEQ || RPD.SEQ AS PAGE_SKIP
+			  ,'T' AS CHECK_P
+			  ,PRO_SIN.ADDR1||' '||PRO_SIN.ADDR2 as ADDR
+			  ,PRO_SIN.REPRESEN_REL
+			  ,FN_SINDO_INFO('GANJI_NM',PRO_SIN.TEMPLE_CD,RM.PROPOSAL_BUD_NO) GANJI
+			  ,RPD.START_YYYYMM 
+		 FROM REC_ALWAYS_PRAY_DETAIL RPD
+		     ,REC_ALWAYS_PRAY_MGT RPM
+		     ,REC_MASTER RM
+		     ,REC_SUB RS
+		     ,REC_PAYMENT_HIS RPH
+		     ,SIN_CARD_MASTER PRO_SIN 
+		WHERE RPD.TEMPLE_CD  	   = RPM.TEMPLE_CD
+		  AND RPD.PRAY_CODE  	   = RPM.PRAY_CODE
+		  AND RPD.TEMPLE_CD  	   = RS.TEMPLE_CD
+		  AND RPD.ACCEPT_SEQ 	   = RS.ACCEPT_SEQ
+		  AND RPD.SEQ        	   = RS.SEQ
+		  AND RS.TEMPLE_CD   	   = RM.TEMPLE_CD
+		  AND RS.ACCEPT_SEQ  	   = RM.ACCEPT_SEQ
+		  AND RS.TEMPLE_CD   	   = RPH.TEMPLE_CD
+		  AND RS.ACCEPT_SEQ  	   = RPH.ACCEPT_SEQ
+		  AND RS.SEQ               = RPH.SEQ
+		  AND RM.TEMPLE_CD         = PRO_SIN.TEMPLE_CD(+)
+		  AND RM.PROPOSAL_BUD_NO   = PRO_SIN.BUD_NO(+)
+		  AND RPD.DEL_YN           = 'F'
+		  AND RS.DEL_YN            = 'F'
+		  AND RPD.TEMPLE_CD        = #{V_TEMPLE_CD}
+		  <choose>
+		  	<when test='V_DATE_GBN  == "1" '>
+		  		AND RM.ACCEPT_DATE     BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		  	</when>
+		  	<when test='V_DATE_GBN  == "2" '>
+		  		AND RPH.PAYMENT_YYYYMM BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		  	</when>	
+		  	<when test='V_DATE_GBN  == "3" '>
+		  		AND RPD.START_YYYYMM   BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		  	</when>
+		  	<otherwise>
+		  		AND RM.ACCEPT_DATE     BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		  	</otherwise>
+		  </choose>
+		<if test='V_PROPOSAL_BUD_NO != null and  V_PROPOSAL_BUD_NO != "" '>
+			AND RM.PROPOSAL_BUD_NO LIKE #{V_PROPOSAL_BUD_NO} || '%'
+		</if>
+		<if test='V_CODE != null and  V_CODE != "" '>
+			AND RPD.PRAY_CODE = #{V_CODE}
+		</if>
+		GROUP by RPD.TEMPLE_CD
+			    ,RPD.SEQ
+			    ,RPD.DEL_YN
+			    ,RPD.ACCEPT_SEQ
+			    ,RPD.PRAY_CODE
+			    ,RPM.PRAY_NM
+			    ,RM.PROPOSAL_BUD_NO
+			    ,PRO_SIN.NAME_KOR
+			    ,RPD.CRT_USER
+			    ,RPD.ACCEPT_SEQ || RPD.SEQ
+			    ,'T'
+			    ,PRO_SIN.ADDR1||' '||PRO_SIN.ADDR2
+			    ,PRO_SIN.REPRESEN_REL
+			    ,FN_SINDO_INFO('GANJI_NM',PRO_SIN.TEMPLE_CD,RM.PROPOSAL_BUD_NO)
+			    ,RPD.START_YYYYMM 
+		ORDER BY RPD.ACCEPT_SEQ
+				,RPD.SEQ
+	</select>
+	
+	<select id="SELECT_GDREC_NEW" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT SCM.NAME_KOR 
+			  ,SCM.REPRESEN_REL 
+			  ,FN_SINDO_INFO('GANJI_NM',SCM.TEMPLE_CD,SCM.BUD_NO) GANJI 
+			  ,SCM.BUD_NO as PROPOSAL_BUD_NO
+		      ,RA.TEMPLE_CD 
+		      ,RA.SEQ, RA.DEL_YN 
+		      ,RA.ACCEPT_SEQ 
+		      ,RA.PRAY_CODE 
+		      ,RA.PRAY_NM 
+		      ,RA.CRT_USER 
+		      ,RA.PAGE_SKIP 
+		      ,RA.CHECK_P 
+		      ,RA.START_YYYYMM 
+		      ,RA.ADDR
+		FROM SIN_CARD_MASTER SCM
+		    ,(SELECT RPD.TEMPLE_CD
+		    		,RPD.SEQ
+		    		,RPD.DEL_YN
+		    		,RPD.ACCEPT_SEQ
+		    		,RPD.PRAY_CODE
+		    		,SUBSTR(RM.PROPOSAL_BUD_NO ,0,10) AS BUD_CODE
+		    		,RPM.PRAY_NM
+		    		,RM.PROPOSAL_BUD_NO
+		    		,PRO_SIN.NAME_KOR
+		    		,RPD.CRT_USER
+		    		,RPD.ACCEPT_SEQ || RPD.SEQ AS PAGE_SKIP
+		    		,'T' AS CHECK_P
+		    		,PRO_SIN.ADDR1||' '||PRO_SIN.ADDR2 as ADDR
+		    		,PRO_SIN.REPRESEN_REL
+		    		,FN_SINDO_INFO('GANJI_NM',PRO_SIN.TEMPLE_CD,RM.PROPOSAL_BUD_NO) GANJI
+		    		,RPD.START_YYYYMM
+		        FROM REC_ALWAYS_PRAY_DETAIL RPD
+		        	,REC_ALWAYS_PRAY_MGT RPM
+		        	,REC_MASTER RM
+		        	,SIN_CARD_MASTER PRO_SIN
+		       WHERE RPD.TEMPLE_CD   	 = RPM.TEMPLE_CD
+		         AND RPD.PRAY_CODE   	 = RPM.PRAY_CODE
+		         AND RPD.TEMPLE_CD   	 = RM.TEMPLE_CD
+		         AND RPD.ACCEPT_SEQ  	 = RM.ACCEPT_SEQ
+		         AND RM.TEMPLE_CD    	 = PRO_SIN.TEMPLE_CD
+		         AND RM.PROPOSAL_BUD_NO  = PRO_SIN.BUD_NO
+		         AND RPD.TEMPLE_CD   	 = #{V_TEMPLE_CD}
+		         <if test='V_DATE_GBN  == "3" '>
+		         	AND RPD.START_YYYYMM BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		         </if>
+		         <if test='V_DATE_GBN  != "3" '>
+		         	AND RM.ACCEPT_DATE BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		         </if>
+		         <if test='V_PROPOSAL_BUD_NO != null and  V_PROPOSAL_BUD_NO != "" '>
+		         	AND RM.PROPOSAL_BUD_NO LIKE #{V_PROPOSAL_BUD_NO} || '%'
+		         </if>
+		         <if test='V_CODE != null and  V_CODE != "" '>
+		          	AND RPD.PRAY_CODE = #{V_CODE}
+		         </if>
+			  ) RA
+		WHERE RA.TEMPLE_CD = SCM.TEMPLE_CD
+		AND   RA.BUD_CODE  = SCM.BUD_CODE
+		AND   SCM.DEL_YN = 'F'
+		AND   SCM.BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = SCM.TEMPLE_CD)
+		ORDER BY RA.ACCEPT_SEQ
+				,RA.SEQ
+				,SCM.SORT_SEQ
+	</select>
+	
+	<select id="SELECT_GDREC_PRINT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT 
+			  RPD.TEMPLE_CD,
+			  RPD.ACCEPT_SEQ, 
+			  RPD.SEQ, 
+			  RPD.DEL_YN,	   
+			  RPM.PRAY_NM,   
+			  PRO_SIN.BUD_CODE,
+			  DECODE(SIN.BUD_NO,SIN.DAEJU_BUD_NO,'T','F') AS DAEJU_YN,
+			  SIN.NAME_KOR,
+			  SIN.SORT_SEQ,
+			  DAE.ADDR1,
+			  DAE.ADDR2,
+			  DAE.ZIP_CD,
+			  '(' || DAE.TELNO1 || ') ' || DAE.TELNO2 || '-' || DAE.TELNO3 AS TELNO,
+			  SIN.REPRESEN_REL,
+			  SIN.SEXAGENARY,
+			  NVL2(CM_SEX.NAME,CM_SEX.NAME||'생','') AS SEXAGENARY_NM,
+			  SIN.LUNAR_SOLAR,
+			  CM_LS.NAME AS LUNAR_SOLAR_NM,
+			  DECODE(LENGTH(SIN.BIRTHDAY),8,SUBSTR(NVL(CM_LS.NAME,''),1,1)|| NVL2(SIN.BIRTHDAY,' ' || SUBSTR(SIN.BIRTHDAY,5,2) ||'월 '||SUBSTR(SIN.BIRTHDAY,7,2) || '일',''),'')  AS BIRTHDAY,
+			  RPD.CRT_USER,
+			  RPD.ACCEPT_SEQ || RPD.SEQ AS PAGE_SKIP,
+			  '' AS TEMPLE_NM,
+			  CASE WHEN FN_FMT_NUMBER(SIN.BIRTHDAY)>1000 AND FN_TEMPLE_INFO(SIN.TEMPLE_CD,'PRINT_AGE_YN') = 'T' THEN (1+TO_CHAR(SYSDATE,'YYYY')-SUBSTR(SIN.BIRTHDAY,1,4))||'세' ELSE '' END AGE,
+			  DAE.ADDR1 || ' ' || DAE.ADDR2 || ' ' || FN_ADDR_BLDG2(DAE.BLDG_NUM) as ADDR_ALL
+		FROM 
+			REC_ALWAYS_PRAY_DETAIL RPD,
+			REC_ALWAYS_PRAY_MGT RPM,
+			REC_MASTER RM,
+			SIN_CARD_MASTER PRO_SIN,
+			SIN_CARD_MASTER SIN,
+		    SIN_CARD_MASTER DAE,
+			ASP_CODE_MGT CM_SEX,
+			ASP_CODE_MGT CM_LS,
+			REC_PAYMENT_HIS RPH
+		WHERE    RPD.TEMPLE_CD   = RPM.TEMPLE_CD 
+		     AND RPD.PRAY_CODE         = RPM.PRAY_CODE 
+			 AND RPD.TEMPLE_CD         = RM.TEMPLE_CD 
+			 AND RPD.ACCEPT_SEQ        = RM.ACCEPT_SEQ 
+			 AND RM.TEMPLE_CD          = PRO_SIN.TEMPLE_CD 
+			 AND RM.PROPOSAL_BUD_NO    = PRO_SIN.BUD_NO	 
+			 AND RPD.TEMPLE_CD         = SIN.TEMPLE_CD
+		     AND SIN.BUD_NO      LIKE PRO_SIN.BUD_CODE || '%' 
+			 AND RPD.TEMPLE_CD         = DAE.TEMPLE_CD
+			 AND DAE.BUD_NO            = PRO_SIN.DAEJU_BUD_NO
+			 AND CM_SEX.GROUP_CD(+)    = 'GANJI'
+			 AND SIN.SEXAGENARY        = CM_SEX.CODE(+)
+			 AND CM_LS.GROUP_CD(+)     = 'LUNAR_SOLAR'
+			 AND SIN.LUNAR_SOLAR       = CM_LS.CODE(+)
+			 AND RPD.DEL_YN            = 'F'
+			 AND SIN.DEL_YN            = 'F'
+			 AND RPD.TEMPLE_CD   	   = RPH.TEMPLE_CD
+		     AND RPD.ACCEPT_SEQ  	   = RPH.ACCEPT_SEQ
+		     AND RPD.SEQ               = RPH.SEQ
+		     AND RPH.TEMPLE_CD         = #{V_TEMPLE_CD}  
+			 AND RPD.TEMPLE_CD         = #{V_TEMPLE_CD}
+			 AND SIN.BUD_NO IN (SELECT BUD_NO FROM SIN_CARD_MASTER WHERE TEMPLE_CD = RPD.TEMPLE_CD MINUS SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = RPD.TEMPLE_CD)
+			 <choose>
+			  	<when test='V_DATE_GBN  == "1" '>
+			  		AND RM.ACCEPT_DATE BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+			  	</when>
+			  	<when test='V_DATE_GBN  == "2" '>
+			  		AND RPH.PAYMENT_YYYYMM BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE} 
+			  	</when>	
+			  	<when test='V_DATE_GBN  == "3" '>
+			  		AND RPD.START_YYYYMM   BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+			  	</when>
+			  	<otherwise>
+			  		AND RM.ACCEPT_DATE BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+			  	</otherwise>
+			  </choose>
+			<if test='V_PROPOSAL_BUD_NO != null and  V_PROPOSAL_BUD_NO != "" '>
+				AND RM.PROPOSAL_BUD_NO LIKE #{V_PROPOSAL_BUD_NO} || '%'
+			</if>
+			<if test='V_CODE != null and  V_CODE != "" '>
+				AND RPD.PRAY_CODE = #{V_CODE} 
+			</if>
+		GROUP by RPD.TEMPLE_CD
+		        ,RPD.ACCEPT_SEQ
+		        ,RPD.SEQ
+		        ,RPD.DEL_YN
+		        ,RPM.PRAY_NM
+		        ,PRO_SIN.BUD_CODE
+		        ,DECODE(SIN.BUD_NO,SIN.DAEJU_BUD_NO,'T','F')
+		        ,SIN.NAME_KOR
+		        ,SIN.SORT_SEQ
+		        ,DAE.ADDR1
+		        ,DAE.ADDR2
+		        ,DAE.ZIP_CD
+		        ,'(' || DAE.TELNO1 || ') ' || DAE.TELNO2 || '-' || DAE.TELNO3
+		        ,SIN.REPRESEN_REL
+		        ,SIN.SEXAGENARY
+		        ,NVL2(CM_SEX.NAME,CM_SEX.NAME||'생','')
+		        ,SIN.LUNAR_SOLAR
+		        ,CM_LS.NAME
+		        ,DECODE(LENGTH(SIN.BIRTHDAY),8,SUBSTR(NVL(CM_LS.NAME,''),1,1)|| NVL2(SIN.BIRTHDAY,' ' || SUBSTR(SIN.BIRTHDAY,5,2) ||'월 '||SUBSTR(SIN.BIRTHDAY,7,2) || '일',''),'')
+		        ,RPD.CRT_USER
+		        ,RPD.ACCEPT_SEQ || RPD.SEQ
+		        ,''
+		        ,CASE WHEN FN_FMT_NUMBER(SIN.BIRTHDAY)>1000 AND FN_TEMPLE_INFO(SIN.TEMPLE_CD,'PRINT_AGE_YN') = 'T' THEN (1+TO_CHAR(SYSDATE,'YYYY')-SUBSTR(SIN.BIRTHDAY,1,4))||'세' ELSE '' END 
+		        ,DAE.ADDR1 || ' ' || DAE.ADDR2 || ' ' || FN_ADDR_BLDG2(DAE.BLDG_NUM)
+		ORDER BY RPD.ACCEPT_SEQ, RPD.SEQ, SORT_SEQ
+	</select>
+	
+</mapper>

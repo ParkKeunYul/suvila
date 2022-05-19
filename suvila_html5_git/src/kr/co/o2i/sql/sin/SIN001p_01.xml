@@ -1,0 +1,809 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SIN001p_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+	
+	
+	<insert id="INSERT_SIN_CARD_MASTER_BRANCH" parameterType="java.util.Map">
+		INSERT INTO SIN_CARD_MASTER(
+			 TEMPLE_CD
+			,BUD_NO
+			,BUD_CODE
+			,SORT_SEQ
+			,DAEJU_BUD_NO
+			,REPRESEN_REL
+			,NAME_KOR
+			,NAME_HAN
+			,SACRED_KOR
+			,SACRED_HAN
+			,JUMIN_NO
+			,ZIP_CD
+			,ADDR1
+			,ADDR2
+			,TELNO1
+			,TELNO2
+			,TELNO3
+			,MOBILE_TELNO1
+			,MOBILE_TELNO2
+			,MOBILE_TELNO3
+			,EMAIL
+			,LAST_SCHOLA
+			,INTEREST
+			,SKILL
+			,COMPANY_NAME
+			,COMPANY_POS
+			,COMPANY_TEL1
+			,COMPANY_TEL2
+			,COMPANY_TEL3
+			,ENTRANCE_CD
+			,NEWS_YN
+			,QUALIFICATION
+			,SACHAL_NAME
+			,POST_TRANS
+			,EMAIL_TRANS
+			,SMS_TRANS
+			,MEMO
+			,SEXAGENARY
+			,LEAP_MONTH
+			,LUNAR_SOLAR
+			,BIRTHTIME
+			,ISSUE_DATE
+			,BIRTHDAY
+			,SEX_GBN
+			,SINDO_GBN
+			,HWAJU_YN
+			,HWAJU_BUD_NO
+			,CARD_ISSUE_DATE
+			,CARD_ISSUE_CNT
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+			,DEL_YN
+			,BLDG_NUM
+		) VALUES (
+			 #{V_TEMPLE_CD}
+			,#{V_BUD_NO}
+			,#{V_BUD_CODE}
+			,#{V_SORT_SEQ}
+			,#{DAEJU_YN      ,jdbcType=VARCHAR}
+			,#{REPRESEN_REL  ,jdbcType=VARCHAR}
+			,#{NAME_KOR      ,jdbcType=VARCHAR}
+			,#{NAME_HAN      ,jdbcType=VARCHAR}
+			,#{SACRED_KOR    ,jdbcType=VARCHAR}
+			,#{SACRED_HAN    ,jdbcType=VARCHAR}
+			,#{JUMIN_NO      ,jdbcType=VARCHAR}
+			,#{ZIP_CD        ,jdbcType=VARCHAR}
+			,#{ADDR1         ,jdbcType=VARCHAR}
+			,#{ADDR2         ,jdbcType=VARCHAR}
+			,#{TELNO1        ,jdbcType=VARCHAR}
+			,#{TELNO2        ,jdbcType=VARCHAR}
+			,#{TELNO3        ,jdbcType=VARCHAR}
+			,#{MOBILE_TELNO1 ,jdbcType=VARCHAR}
+			,#{MOBILE_TELNO2 ,jdbcType=VARCHAR}
+			,#{MOBILE_TELNO3 ,jdbcType=VARCHAR}
+			,#{EMAIL1        ,jdbcType=VARCHAR} || '@' ||#{EMAIL2 ,jdbcType=VARCHAR}
+			,#{LAST_SCHOLA   ,jdbcType=VARCHAR}
+			,#{INTEREST      ,jdbcType=VARCHAR}
+			,#{SKILL         ,jdbcType=VARCHAR}
+			,#{COMPANY_NAME  ,jdbcType=VARCHAR}
+			,#{COMPANY_POS   ,jdbcType=VARCHAR}
+			,#{COMPANY_TEL1  ,jdbcType=VARCHAR}
+			,#{COMPANY_TEL2  ,jdbcType=VARCHAR}
+			,#{COMPANY_TEL3  ,jdbcType=VARCHAR}
+			,#{ENTRANCE_CD   ,jdbcType=VARCHAR}
+			,DECODE( #{NEWS_YN ,jdbcType=VARCHAR} ,'1','T','F')
+			,#{QUALIFICATION ,jdbcType=VARCHAR}
+			,#{SACHAL_NAME   ,jdbcType=VARCHAR}
+			,DECODE(#{POST_TRANS   ,jdbcType=VARCHAR},'1','T','F')
+			,DECODE(#{EMAIL_TRANS  ,jdbcType=VARCHAR},'1','T','F')
+			,DECODE(#{SMS_TRANS    ,jdbcType=VARCHAR},'1','T','F')
+			,#{MEMO            ,jdbcType=VARCHAR}
+			,#{SEXAGENARY      ,jdbcType=VARCHAR}
+			,#{LEAP_MONTH      ,jdbcType=VARCHAR}
+			,#{LUNAR_SOLAR     ,jdbcType=VARCHAR}
+			,#{BIRTHTIME       ,jdbcType=VARCHAR}
+			,#{ISSUE_DATE      ,jdbcType=VARCHAR}
+			,#{BIRTHDAY        ,jdbcType=VARCHAR}
+			,#{SEX_GBN         ,jdbcType=VARCHAR}
+			,#{SINDO_GBN       ,jdbcType=VARCHAR}
+			,DECODE(#{HWAJU_YN ,jdbcType=VARCHAR},'1','T','F')
+			,#{HWAJU_BUD_NO    ,jdbcType=VARCHAR}
+			,#{CARD_ISSUE_DATE ,jdbcType=VARCHAR}
+			,${CARD_ISSUE_CNT}
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_REMOTE}
+			,'F'
+			,#{BLDG_NUM         ,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<!-- <update id="UPDATE_SIN_CARD_MASTER_BRANCH_PICTURE" parameterType="java.util.Map">
+		UPDATE SIN_CARD_MASTER
+	       SET PICTURE   = #{V_PICTURE}
+	     WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+	       AND BUD_NO    = #{V_BUD_NO}
+	</update> -->
+	
+	<update id="UPDATE_SIN_CARD_NO_CHANGE" parameterType="java.util.Map">
+		UPDATE SIN_CARD_ISSUE_DETAIL
+  	       SET BUD_NO    = #{V_BUD_NO}
+     		  ,MEMO      = MEMO || CHR(13)||CHR(10) || #{BUD_NO} || ' 분가로인해' || #{V_BUD_NO} || ' 로 변경' 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+  		   AND BUD_NO    = #{BUD_NO}  
+	</update>
+	
+	<select  id="SELECT_BRANCH_CD"  parameterType="java.util.Map" resultType="String">
+		SELECT  TO_CHAR(MAX(NVL(SUBSTR(BUD_CODE,10),0)+1)) as BRANCH_CODE		    
+		  FROM SIN_CARD_MASTER                              							
+		 WHERE TEMPLE_CD     = #{V_TEMPLE_CD}  					
+		   AND BUD_CODE LIKE  #{V_BUD_CODE} || '%'     
+	</select>
+	
+	<select  id="SELECT_BRANCH_BUD_NO"  parameterType="java.util.Map" resultType="String">
+		SELECT LPAD(TO_NUMBER(NVL(MAX(SUBSTR(BUD_NO,12)),0))+1,2,0) AS SORT_SEQ	
+		  FROM SIN_CARD_MASTER                              						
+		 WHERE TEMPLE_CD   = #{V_TEMPLE_CD}				
+		   AND BUD_NO LIKE  #{V_BUD_CODE} || '%'    				
+	</select>
+	
+	
+	
+	<select  id="SELECT_SIN_BRANCH_FAMILY_HIS_SEQ_NO" parameterType="java.util.Map" resultType="String" >
+		SELECT NVL(MAX(SEQ_NO),0)+1 SEQ_NO 
+		  FROM SIN_BRANCH_FAMILY_HIS 
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND BUD_NO    = #{BUD_NO} 
+	</select>
+	
+	
+	<insert id="SIN_BRANCH_FAMILY_HIS_INSERT" parameterType="java.util.Map" >
+		 INSERT INTO SIN_BRANCH_FAMILY_HIS (    																											
+	     	 TEMPLE_CD
+	     	,BUD_NO
+	     	,SEQ_NO
+	     	,BUD_CODE
+	     	,BUD_CODE_AFTER
+	     	,BRANCH_GBN
+	     	,BRANCH_DATE
+	     	,CRT_USER
+	     	,CRT_DATE
+	     	,UPT_USER
+	     	,UPT_DATE
+	     	,REMOTE																						
+	     ) VALUES (   																									
+	     	 #{TEMPLE_CD}
+	     	,#{N_BudCd}
+	     	,#{SEQ_NO}
+	     	,SUBSTR(#{N_BudCd}, 0, 10)
+	     	,SUBSTR(#{O_BudCd}, 0, 10)
+	     	,#{PMFlag}
+	     	,TO_CHAR(SYSDATE,'YYYYMMDD')
+	     	,#{CRT_USER}
+	     	,SYSDATE
+	     	,#{CRT_USER}
+	     	,SYSDATE
+	     	,#{REMOTE}											  												
+	     )   	
+	</insert>
+	
+	
+	<delete id="DELETE_SIN_CARD_MASTER_BRANCH" parameterType="java.util.Map">
+		DELETE FROM SIN_CARD_MASTER
+         WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND BUD_NO    = #{BUD_NO}
+	</delete>
+	
+	<!--  분가 쿼리 시작 -->	
+	<select  id="SELECT_SIN_BRANCH_FAMILY_HIS_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SIN_BRANCH_FAMILY_HIS 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="SELECT_SIN_BRANCH_FAMILY_HIS_UPDATE" parameterType="java.util.Map">
+		UPDATE SIN_BRANCH_FAMILY_HIS 
+		   SET BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND BUD_NO    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="SIN_DEATH_INFO_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SIN_DEATH_INFO 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="SIN_DEATH_INFO_CNT_UPDATE" parameterType="java.util.Map">
+		UPDATE SIN_DEATH_INFO 
+		   SET BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND BUD_NO    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="SIN_DEATH_BOKWI_INFO_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SIN_DEATH_BOKWI_INFO 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="SIN_DEATH_BOKWI_INFO_UPDATE" parameterType="java.util.Map">
+		UPDATE SIN_DEATH_BOKWI_INFO 
+		   SET BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND BUD_NO    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="SIN_BUDDHISM_INFO_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SIN_BUDDHISM_INFO 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="SIN_BUDDHISM_INFO_UPDATE" parameterType="java.util.Map">
+		UPDATE SIN_BUDDHISM_INFO 
+		   SET BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND BUD_NO    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="SIN_ACTION_HIS_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SIN_ACTION_HIS 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="SIN_ACTION_HIS_UPDATE" parameterType="java.util.Map">
+		UPDATE SIN_ACTION_HIS 
+		   SET BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND BUD_NO    = #{O_BudCd}
+	</update>
+	
+	<select  id="SIN_CARD_HIS_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SIN_CARD_HIS 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="SIN_CARD_HIS_UPDATE" parameterType="java.util.Map">
+		UPDATE SIN_CARD_HIS 
+		   SET BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND BUD_NO    = #{O_BudCd}
+	</update>
+	
+	<select  id="SIN_GROUP_HIS_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SIN_GROUP_HIS 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	<insert id="SIN_GROUP_HIS_INSERT" parameterType="java.util.Map">
+		INSERT INTO SIN_GROUP_HIS													
+		(																			
+			TEMPLE_CD, 	BUD_NO, 		ORG_CD, 	ENTRY_DATE, 	OUT_YN, 		
+			DEL_DATE, 	POSTION_CODE, 	MEMO, 		CRT_USER, 		CRT_DATE, 		
+			UPT_DATE, 	UPT_USER, 		REMOTE										
+		)																			
+		SELECT																	
+			TEMPLE_CD, 	#{N_BudCd},		ORG_CD, 	ENTRY_DATE, 	OUT_YN, 		
+			DEL_DATE, 	POSTION_CODE, 	MEMO, 		CRT_USER, 		CRT_DATE, 		
+			UPT_DATE, 	UPT_USER, 		REMOTE										
+		FROM																		
+			SIN_GROUP_HIS															
+		WHERE																		
+					TEMPLE_CD 	= #{TEMPLE_CD}												
+			AND 	BUD_NO		= #{O_BudCd}												
+	</insert>
+	
+	<select  id="SIN_GROUP_ENTRANCE_HIS_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SIN_GROUP_ENTRANCE_HIS 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="SIN_GROUP_ENTRANCE_HIS_UPDATE" parameterType="java.util.Map">
+		UPDATE SIN_GROUP_ENTRANCE_HIS 
+		   SET BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND BUD_NO    = #{O_BudCd}
+	</update>
+	
+	<select  id="SIN_GROUP_FEE_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SIN_GROUP_FEE 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="SIN_GROUP_FEE_UPDATE" parameterType="java.util.Map">
+		UPDATE SIN_GROUP_FEE 
+		   SET BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND BUD_NO    = #{O_BudCd}
+	</update>
+	
+	<select  id="SIN_GROUP_HIS_CNT2" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SIN_GROUP_HIS 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="SIN_GROUP_HIS_DELETE" parameterType="java.util.Map">
+		DELETE FROM SIN_GROUP_HIS
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND BUD_NO    = #{O_BudCd}
+	</update>
+	
+	<select  id="SIN_SCHOLARSHIP_FUND_HIS_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SIN_SCHOLARSHIP_FUND_HIS 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="SIN_SCHOLARSHIP_FUND_HIS_UPDATE" parameterType="java.util.Map">
+		UPDATE SIN_SCHOLARSHIP_FUND_HIS 
+		   SET BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND BUD_NO    = #{O_BudCd}
+	</update>
+	
+	<select  id="SIN_FAMILY_MEMO_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SIN_FAMILY_MEMO 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="SIN_FAMILY_MEMO_UPDATE" parameterType="java.util.Map">
+		UPDATE SIN_FAMILY_MEMO 
+		   SET BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND BUD_NO    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="SIN_DONATION_BILL_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SIN_DONATION_BILL 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	
+	<insert id="SIN_DONATION_BILL_INSERT" parameterType="java.util.Map">
+		INSERT INTO SIN_DONATION_BILL(														
+			TEMPLE_CD, 	BUD_NO, 	GIBU_NO, 	GIBU_DAY,		
+			NAME_KOR, 	JUMIN_NO, 	SAUP_NO, 	ZIP_CD, 		
+			ADDR1, 		REMARK, 	ADDR2, 		GIBU_AMT,		
+			REISUE_YN, 	CRT_USER, 	CRT_DATE, 	UPT_DATE,		
+			UPT_USER, 	REMOTE									
+		)														
+		SELECT													
+			TEMPLE_CD, 	#{N_BudCd},	GIBU_NO, 	GIBU_DAY,		
+			NAME_KOR, 	JUMIN_NO, 	SAUP_NO, 	ZIP_CD, 		
+			ADDR1, 		REMARK, 	ADDR2, 		GIBU_AMT,		
+			REISUE_YN, 	CRT_USER, 	CRT_DATE, 	UPT_DATE,		
+			UPT_USER, 	REMOTE									
+		FROM													
+			SIN_DONATION_BILL									
+		WHERE													
+				TEMPLE_CD 	= #{V_TEMPLE_CD}									
+			AND BUD_NO		= #{O_BudCd}									
+	</insert>
+	
+	
+	<select  id="SIN_DONATION_BILL_DETAIL_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SIN_DONATION_BILL_DETAIL 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="SIN_DONATION_BILL_DETAIL_UPDATE" parameterType="java.util.Map">
+		UPDATE SIN_DONATION_BILL_DETAIL 
+		   SET BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND BUD_NO    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="SIN_DONATION_BILL_YEAR_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SIN_DONATION_BILL_YEAR 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="SIN_DONATION_BILL_YEAR_UPDATE" parameterType="java.util.Map">
+		UPDATE SIN_DONATION_BILL_YEAR 
+		   SET BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND BUD_NO    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="SIN_DONATION_BILL_CNT2" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SIN_DONATION_BILL 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	<delete id="SIN_DONATION_BILL_DELETE"  parameterType="java.util.Map">
+		DELETE FROM  SIN_DONATION_BILL
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</delete>
+	
+	<select  id="SIN_CLASS_INFO_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SIN_CLASS_INFO 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="SIN_CLASS_INFO_UPDATE" parameterType="java.util.Map">
+		UPDATE SIN_CLASS_INFO 
+		   SET BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND BUD_NO    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="SIN_TEMPLE_STAY_HIS_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SIN_TEMPLE_STAY_HIS 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="SIN_TEMPLE_STAY_HIS_UPDATE" parameterType="java.util.Map">
+		UPDATE SIN_TEMPLE_STAY_HIS 
+		   SET BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND BUD_NO    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="SIN_CMS_INFO_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SIN_CMS_INFO 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="SIN_CMS_INFO_UPDATE" parameterType="java.util.Map">
+		UPDATE SIN_CMS_INFO 
+		   SET BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND BUD_NO    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="SIN_CMS_MEMBER_HIS_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SIN_CMS_MEMBER_HIS 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="SIN_CMS_MEMBER_HIS_UPDATE" parameterType="java.util.Map">
+		UPDATE SIN_CMS_MEMBER_HIS 
+		   SET BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND BUD_NO    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="REC_MASTER_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM REC_MASTER 
+		 WHERE TEMPLE_CD          = #{V_TEMPLE_CD} 
+		   AND PROPOSAL_BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="REC_MASTER_UPDATE" parameterType="java.util.Map">
+		UPDATE REC_MASTER 
+		   SET PROPOSAL_BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD 		  = #{TEMPLE_CD}
+		   AND PROPOSAL_BUD_NO    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="REC_MASTER_WHAJUBOSAL_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM REC_MASTER 
+		 WHERE TEMPLE_CD     = #{V_TEMPLE_CD} 
+		   AND WHAJUBOSAL    = #{O_BudCd}	
+	</select>
+	<update id="REC_MASTER_WHAJUBOSAL_UPDATE" parameterType="java.util.Map">
+		UPDATE REC_MASTER 
+		   SET WHAJUBOSAL    = #{N_BudCd}
+		 WHERE TEMPLE_CD 	 = #{TEMPLE_CD}
+		   AND WHAJUBOSAL    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="REC_WEPAE_CHONHON_JOIN_MGT_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM REC_WEPAE_CHONHON_JOIN_MGT 
+		 WHERE TEMPLE_CD     = #{V_TEMPLE_CD} 
+		   AND BOKWIJA_NO    = #{O_BudCd}	
+	</select>
+	<update id="REC_WEPAE_CHONHON_JOIN_MGT_UPDATE" parameterType="java.util.Map">
+		UPDATE REC_WEPAE_CHONHON_JOIN_MGT 
+		   SET BOKWIJA_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD 	 = #{TEMPLE_CD}
+		   AND BOKWIJA_NO    = #{O_BudCd}
+	</update>
+	
+	<select  id="REC_INDEUNG_JOIN_MGT_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM REC_INDEUNG_JOIN_MGT 
+		 WHERE TEMPLE_CD    	  = #{V_TEMPLE_CD} 
+		   AND DONGCHAM_BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="REC_INDEUNG_JOIN_MGT_UPDATE" parameterType="java.util.Map">
+		UPDATE REC_INDEUNG_JOIN_MGT 
+		   SET DONGCHAM_BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD 	 	  = #{TEMPLE_CD}
+		   AND DONGCHAM_BUD_NO    = #{O_BudCd}
+	</update>
+	
+	<select  id="REC_INDEUNG_JOIN_MGT_BOKWIJA_NO_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM REC_INDEUNG_JOIN_MGT 
+		 WHERE TEMPLE_CD     = #{V_TEMPLE_CD} 
+		   AND BOKWIJA_NO    = #{O_BudCd}	
+	</select>
+	<update id="REC_INDEUNG_JOIN_MGT_BOKWIJA_NO_UPDATE" parameterType="java.util.Map">
+		UPDATE REC_INDEUNG_JOIN_MGT 
+		   SET BOKWIJA_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD 	 = #{TEMPLE_CD}
+		   AND BOKWIJA_NO    = #{O_BudCd}
+	</update>
+	
+	<select  id="REC_YEONDEUNG_JOIN_MGT_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM REC_YEONDEUNG_JOIN_MGT 
+		 WHERE TEMPLE_CD    	  = #{V_TEMPLE_CD} 
+		   AND DONGCHAM_BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="REC_YEONDEUNG_JOIN_MGT_UPDATE" parameterType="java.util.Map">
+		UPDATE REC_YEONDEUNG_JOIN_MGT 
+		   SET DONGCHAM_BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD 	 	  = #{TEMPLE_CD}
+		   AND DONGCHAM_BUD_NO    = #{O_BudCd}
+	</update>
+	
+	<select  id="REC_YEONDEUNG_JOIN_MGT_BOKWIJA_NO_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM REC_YEONDEUNG_JOIN_MGT 
+		 WHERE TEMPLE_CD     = #{V_TEMPLE_CD} 
+		   AND BOKWIJA_NO    = #{O_BudCd}	
+	</select>
+	<update id="REC_YEONDEUNG_JOIN_MGT_BOKWIJA_NO_UPDATE" parameterType="java.util.Map">
+		UPDATE REC_YEONDEUNG_JOIN_MGT 
+		   SET BOKWIJA_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD 	 = #{TEMPLE_CD}
+		   AND BOKWIJA_NO    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="REC_FORTY_NINE_DEATH_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM REC_FORTY_NINE_DEATH 
+		 WHERE TEMPLE_CD      = #{V_TEMPLE_CD} 
+		   AND DECE_BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="REC_FORTY_NINE_DEATH_UPDATE" parameterType="java.util.Map">
+		UPDATE REC_FORTY_NINE_DEATH 
+		   SET DECE_BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD 	  = #{TEMPLE_CD}
+		   AND DECE_BUD_NO    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="REC_GIJE_DEATH_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM REC_FORTY_NINE_DEATH 
+		 WHERE TEMPLE_CD      = #{V_TEMPLE_CD} 
+		   AND DECE_BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="REC_GIJE_DEATH_UPDATE" parameterType="java.util.Map">
+		UPDATE REC_FORTY_NINE_DEATH 
+		   SET DECE_BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD 	  = #{TEMPLE_CD}
+		   AND DECE_BUD_NO    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="REC_CHONDOJE_DEATH_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM REC_CHONDOJE_DEATH 
+		 WHERE TEMPLE_CD      = #{V_TEMPLE_CD} 
+		   AND DECE_BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="REC_CHONDOJE_DEATH_UPDATE" parameterType="java.util.Map">
+		UPDATE REC_CHONDOJE_DEATH 
+		   SET DECE_BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD 	  = #{TEMPLE_CD}
+		   AND DECE_BUD_NO    = #{O_BudCd}
+	</update>
+	
+	<select  id="REC_BULSA_DETAIL_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM REC_BULSA_DETAIL 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="REC_BULSA_DETAIL_UPDATE" parameterType="java.util.Map">
+		UPDATE REC_BULSA_DETAIL 
+		   SET BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND BUD_NO    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="REC_TEMPLE_STAY_DETAIL_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM REC_BULSA_DETAIL 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="REC_TEMPLE_STAY_DETAIL_UPDATE" parameterType="java.util.Map">
+		UPDATE REC_BULSA_DETAIL 
+		   SET BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND BUD_NO    = #{O_BudCd}
+	</update>
+	
+	<select  id="REC_WONBUL_JOIN_MGT_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM REC_WONBUL_JOIN_MGT 
+		 WHERE TEMPLE_CD 		  = #{V_TEMPLE_CD} 
+		   AND DONGCHAM_BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="REC_WONBUL_JOIN_MGT_UPDATE" parameterType="java.util.Map">
+		UPDATE REC_WONBUL_JOIN_MGT 
+		   SET DONGCHAM_BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD 		  = #{TEMPLE_CD}
+		   AND DONGCHAM_BUD_NO    = #{O_BudCd}
+	</update>
+	
+	
+	
+	<select  id="REC_WONBUL_JOIN_MGT_BOKWIJA_NO_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM REC_WONBUL_JOIN_MGT 
+		 WHERE TEMPLE_CD 	 = #{V_TEMPLE_CD} 
+		   AND BOKWIJA_NO    = #{O_BudCd}	
+	</select>
+	<update id="REC_WONBUL_JOIN_MGT_BOKWIJA_NO_UPDATE" parameterType="java.util.Map">
+		UPDATE REC_WONBUL_JOIN_MGT 
+		   SET BOKWIJA_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD 	 = #{TEMPLE_CD}
+		   AND BOKWIJA_NO    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="REC_SUPPORT_DETAIL_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM REC_SUPPORT_DETAIL 
+		 WHERE TEMPLE_CD 		  = #{V_TEMPLE_CD} 
+		   AND DONGCHAM_BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="REC_SUPPORT_DETAIL_UPDATE" parameterType="java.util.Map">
+		UPDATE REC_SUPPORT_DETAIL 
+		   SET DONGCHAM_BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD 		  = #{TEMPLE_CD}
+		   AND DONGCHAM_BUD_NO    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="REC_YOUNGTOP_DETAIL_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM REC_YOUNGTOP_DETAIL 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND BUD_NO    = #{O_BudCd}	
+	</select>
+	<update id="REC_YOUNGTOP_DETAIL_UPDATE" parameterType="java.util.Map">
+		UPDATE REC_YOUNGTOP_DETAIL 
+		   SET BUD_NO    = #{N_BudCd}
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND BUD_NO    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="SDK_SMS_SEND_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SMSKT.SDK_SMS_SEND 
+		 WHERE RESERVED1 = #{V_TEMPLE_CD} 
+		   AND RESERVED2 = #{O_BudCd}	
+	</select>
+	<update id="SDK_SMS_SEND_UPDATE" parameterType="java.util.Map">
+		UPDATE SMSKT.SDK_SMS_SEND 
+		   SET RESERVED2    = #{N_BudCd}
+		 WHERE RESERVED1 	= #{TEMPLE_CD}
+		   AND RESERVED2    = #{O_BudCd}
+	</update>
+	
+	<select  id="SDK_MMS_SEND_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SMSKT.SDK_MMS_SEND 
+		 WHERE RESERVED1 = #{V_TEMPLE_CD} 
+		   AND RESERVED2 = #{O_BudCd}	
+	</select>
+	<update id="SDK_MMS_SEND_UPDATE" parameterType="java.util.Map">
+		UPDATE SMSKT.SDK_MMS_SEND 
+		   SET RESERVED2    = #{N_BudCd}
+		 WHERE RESERVED1    = #{TEMPLE_CD}
+		   AND RESERVED2    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="SDK_SMS_REPORT_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SMSKT.SDK_SMS_REPORT 
+		 WHERE RESERVED1 = #{V_TEMPLE_CD} 
+		   AND RESERVED2 = #{O_BudCd}	
+	</select>
+	<update id="SDK_SMS_REPORT_UPDATE" parameterType="java.util.Map">
+		UPDATE SMSKT.SDK_SMS_REPORT 
+		   SET RESERVED2    = #{N_BudCd}
+		 WHERE RESERVED1    = #{TEMPLE_CD}
+		   AND RESERVED2    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="SDK_MMS_REPORT_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SMSKT.SDK_MMS_REPORT 
+		 WHERE RESERVED1 = #{V_TEMPLE_CD} 
+		   AND RESERVED2 = #{O_BudCd}	
+	</select>
+	<update id="SDK_MMS_REPORT_UPDATE" parameterType="java.util.Map">
+		UPDATE SMSKT.SDK_MMS_REPORT 
+		   SET RESERVED2    = #{N_BudCd}
+		 WHERE RESERVED1    = #{TEMPLE_CD}
+		   AND RESERVED2    = #{O_BudCd}
+	</update>
+	
+	
+	<select  id="SIN_CARD_ISSUE_DETAIL_CNT" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*) CNT 
+		  FROM SIN_CARD_ISSUE_DETAIL 
+		 WHERE TEMPLE_CD = #{TEMPLE_CD} 
+		   AND BUD_NO 	 = #{O_BudCd}	
+	</select>
+	<update id="SIN_CARD_ISSUE_DETAIL_UPDATE" parameterType="java.util.Map">
+		UPDATE SIN_CARD_ISSUE_DETAIL 
+		   SET BUD_NO       = #{N_BudCd}
+		      ,MEMO         = MEMO || CHR(13)||CHR(10) || #{O_BudCd} || ' 합가로인해' || #{N_BudCd} || ' 로 변경'
+		 WHERE TEMPLE_CD    = #{TEMPLE_CD}
+		   AND BUD_NO       = #{O_BudCd}
+	</update>
+	
+	
+	
+	
+	<select  id="SELECT_BRANCH_DAEJU_BUD_NO" parameterType="java.util.Map" resultType="String" >
+		SELECT BUD_NO	 												 
+		  FROM SIN_CARD_MASTER                                             
+		 WHERE TEMPLE_CD     = #{V_TEMPLE_CD}         
+		   AND BUD_CODE      = #{V_BUD_CODE}    		 
+		   AND DAEJU_BUD_NO  = '1'                                           
+	</select>
+	
+	<update id="UPDATE_BRANCH_DAEJU_BUD_NO" parameterType="java.util.Map">
+		UPDATE SIN_CARD_MASTER	 											 
+		   SET DAEJU_BUD_NO  = #{V_DAEJU_BUD_NO}         
+		 WHERE TEMPLE_CD     = #{V_TEMPLE_CD}        	 
+		   AND BUD_CODE      = #{V_BUD_CODE}    		 	 
+	</update>
+	
+</mapper>

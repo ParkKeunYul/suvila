@@ -1,0 +1,30 @@
+{
+   "children":[
+        {"code":"A","name":"홍길동"
+        ,"leaf":false,
+         "children":[]
+    }, {"code":"B","name":"이순신"
+        ,"leaf":false,
+         "children":[]
+    }, {"code":"C","name":"임걱정"
+        ,"leaf":false,
+         "children":[]
+    }, {"code":"D","name":"임경업"
+        ,"leaf":false,
+         "children":[]
+    }, {"code":"E","name":"유관순"
+        ,"leaf":false,
+         "children":[]
+    }, {"code":"F","name":"전우치"
+        ,leaf:true
+    }, {"code":"G","name":"정중부"
+        ,leaf:true
+    }, {"code":"H","name":"이성계"
+        ,leaf:true
+    }, {"code":"I","name":"안중근"
+        ,leaf:true
+    }, {"code":"J","name":"김구"
+        ,leaf:true
+    }
+   ]
+}

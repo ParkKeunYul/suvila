@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SIN014W_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="USE_YN" column="USE_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+
+	<select  id="SELECT_SIN_CARD_MASTER"  parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT SIN.TEMPLE_CD
+			  ,SIN.BUD_NO
+			  ,SIN.SORT_SEQ
+			  ,SIN.BUD_CODE
+			  ,SIN.NAME_KOR
+			  ,SIN.SACRED_KOR
+			  ,SIN.REPRESEN_REL
+			  ,SIN.ZIP_CD
+			  ,SIN.ADDR1
+			  ,SIN.ADDR2
+			  ,DECODE(SIN.TELNO1,NULL,'',SIN.TELNO1 || '-') || DECODE(SIN.TELNO2,NULL,'',SIN.TELNO2 || '-') || SIN.TELNO3 AS TELNO
+			  ,DECODE(SIN.MOBILE_TELNO1,NULL,'',SIN.MOBILE_TELNO1 || '-') || DECODE(SIN.MOBILE_TELNO2,NULL,'',SIN.MOBILE_TELNO2 || '-') || SIN.MOBILE_TELNO3 AS MOBILE_TELNO
+			  ,SIN.SEX_GBN
+			  ,(SELECT NAME 
+			      FROM ASP_CODE_MGT 
+			     WHERE GROUP_CD = 'SEXGBN' 
+			       AND CODE = SIN.SEX_GBN) AS SEX_GBN_NM
+			  ,SIN.BIRTHDAY
+			  ,SIN.LUNAR_SOLAR
+			  ,(SELECT NAME 
+			      FROM ASP_CODE_MGT 
+			     WHERE GROUP_CD = 'LUNAR_SOLAR' 
+			       AND CODE = SIN.LUNAR_SOLAR) AS LUNAR_SOLAR_NM
+			  ,SIN.SEXAGENARY
+			  ,(SELECT NAME 
+			      FROM ASP_CODE_MGT 
+			     WHERE GROUP_CD = 'GANJI' 
+			       AND CODE = SIN.SEXAGENARY) AS SEXAGENARY_NM
+			  ,SIN.ETC1
+			  ,DECODE(SIN.DAEJU_BUD_NO,SIN.BUD_NO,'T','F') AS DAEJU_TF
+			  ,'T' AS CHECK_P
+			  ,BLDG_NUM
+			  ,FN_ADDR_BLDG(BLDG_NUM) ADDR3
+		  FROM SIN_CARD_MASTER SIN
+		 WHERE 1=1
+		   AND SIN.TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND SIN.BUD_NO LIKE #{V_BUD_CODE} || '%'
+		   AND SIN.BUD_NO NOT IN (SELECT BUD_NO 
+		   						    FROM SIN_DEATH_INFO 
+		   						   WHERE TEMPLE_CD = SIN.TEMPLE_CD)
+		   AND SIN.DEL_YN = 'F'
+		 ORDER BY SORT_SEQ
+	</select>
+	
+	<update id="UPDATE_SIN_CARD_MASTER" parameterType="kr.co.o2i.util.CommonMap">
+		UPDATE SIN_CARD_MASTER
+		   SET ETC1 	 = #{ETC1}
+		   	  ,SORT_SEQ	 = #{SORT_SEQ}
+		   	  ,UPT_USER  = #{V_USER_ID}
+		   	  ,UPT_DATE	 = SYSDATE
+		   	  ,REMOTE 	 = #{V_REMOTE}
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND BUD_NO    = #{BUD_NO}
+	</update>
+	
+</mapper>

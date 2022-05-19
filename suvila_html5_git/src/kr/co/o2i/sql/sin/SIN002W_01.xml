@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SIN002W_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="CONTENT"    column="CONTENT"  javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		 <result  property="SEL_YN" column="SEL_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+	</resultMap>
+
+	<select id="SELECT_SIN_SCHOLARSHIP_FUND_HIS"  parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT  TEMPLE_CD			<!--사찰코드 -->
+		       ,BUD_NO				<!--개인번호 -->
+		       ,SEQ_NO				<!--순번 -->
+		       ,JANGHAK_GUBUN		<!--종류 -->
+		       ,DECODE(JANGHAK_GUBUN, '1', '장학', '2', '포상') AS JANGHAK_GUBUN_NM	<!--종류명 -->
+		       ,ELEGANT				<!--품위자 -->
+		       ,GIVE				<!--기부자 -->
+		       ,PRESENT_CONTENTS	<!--수여내역 -->	
+		       ,MEMO				<!--메모 -->
+		       ,SDATE				<!--지급일 -->
+		       ,CRT_USER			<!--등록자 -->
+		       ,CRT_DATE			<!--등록일 -->
+		       ,UPT_USER			<!--수정자 -->
+		       ,UPT_DATE			<!--수정일 -->
+		       ,REMOTE				<!--Local IP Address -->
+		FROM SIN_SCHOLARSHIP_FUND_HIS
+		 WHERE  TEMPLE_CD 	  = #{V_TEMPLE_CD}
+			AND BUD_NO	  	  like '%'||#{V_BUD_NO}||'%'  		
+			AND JANGHAK_GUBUN like '%'||#{V_JANGHAK_GUBUN}||'%'
+	</select>
+
+	<insert id="INSERT_SIN_SCHOLARSHIP_FUND_HIS" parameterType="java.util.Map">
+		INSERT INTO SIN_SCHOLARSHIP_FUND_HIS (
+		        TEMPLE_CD			
+		       ,BUD_NO				
+		       ,SEQ_NO				
+		       ,JANGHAK_GUBUN			
+		       ,ELEGANT				
+		       ,GIVE				
+		       ,PRESENT_CONTENTS	
+		       ,MEMO				
+		       ,SDATE				
+		       ,CRT_USER			
+		       ,CRT_DATE			
+		       ,UPT_USER			
+		       ,UPT_DATE			
+		       ,REMOTE				
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{BUD_NO}
+		       ,( SELECT NVL2( MAX(SEQ_NO), MAX(SEQ_NO)+1, 1) FROM SIN_SCHOLARSHIP_FUND_HIS WHERE BUD_NO = #{BUD_NO})
+		       ,#{JANGHAK_GUBUN}
+		       ,#{ELEGANT}
+		       ,#{GIVE}
+		       ,#{PRESENT_CONTENTS,jdbcType=VARCHAR}
+		       ,#{MEMO ,jdbcType=VARCHAR}
+		       ,#{SDATE}
+		       ,#{V_USER_ID}			
+		       ,sysdate			
+		       ,#{V_USER_ID}			
+		       ,sysdate			
+		       ,#{REMOTE}				
+		)
+	</insert>
+	
+	<update id="UPDATE_SIN_SCHOLARSHIP_FUND_HIS" parameterType="java.util.Map">
+		UPDATE SIN_SCHOLARSHIP_FUND_HIS 
+		   SET JANGHAK_GUBUN    = #{JANGHAK_GUBUN}
+		   	  ,ELEGANT          = #{ELEGANT}
+		   	  ,GIVE             = #{GIVE ,jdbcType=VARCHAR}
+		   	  ,PRESENT_CONTENTS = #{PRESENT_CONTENTS ,jdbcType=VARCHAR}
+		   	  ,MEMO             = #{MEMO}
+		   	  ,SDATE            = #{SDATE}
+		   	  ,CRT_USER         = #{V_USER_ID}
+		   	  ,CRT_DATE         = sysdate
+		   	  ,UPT_USER         = #{V_USER_ID}
+		   	  ,UPT_DATE         = sysdate
+		   	  ,REMOTE           = #{REMOTE}
+		 WHERE TEMPLE_CD        = #{TEMPLE_CD}
+  	       AND BUD_NO           = #{BUD_NO}
+  		   AND SEQ_NO           = #{SEQ_NO}
+	</update>
+	
+	
+	<delete id="DELETE_SIN_SCHOLARSHIP_FUND_HIS" parameterType="java.util.Map">
+		DELETE FROM SIN_SCHOLARSHIP_FUND_HIS
+		 WHERE TEMPLE_CD        = #{TEMPLE_CD}
+		   AND BUD_NO           = #{BUD_NO}
+		   AND SEQ_NO           = #{SEQ_NO}
+	</delete>
+	
+</mapper>

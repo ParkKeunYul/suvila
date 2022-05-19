@@ -1,0 +1,59 @@
+Ext.define('ExFrm.view.ide.Settings', {
+    extend: 'Ext.window.Window',
+    alias:'widget.settings',
+    requires: [
+		'ExFrm.view.ide.SettingsController'
+    ],
+    controller: 'settings',	    
+    layout:{
+    	type:'vbox',
+    	align:'stretch'
+    },
+    title:'설정',
+    width:800,
+    height:600,
+    name:'setttings',
+    items:[
+    {
+		xtype:'textfield',
+		fieldLabel:'서버파일경로',
+		reference:'serverPath'
+	},{
+		xtype:'textfield',
+		fieldLabel:'URL경로',
+		reference:'serverUrl'
+	},{
+		xtype:'textfield',
+		fieldLabel:'애플리케이션명',
+		reference:'applicationName'
+	},{
+		xtype:'textfield',
+		reference:'screenWidth',
+		fieldLabel:'화면가로길이'
+	},{
+		xtype:'textfield',
+		reference:'screenHeight',
+		fieldLabel:'화면세로길이'
+	},{
+		html:'설정을 변경합니다. 변경 후 브라우저 화면을 refresh 해주세요.'
+	},{
+		layout:'hbox',
+		items:[{
+			xtype:'tbspacer',
+			flex:1
+		},{
+			xtype:'button',
+			text:'확인',
+			handler:'onSave'
+		},{
+			xtype:'tbspacer',
+			width:10
+		},{
+			xtype:'button',
+			text:'취소',
+			handler:function(){
+				this.up('[name=settings]').destroy();
+			}
+		}]
+	}]
+});

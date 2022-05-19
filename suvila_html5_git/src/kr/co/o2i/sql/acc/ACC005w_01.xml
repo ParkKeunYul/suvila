@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ACC005w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+	<select id="SELECT_ACC" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT TEMPLE_CD
+		      ,ACCT_NM
+		      ,DECODE(IE_GBN,'I','세입','O','세출') AS NAME
+		      ,ACT_DATE
+		      ,SUM(AMOUNT) AS AMOUNT
+		FROM ( 
+		       SELECT AMM.TEMPLE_CD
+		             ,ACCT_NM
+		             ,AMM.IE_GBN
+		             ,SUBSTR(ACT_DATE,1,#{V_DATE_GBN}) AS ACT_DATE
+		             ,AMM.AMOUNT
+			     FROM ACC_MONEY_MGT AMM
+			         ,(SELECT DISTINCT TEMPLE_CD
+			                 ,ACCT_GBN
+			                 ,ACCT_NM
+						 FROM ACC_ACCOUNTS
+						WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+						  AND KWAN = 1
+						  AND HANG = 0
+						  AND MOK  = 0                    
+					   ) AA
+				 WHERE AMM.TEMPLE_CD 	     = AA.TEMPLE_CD
+				   AND AMM.ACCT_GBN 		 = AA.ACCT_GBN
+				   AND AMM.TEMPLE_CD 		 = #{V_TEMPLE_CD}
+				   AND AMM.ACCT_GBN 		 = #{V_ACCT_GBN}
+				   AND AMM.IE_GBN 			 = #{V_IE_GBN}
+				   AND AMM.ACT_DATE 		>= RPAD(#{V_SDATE},8,'0')
+				   AND AMM.ACT_DATE      &lt;= RPAD(#{V_EDATE},8,'9')
+				   <if test='V_KWAN != 0  and V_KWAN != "0" '>
+				   		AND AMM.KWAN = #{V_KWAN} 
+				   </if>
+				   <if test='V_HANG != 0  and V_HANG != "0" '>
+				   		AND AND AMM.HANG = #{V_HANG}  
+				   </if>
+			   )
+		GROUP BY TEMPLE_CD
+		        ,ACCT_NM
+		        ,IE_GBN
+		        ,ACT_DATE
+		ORDER BY ACT_DATE
+	</select>
+
+	
+</mapper>

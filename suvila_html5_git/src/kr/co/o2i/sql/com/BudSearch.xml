@@ -1,0 +1,493 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.o2i.dao.com.BudSearchDAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+	<!-- 신도조회 -->
+	<select id="SINDO_SELECT"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	   SELECT 
+		    TEMPLE_CD as templeCd,
+		    BUD_NO,
+		    BUD_CODE,
+		    SUBSTR(BUD_CODE,4,5) AS FAM_CODE,
+		    REPRESEN_REL,
+		    DAEJU_BUD_NO,
+		    FN_GET_NM('BUD',TEMPLE_CD,DAEJU_BUD_NO) AS DAEJU_NAME_KOR,
+		    SORT_SEQ,
+		    NAME_KOR,
+		    SACRED_KOR,
+		    SACRED_HAN,
+		    SINDO_GBN,
+		    (CASE
+		    	WHEN SINDO_GBN = 'T' THEN '신도'
+		    	ELSE '비신도' 
+		    END )AS SINDO_GBN_TXT ,
+		    ADDR1,
+		    ADDR2,
+		    ADDR1 || ' ' || ADDR2  as ADDR ,
+		    TELNO1,
+		    TELNO2,
+		    TELNO3,
+		    TELNO1 || TELNO2 || TELNO3 AS TELNO,
+		    (CASE
+		    	WHEN NVL(TELNO1 , '-1') != '-1'  AND NVL(TELNO2 , '-1') != '-1' AND NVL(TELNO3 , '-1') != '-1'
+		    		THEN TELNO1||'-'||TELNO2||'-'||TELNO3
+		    	WHEN NVL(TELNO1 , '-1')  = '-1'  AND NVL(TELNO2 , '-1') != '-1' AND NVL(TELNO3 , '-1') != '-1'
+		    		THEN TELNO2||'-'||TELNO3
+		    	WHEN NVL(TELNO1 , '-1') != '-1'  AND NVL(TELNO2 , '-1')  = '-1' AND NVL(TELNO3 , '-1') != '-1'
+		    		THEN TELNO1||'-'||TELNO3
+		    	WHEN NVL(TELNO1 , '-1') != '-1'  AND NVL(TELNO2 , '-1') != '-1' AND NVL(TELNO3 , '-1')  = '-1'
+		    		THEN TELNO1||'-'||TELNO2
+		    	WHEN NVL(TELNO1 , '-1')  = '-1'  AND NVL(TELNO2 , '-1')  = '-1' AND NVL(TELNO3 , '-1')  = '-1'
+		    		THEN ''
+		    	ELSE  TELNO1||'-'||TELNO2||'-'||TELNO3
+		    END )AS TEL_NO_RENDER ,
+		    MOBILE_TELNO1,
+		    MOBILE_TELNO2,
+		    MOBILE_TELNO3,
+		    (CASE
+		    	WHEN NVL(MOBILE_TELNO1 , '-1') != '-1'  AND NVL(MOBILE_TELNO2 , '-1') != '-1' AND NVL(MOBILE_TELNO3 , '-1') != '-1'
+		    		THEN MOBILE_TELNO1||'-'||MOBILE_TELNO2||'-'||MOBILE_TELNO3
+		    	WHEN NVL(MOBILE_TELNO1 , '-1')  = '-1'  AND NVL(MOBILE_TELNO2 , '-1') != '-1' AND NVL(MOBILE_TELNO3 , '-1') != '-1'
+		    		THEN MOBILE_TELNO1||'-'||MOBILE_TELNO2
+		    	WHEN NVL(MOBILE_TELNO1 , '-1') != '-1'  AND NVL(MOBILE_TELNO2 , '-1')  = '-1' AND NVL(MOBILE_TELNO3 , '-1') != '-1'
+		    		THEN MOBILE_TELNO1||'-'||MOBILE_TELNO3
+		    	WHEN NVL(MOBILE_TELNO1 , '-1') != '-1'  AND NVL(MOBILE_TELNO2 , '-1') != '-1' AND NVL(MOBILE_TELNO3 , '-1')  = '-1'
+		    		THEN MOBILE_TELNO1||'-'||MOBILE_TELNO2
+		    	WHEN NVL(MOBILE_TELNO1 , '-1')  = '-1'  AND NVL(MOBILE_TELNO2 , '-1')  = '-1' AND NVL(MOBILE_TELNO3 , '-1')  = '-1'
+		    		THEN ''
+		    	ELSE  MOBILE_TELNO1||'-'||MOBILE_TELNO2||'-'||MOBILE_TELNO3
+		    END )AS MOBILE_TELNO_RENDER ,
+		    HWAJU_YN,
+		    ZIP_CD,
+		    MEMO,
+		    DEL_YN,
+		    JUMIN_NO,
+		    BLDG_NUM,
+		    FN_ADDR_BLDG(BLDG_NUM) ADDR3,
+		    (SELECT CARD_NO FROM SIN_CARD_ISSUE_DETAIL WHERE TEMPLE_CD = #{param.V_TEMPLE_CD} AND BUD_NO = A.BUD_NO AND ISSUE_STATE = 2 AND ROWNUM = 1) CARD_NO 
+		FROM SIN_CARD_MASTER A
+		WHERE TEMPLE_CD = #{param.V_TEMPLE_CD}
+		  AND DEL_YN    = 'F'
+		  AND BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = A.TEMPLE_CD)
+		  <choose>
+		  	<when test='param.V_SEARCH_WORD != null and param.V_SEARCH_WORD != "" '>
+		  		<if test='param.V_SEARCH_GBN == "BUD_NO"'>
+		  			AND BUD_NO LIKE '%' || #{param.V_SEARCH_WORD} || '%'		  		
+		  		</if>
+		  		<if test='param.V_SEARCH_GBN == "NAME_KOR"'>	
+		  			AND NAME_KOR LIKE '%' || #{param.V_SEARCH_WORD} || '%'	  		
+		  		</if>
+		  		<if test='param.V_SEARCH_GBN == "SACRED_KOR"'>	
+		  			AND SACRED_KOR LIKE '%' || #{param.V_SEARCH_WORD} || '%'	  		
+		  		</if>
+		  		<if test='param.V_SEARCH_GBN == "MOBILE_TELNO"'>
+		  			AND MOBILE_TELNO1 || MOBILE_TELNO2 || MOBILE_TELNO3 LIKE '%'||#{param.V_SEARCH_WORD}||'%'		  		
+		  		</if>
+		  		<if test='param.V_SEARCH_GBN == "TELNO"'>	
+		  			AND TELNO1 || TELNO2 || TELNO3 LIKE '%'||#{param.V_SEARCH_WORD}||'%'	  		
+		  		</if>
+		  		<if test='param.V_SEARCH_GBN == "CARD"'>
+		  			AND NVL(A.CARD_CODE, '-1') != '-1' AND A.CARD_CODE  =  TRIM(#{param.V_SEARCH_WORD})		  		
+		  		</if>
+		  	</when>
+		  	<otherwise>
+		  		AND ROWNUM   = 1
+		  	</otherwise>
+		  </choose>
+		ORDER BY BUD_NO
+	</select>
+	<!-- 카드번호 조회 -->
+	<select id="SINDO_SELECT_CARD"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT 
+		    A.TEMPLE_CD,
+		    A.BUD_NO,
+		    A.BUD_CODE,
+		    SUBSTR(A.BUD_CODE,4,5) AS FAM_CODE,
+		    A.REPRESEN_REL,
+		    A.DAEJU_BUD_NO,
+		    FN_GET_NM('BUD',A.TEMPLE_CD,A.DAEJU_BUD_NO) AS DAEJU_NAME_KOR,
+		    A.SORT_SEQ,
+		    A.NAME_KOR,
+		    A.SACRED_KOR,
+		    A.SACRED_HAN,
+		    A.SINDO_GBN,
+		    A.ADDR1,
+		    A.ADDR2,
+		    A.ADDR1 || ' ' || A.ADDR2  as ADDR ,
+		    A.TELNO1,
+		    A.TELNO2,
+		    A.TELNO3,
+		    A.TELNO1 || A.TELNO2 || A.TELNO3 AS TELNO,
+		    A.MOBILE_TELNO1,
+		    A.MOBILE_TELNO2,
+		    A.MOBILE_TELNO3,
+		    A.HWAJU_YN,
+		    A.ZIP_CD,
+		    A.MEMO,
+		    A.DEL_YN,
+		    A.JUMIN_NO,
+		    A.BLDG_NUM,
+		    FN_ADDR_BLDG(A.BLDG_NUM) ADDR3,
+		    SCID.CARD_NO,
+		    (CASE
+		    	WHEN NVL(A.TELNO1 , '-1') != '-1'  AND NVL(A.TELNO2 , '-1') != '-1' AND NVL(A.TELNO3 , '-1') != '-1'
+		    		THEN A.TELNO1||'-'||A.TELNO2||'-'||A.TELNO3
+		    	WHEN NVL(A.TELNO1 , '-1')  = '-1'  AND NVL(A.TELNO2 , '-1') != '-1' AND NVL(A.TELNO3 , '-1') != '-1'
+		    		THEN A.TELNO2||'-'||A.TELNO3
+		    	WHEN NVL(A.TELNO1 , '-1') != '-1'  AND NVL(A.TELNO2 , '-1')  = '-1' AND NVL(A.TELNO3 , '-1') != '-1'
+		    		THEN A.TELNO1||'-'||A.TELNO3
+		    	WHEN NVL(A.TELNO1 , '-1') != '-1'  AND NVL(A.TELNO2 , '-1') != '-1' AND NVL(A.TELNO3 , '-1')  = '-1'
+		    		THEN A.TELNO1||'-'||A.TELNO2
+		    	WHEN NVL(A.TELNO1 , '-1')  = '-1'  AND NVL(A.TELNO2 , '-1')  = '-1' AND NVL(A.TELNO3 , '-1')  = '-1'
+		    		THEN ''
+		    	ELSE  A.TELNO1||'-'||A.TELNO2||'-'||A.TELNO3
+		    END )AS TEL_NO_RENDER ,
+		    (CASE
+		    	WHEN NVL(A.MOBILE_TELNO1 , '-1') != '-1'  AND NVL(A.MOBILE_TELNO2 , '-1') != '-1' AND NVL(A.MOBILE_TELNO3 , '-1') != '-1'
+		    		THEN A.MOBILE_TELNO1||'-'||A.MOBILE_TELNO2||'-'||A.MOBILE_TELNO3
+		    	WHEN NVL(A.MOBILE_TELNO1 , '-1')  = '-1'  AND NVL(A.MOBILE_TELNO2 , '-1') != '-1' AND NVL(A.MOBILE_TELNO3 , '-1') != '-1'
+		    		THEN A.MOBILE_TELNO1||'-'||A.MOBILE_TELNO3
+		    	WHEN NVL(A.MOBILE_TELNO1 , '-1') != '-1'  AND NVL(A.MOBILE_TELNO2 , '-1')  = '-1' AND NVL(A.MOBILE_TELNO3 , '-1') != '-1'
+		    		THEN A.MOBILE_TELNO1||'-'||A.MOBILE_TELNO3
+		    	WHEN NVL(A.MOBILE_TELNO1 , '-1') != '-1'  AND NVL(A.MOBILE_TELNO2 , '-1') != '-1' AND NVL(A.MOBILE_TELNO3 , '-1')  = '-1'
+		    		THEN A.MOBILE_TELNO1||'-'||A.MOBILE_TELNO2
+		    	WHEN NVL(A.MOBILE_TELNO1 , '-1')  = '-1'  AND NVL(A.MOBILE_TELNO2 , '-1')  = '-1' AND NVL(A.MOBILE_TELNO3 , '-1')  = '-1'
+		    		THEN ''
+		    	ELSE  A.MOBILE_TELNO1||'-'||A.MOBILE_TELNO2||'-'||A.MOBILE_TELNO3
+		    END )AS MOBILE_TELNO_RENDER 
+		    <!--SCSM.CARD_CODE -->
+		FROM SIN_CARD_ISSUE_DETAIL SCID
+		    ,SIN_CARD_SEC_MGT SCSM
+		    ,SIN_CARD_MASTER A  
+		WHERE  SCID.TEMPLE_CD  = SCSM.TEMPLE_CD
+		  AND SCID.TEMPLE_CD = A.TEMPLE_CD
+		  AND SCSM.TEMPLE_CD = A.TEMPLE_CD
+		  AND SCID.BUD_NO    = A.BUD_NO
+		  AND SCID.SEC_SEQ   = SCSM.SEQ 
+		  AND SCID.TEMPLE_CD = #{param.V_TEMPLE_CD}
+		  AND SCSM.TEMPLE_CD = #{param.V_TEMPLE_CD}
+		  AND A.TEMPLE_CD    = #{param.V_TEMPLE_CD}
+		  AND A.DEL_YN       = 'F'
+		  AND A.BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = A.TEMPLE_CD)
+		  AND NVL(SCID.CARD_NO, '-1')   != '-1'
+		  AND NVL(SCSM.CARD_CODE, '-1') != '-1'
+		  AND ISSUE_STATE                = 2
+		  <choose>
+		  	<when test="param.V_SEARCH_WORD != null and param.V_SEARCH_WORD != '' ">
+		  		<choose>
+		  			<when test="param.V_SEARCH_GBN == 'CARD_NO' ">
+		  				AND SCID.CARD_NO          =  REPLACE(TRIM(#{param.V_SEARCH_WORD}),'-' , '')
+		  			</when>
+		  			<otherwise>
+		  				AND TRIM(SCSM.CARD_CODE)  =  TRIM(#{param.V_SEARCH_WORD}) 
+		  			</otherwise>
+		  		</choose>
+		  	</when>
+		  	<otherwise>
+		  		AND SCID.CARD_NO          =  TRIM(#{param.V_SEARCH_WORD})
+		  	</otherwise>
+		  </choose>
+		  AND ROWNUM   = 1
+	</select>
+	<!-- 영가조회 -->
+	<select id="YOUNGGA_SELECT"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT 
+		    A.TEMPLE_CD,
+		    A.BUD_NO,
+		    A.BUD_CODE,
+		    SUBSTR(A.BUD_CODE,4,5) AS FAM_CODE,
+		    A.REPRESEN_REL,
+		    A.DAEJU_BUD_NO,
+		    FN_GET_NM('BUD',A.TEMPLE_CD,A.DAEJU_BUD_NO) AS DAEJU_NAME_KOR,
+		    A.SORT_SEQ,
+		    A.NAME_KOR,
+		    A.SACRED_KOR,
+		    A.SACRED_HAN,
+		    A.SINDO_GBN,
+		    A.ADDR1,
+		    A.ADDR2,
+		    A.ADDR1 || ' ' || A.ADDR2  as ADDR ,
+		    A.TELNO1,
+		    A.TELNO2,
+		    A.TELNO3,
+		    A.TELNO1 || A.TELNO2 || A.TELNO3 AS TELNO,
+		    A.MOBILE_TELNO1,
+		    A.MOBILE_TELNO2,
+		    A.MOBILE_TELNO3,
+		    A.HWAJU_YN,
+		    A.ZIP_CD,
+		    A.MEMO,
+		    A.DEL_YN,
+		    A.JUMIN_NO,
+		    A.BLDG_NUM,
+		    FN_ADDR_BLDG(A.BLDG_NUM) ADDR3,
+		    B.DECE_BUD_NO,
+		    B.HYO_REL,
+		    FN_CODE_NAME('BOKWIGBN',B.BOKWI_KIBU_GBN) BOKWI_KIBU_GBN_NAME, 
+		    B.DECE_REL,
+		    FN_CODE_NAME('BON',C.BON) DEATH_BON_NAME,
+		    FN_CODE_NAME('DEATH_SEXGBN',D.SEX_GBN) DEATH_SEX_GBN_NAME,
+		    D.NAME_KOR DEATH_NAME_KOR,
+		    D.SACRED_KOR DEATH_SACRED_KOR,
+		    FN_CODE_NAME('LUNAR_SOLAR',C.LUNAR_SOLAR) DEATH_LUNAR_SOLAR_NAME,
+		    FN_FMT_DATE(C.DEATH_DAY) DEATH_DAY,
+		    B.BOKWI_KIBU_GBN,
+		    C.BON DEATH_BON,
+		    D.SEX_GBN DEATH_SEX_GBN,
+		    C.LUNAR_SOLAR DEATH_LUNAR_SOLAR,
+		    (CASE
+		    	WHEN NVL(A.TELNO1 , '-1') != '-1'  AND NVL(A.TELNO2 , '-1') != '-1' AND NVL(A.TELNO3 , '-1') != '-1'
+		    		THEN A.TELNO1||'-'||A.TELNO2||'-'||A.TELNO3
+		    	WHEN NVL(A.TELNO1 , '-1')  = '-1'  AND NVL(A.TELNO2 , '-1') != '-1' AND NVL(A.TELNO3 , '-1') != '-1'
+		    		THEN A.TELNO2||'-'||A.TELNO3
+		    	WHEN NVL(A.TELNO1 , '-1') != '-1'  AND NVL(A.TELNO2 , '-1')  = '-1' AND NVL(A.TELNO3 , '-1') != '-1'
+		    		THEN A.TELNO1||'-'||A.TELNO3
+		    	WHEN NVL(A.TELNO1 , '-1') != '-1'  AND NVL(A.TELNO2 , '-1') != '-1' AND NVL(A.TELNO3 , '-1')  = '-1'
+		    		THEN A.TELNO1||'-'||A.TELNO2
+		    	WHEN NVL(A.TELNO1 , '-1')  = '-1'  AND NVL(A.TELNO2 , '-1')  = '-1' AND NVL(A.TELNO3 , '-1')  = '-1'
+		    		THEN ''
+		    	ELSE  A.TELNO1||'-'||A.TELNO2||'-'||A.TELNO3
+		    END )AS TEL_NO_RENDER ,
+		    (CASE
+		    	WHEN NVL(A.MOBILE_TELNO1 , '-1') != '-1'  AND NVL(A.MOBILE_TELNO2 , '-1') != '-1' AND NVL(A.MOBILE_TELNO3 , '-1') != '-1'
+		    		THEN A.MOBILE_TELNO1||'-'||A.MOBILE_TELNO2||'-'||A.MOBILE_TELNO3
+		    	WHEN NVL(A.MOBILE_TELNO1 , '-1')  = '-1'  AND NVL(A.MOBILE_TELNO2 , '-1') != '-1' AND NVL(A.MOBILE_TELNO3 , '-1') != '-1'
+		    		THEN A.MOBILE_TELNO1||'-'||A.MOBILE_TELNO3
+		    	WHEN NVL(A.MOBILE_TELNO1 , '-1') != '-1'  AND NVL(A.MOBILE_TELNO2 , '-1')  = '-1' AND NVL(A.MOBILE_TELNO3 , '-1') != '-1'
+		    		THEN A.MOBILE_TELNO1||'-'||A.MOBILE_TELNO3
+		    	WHEN NVL(A.MOBILE_TELNO1 , '-1') != '-1'  AND NVL(A.MOBILE_TELNO2 , '-1') != '-1' AND NVL(A.MOBILE_TELNO3 , '-1')  = '-1'
+		    		THEN A.MOBILE_TELNO1||'-'||A.MOBILE_TELNO2
+		    	WHEN NVL(A.MOBILE_TELNO1 , '-1')  = '-1'  AND NVL(A.MOBILE_TELNO2 , '-1')  = '-1' AND NVL(A.MOBILE_TELNO3 , '-1')  = '-1'
+		    		THEN ''
+		    	ELSE  A.MOBILE_TELNO1||'-'||A.MOBILE_TELNO2||'-'||A.MOBILE_TELNO3
+		    END )AS MOBILE_TELNO_RENDER 
+		FROM SIN_CARD_MASTER A
+		    ,SIN_DEATH_BOKWI_INFO B
+		    ,SIN_DEATH_INFO C
+		    ,SIN_CARD_MASTER D
+		WHERE A.TEMPLE_CD   = #{param.V_TEMPLE_CD}
+		AND A.DEL_YN        = 'F'
+		AND B.DEL_YN       != 'T'
+		AND A.BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = A.TEMPLE_CD)
+		AND B.TEMPLE_CD     = A.TEMPLE_CD
+		AND B.BUD_NO        = A.BUD_NO
+		AND C.TEMPLE_CD     = B.TEMPLE_CD
+		AND C.BUD_NO        = B.DECE_BUD_NO
+		AND D.TEMPLE_CD     = C.TEMPLE_CD
+		AND D.BUD_NO        = C.BUD_NO
+		AND D.NAME_KOR LIKE '%'||#{param.V_SEARCH_WORD}||'%'
+		ORDER BY D.NAME_KOR, A.BUD_NO
+	</select>
+	
+	<!-- 화주조회 -->
+	<select id="HWAJU_SELECT"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT 
+			TEMPLE_CD,
+			BUD_NO,
+			BUD_CODE,
+			FAM_CODE,
+			REPRESEN_REL,
+			DAEJU_BUD_NO,
+			DAEJU_NAME_KOR,
+			SORT_SEQ,
+			NAME_KOR,
+			SACRED_KOR,
+			SACRED_HAN,
+			SINDO_GBN,
+			ADDR1,
+			ADDR2,
+			TELNO1,
+			TELNO2,
+			TELNO3,
+			TELNO,
+			MOBILE_TELNO1,
+			MOBILE_TELNO2,
+			MOBILE_TELNO3,
+			HWAJU_YN,
+			BLDG_NUM,
+			ADDR3,
+			(CASE
+		    	WHEN SINDO_GBN = 'T' THEN '신도'
+		    	ELSE '비신도' 
+		     END )AS SINDO_GBN_TXT,
+		     ADDR1 || ' ' || ADDR2  as ADDR,
+		     (CASE
+		    	WHEN NVL(TELNO1 , '-1') != '-1'  AND NVL(TELNO2 , '-1') != '-1' AND NVL(TELNO3 , '-1') != '-1'
+		    		THEN TELNO1||'-'||TELNO2||'-'||TELNO3
+		    	WHEN NVL(TELNO1 , '-1')  = '-1'  AND NVL(TELNO2 , '-1') != '-1' AND NVL(TELNO3 , '-1') != '-1'
+		    		THEN TELNO2||'-'||TELNO3
+		    	WHEN NVL(TELNO1 , '-1') != '-1'  AND NVL(TELNO2 , '-1')  = '-1' AND NVL(TELNO3 , '-1') != '-1'
+		    		THEN TELNO1||'-'||TELNO3
+		    	WHEN NVL(TELNO1 , '-1') != '-1'  AND NVL(TELNO2 , '-1') != '-1' AND NVL(TELNO3 , '-1')  = '-1'
+		    		THEN TELNO1||'-'||TELNO2
+		    	WHEN NVL(TELNO1 , '-1')  = '-1'  AND NVL(TELNO2 , '-1')  = '-1' AND NVL(TELNO3 , '-1')  = '-1'
+		    		THEN ''
+		    	ELSE  TELNO1||'-'||TELNO2||'-'||TELNO3
+		    END )AS TEL_NO_RENDER ,
+		    (CASE
+		    	WHEN NVL(MOBILE_TELNO1 , '-1') != '-1'  AND NVL(MOBILE_TELNO2 , '-1') != '-1' AND NVL(MOBILE_TELNO3 , '-1') != '-1'
+		    		THEN MOBILE_TELNO1||'-'||MOBILE_TELNO2||'-'||MOBILE_TELNO3
+		    	WHEN NVL(MOBILE_TELNO1 , '-1')  = '-1'  AND NVL(MOBILE_TELNO2 , '-1') != '-1' AND NVL(MOBILE_TELNO3 , '-1') != '-1'
+		    		THEN MOBILE_TELNO1||'-'||MOBILE_TELNO3
+		    	WHEN NVL(MOBILE_TELNO1 , '-1') != '-1'  AND NVL(MOBILE_TELNO2 , '-1')  = '-1' AND NVL(MOBILE_TELNO3 , '-1') != '-1'
+		    		THEN MOBILE_TELNO1||'-'||MOBILE_TELNO3
+		    	WHEN NVL(MOBILE_TELNO1 , '-1') != '-1'  AND NVL(MOBILE_TELNO2 , '-1') != '-1' AND NVL(MOBILE_TELNO3 , '-1')  = '-1'
+		    		THEN MOBILE_TELNO1||'-'||MOBILE_TELNO2
+		    	WHEN NVL(MOBILE_TELNO1 , '-1')  = '-1'  AND NVL(MOBILE_TELNO2 , '-1')  = '-1' AND NVL(MOBILE_TELNO3 , '-1')  = '-1'
+		    		THEN ''
+		    	ELSE  MOBILE_TELNO1||'-'||MOBILE_TELNO2||'-'||MOBILE_TELNO3
+		    END )AS MOBILE_TELNO_RENDER 
+		FROM (SELECT TEMPLE_CD
+				    ,BUD_NO
+				    ,BUD_CODE
+				    ,SUBSTR(BUD_CODE,4,5) AS FAM_CODE
+				    ,REPRESEN_REL
+				    ,DAEJU_BUD_NO
+				    ,FN_GET_NM('BUD',TEMPLE_CD,DAEJU_BUD_NO) AS DAEJU_NAME_KOR
+				    ,SORT_SEQ
+				    ,NAME_KOR
+				    ,SACRED_KOR
+				    ,SACRED_HAN
+				    ,SINDO_GBN
+				    ,ADDR1
+				    ,ADDR2
+				    ,TELNO1
+				    ,TELNO2
+				    ,TELNO3
+				    ,TELNO1 || TELNO2 || TELNO3 AS TELNO
+				    ,MOBILE_TELNO1
+				    ,MOBILE_TELNO2
+				    ,MOBILE_TELNO3
+				    ,HWAJU_YN
+				    ,BLDG_NUM
+				    ,FN_ADDR_BLDG(BLDG_NUM) ADDR3
+			    FROM SIN_CARD_MASTER A
+			   WHERE TEMPLE_CD = #{param.V_TEMPLE_CD}
+				 AND HWAJU_YN  = 'T'
+				 AND DEL_YN    = 'F'
+				 AND BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = A.TEMPLE_CD)
+			)
+		WHERE 1=1
+		<choose>
+			<when test="param.V_SEARCH_WORD != null and V_SEARCH_WORD != ''">
+				<choose>
+					<when test="param.V_SEARCH_GBN == 'BUD_NO'">
+						AND BUD_CODE LIKE '%'||#{param.V_SEARCH_WORD}||'%'
+					</when>					
+					<when test="param.V_SEARCH_GBN == 'NAME_KOR'">
+						AND NAME_KOR LIKE '%'||#{param.V_SEARCH_WORD}||'%'
+					</when>
+					<when test="param.V_SEARCH_GBN == 'SACRED_KOR'">
+						AND SACRED_KOR LIKE '%' || #{param.V_SEARCH_WORD} || '%'
+					</when>
+					<when test="param.V_SEARCH_GBN == 'MOBILE_TELNO'">
+						AND MOBILE_TELNO1 || MOBILE_TELNO2 || MOBILE_TELNO3 LIKE '%'||#{param.V_SEARCH_WORD}||'%'
+					</when>
+					<when test="param.V_SEARCH_GBN == 'TELNO'">
+						AND TELNO LIKE '%'||#{param.V_SEARCH_WORD}||'%'
+					</when>					
+				</choose>
+			</when>			
+		</choose>
+		ORDER BY BUD_NO
+	</select>
+	<!-- 영가 신도조회 조회 -->
+	<select id="DECE_SELECT"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT SPR.TEMPLE_CD
+			  ,SPR.BUD_NO
+			  ,BPR.BUD_CODE
+			  ,SUBSTR(BPR.BUD_CODE,4,5) AS FAM_CODE
+			  ,BPR.DAEJU_BUD_NO
+			  ,FN_GET_NM('BUD',BPR.TEMPLE_CD,BPR.DAEJU_BUD_NO) AS DAEJU_NAME_KOR
+			  ,SPR.SORT_SEQ
+			  ,SPR.NAME_KOR
+			  ,SPR.SACRED_KOR
+			  ,SPR.SACRED_HAN
+			  ,SPR.SINDO_GBN
+			  ,BPR.ADDR1
+			  ,BPR.ADDR2
+			  ,BPR.TELNO1
+			  ,BPR.TELNO2
+			  ,BPR.TELNO3
+			  ,BPR.TELNO1 || BPR.TELNO2 || BPR.TELNO3 AS TELNO
+			  ,BPR.MOBILE_TELNO1
+			  ,BPR.MOBILE_TELNO2
+			  ,BPR.MOBILE_TELNO3
+			  ,BPR.HWAJU_YN
+			  ,BOK.BUD_NO AS BOKWIJA_NO
+			  ,BPR.NAME_KOR AS BOKWIJA_NM
+			  ,BOK.DECE_REL AS REPRESEN_REL
+			  ,BPR.BLDG_NUM
+			  ,FN_ADDR_BLDG(BPR.BLDG_NUM) ADDR3
+			  ,DEA.BON DEATH_BON
+			  ,FN_CODE_NAME('BON',DEA.BON) DEATH_BON_NAME
+			  ,SPR.SEX_GBN DEATH_SEX_GBN
+			  ,FN_CODE_NAME('DEATH_SEXGBN',SPR.SEX_GBN) DEATH_SEX_GBN_NAME
+			  ,BOK.EQUAL_GBN
+			  ,BOK.SPIRITUAL_GBN
+		  FROM SIN_DEATH_BOKWI_INFO BOK
+		      ,SIN_DEATH_INFO DEA
+		      ,SIN_CARD_MASTER SPR
+		      ,SIN_CARD_MASTER BPR 
+		 WHERE 1=1
+		   AND BOK.TEMPLE_CD      = DEA.TEMPLE_CD
+		   AND BOK.DECE_BUD_NO    = DEA.BUD_NO
+		   AND BOK.TEMPLE_CD      = BPR.TEMPLE_CD
+		   AND BOK.BUD_NO         = BPR.BUD_NO
+		   AND DEA.TEMPLE_CD      = SPR.TEMPLE_CD
+		   AND DEA.BUD_NO         = SPR.BUD_NO
+		   AND BOK.DEL_YN         = 'F'
+		   AND SPR.DEL_YN         = 'F'
+		   and BPR.DEL_YN         = 'F'
+		   AND BOK.TEMPLE_CD      = #{param.V_TEMPLE_CD}
+		   AND BOK.BUD_NO      LIKE '%-' || #{param.V_SEARCH_WORD} ||'-%'
+		   ORDER BY BOK.BUD_NO
+		   	    ,BOK.SORT_SEQ
+	</select>
+	
+	<!-- 관계 성명 신도조회 -->
+	<select id="SINDO_SELECT_VREL"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT 
+		    TEMPLE_CD,
+		    BUD_NO,
+		    BUD_CODE,
+		    SUBSTR(BUD_CODE,4,5) AS FAM_CODE,
+		    REPRESEN_REL,
+		    DAEJU_BUD_NO,
+		    FN_GET_NM('BUD',TEMPLE_CD,DAEJU_BUD_NO) AS DAEJU_NAME_KOR,
+		    SORT_SEQ,
+		    NAME_KOR,
+		    SACRED_KOR,
+		    SACRED_HAN,
+		    SINDO_GBN,
+		    ADDR1,
+		    ADDR2,
+		    TELNO1,
+		    TELNO2,
+		    TELNO3,
+		    TELNO1 || TELNO2 || TELNO3 AS TELNO,
+		    MOBILE_TELNO1,
+		    MOBILE_TELNO2,
+		    MOBILE_TELNO3,
+		    HWAJU_YN,
+		    ZIP_CD,
+		    MEMO,
+		    DEL_YN,
+		    JUMIN_NO,
+		    BLDG_NUM,
+		    FN_ADDR_BLDG(BLDG_NUM) ADDR3
+		FROM SIN_CARD_MASTER A
+	   WHERE TEMPLE_CD    = #{param.V_TEMPLE_CD}
+		 AND BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = A.TEMPLE_CD)
+		 AND NAME_KOR     = #{param.V_SEARCH_WORD}
+		 AND REPRESEN_REL = #{param.V_REPRESEN_REL}
+		 AND ZIP_CD       = #{param.V_ZIP_CD}
+		 AND DEL_YN       = 'F'
+		ORDER BY BUD_NO
+	</select>
+</mapper>

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC000p_06DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+	
+	
+	<select id="SELECT_REC_INDEUNG" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		  SELECT ACCEPT_DATE
+		  	    ,APPROVAL_GBN
+		  	    ,MGT.PROPOSAL_BUD_NO
+		  	    ,SIN.NAME_KOR AS PROPOSAL_BUD_NM
+		  	    ,SIN.MOBILE_TELNO1 || SIN.MOBILE_TELNO2 || SIN.MOBILE_TELNO3 AS MOBILE_TELNO
+		  	    ,MGT.SMS_YN
+		  	    ,MGT.TEMPLE_CD
+		  	    ,MGT.ACCEPT_SEQ
+		  	    ,MGT.SEQ
+		  	    ,INDEUNG_GBN
+		  	    ,INDEUNG_YEAR
+		  	    ,INDEUNG_MONTH
+		  	    ,INDEUNG_PERIOD
+		  	    ,PAYMENT_PLAN_AMT
+		  	    ,PAYMENT_AMT_DETAIL
+		  	    ,MGT.JUNGAK_CD
+		  	    ,MGT.LIGHT_NO
+		  	    ,LIMIT_YN
+		  	    ,START_MONTH
+		  	    ,END_MONTH
+		  	    ,LIGHT_NM
+		  	    ,AMOUNTS
+		  	    ,TRUNC(B_AMT) AS BASE_AMT
+		  	    ,(CASE WHEN TRUNC(B_AMT) > 0 THEN TRUNC(AMOUNTS/TRUNC(B_AMT)) ELSE 0 END )AS ACC_MONTH
+		  	    ,(CASE WHEN TRUNC(B_AMT) > 0 THEN TRUNC(AMOUNTS/TRUNC(B_AMT)) ELSE 0 END )AS ACC_MONTH
+		  	    ,(CASE  			            
+			           WHEN APPROVAL_GBN = '3' THEN '1' <!--CMS 인경우 -->			            
+			           WHEN TRUNC(B_AMT) = 0 THEN '2'  <!--납부금액이 0원인경우-->
+			           WHEN LIMIT_YN = 'T' THEN <!--개월이 0인경우 --> 
+			            CASE 
+			                WHEN INDEUNG_PERIOD = 0 THEN '3'  <!--예정금이 0인경우 -->			                
+			                WHEN PAYMENT_PLAN_AMT = 0 THEN '4'  <!-- 완납 -->
+			                WHEN AMOUNTS = PAYMENT_PLAN_AMT THEN '5'  <!-- 납부금액이  예정금액을 초과 -->			                
+			                WHEN AMOUNTS > PAYMENT_PLAN_AMT THEN '6'  <!--월납부금이 정수가 아닌경우-->
+			                WHEN TRUNC(B_AMT) != B_AMT THEN '7'
+			            ELSE 'T' END 
+			        ELSE 'T' END
+			     )AS SUNAB_YN
+			    ,DECODE(LIMIT_YN,'F',FN_GET_LAST_PAYMENT_YYYYMM(MGT.TEMPLE_CD,MGT.ACCEPT_SEQ,MGT.SEQ),'000000') AS LAST_MONTH
+			    ,FN_GET_NM('BUD',MGT.TEMPLE_CD,RIJM.DONGCHAM_BUD_NO) AS DONGCHAM_NM
+			    ,DONGCHAM_BUD_NO
+			    ,0 AS SUNAP_MONTH
+			    ,'F' AS CHECK_P
+			    ,0 AS PAYMENT_AMT
+			    ,MGT.MEMO
+			    ,MGT.REMARK_DETAIL
+			    ,MGT.ACCEPT_GBN
+		   FROM ( SELECT RM.ACCEPT_DATE
+				  		,RM.APPROVAL_GBN
+				  		,RM.PROPOSAL_BUD_NO
+				  		,RM.SMS_YN
+				  		,RID.TEMPLE_CD
+				  		,RID.ACCEPT_SEQ
+				  		,RID.SEQ
+				  		,RID.INDEUNG_GBN
+				  		,RID.INDEUNG_YEAR
+				  		,RID.INDEUNG_MONTH
+				  		,RID.INDEUNG_PERIOD
+				  		,RID.PAYMENT_PLAN_AMT
+				  		,RID.PAYMENT_AMT AS PAYMENT_AMT_DETAIL
+				  		,RID.JUNGAK_CD
+				  		,RID.LIGHT_NO
+				  		,RID.LIMIT_YN
+				  		,RID.INDEUNG_YEAR || LPAD(RID.INDEUNG_MONTH,2,'0') AS START_MONTH
+				  		,RID.ACCEPT_GBN
+				  		,TO_CHAR(ADD_MONTHS(TO_DATE(RID.INDEUNG_YEAR || LPAD(RID.INDEUNG_MONTH,2,'0'),'YYYYMM'),RID.INDEUNG_PERIOD-1),'YYYYMM') AS END_MONTH
+				  		,RDCM.LIGHT_NM
+				  		,(SELECT SUM(AMOUNT) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = RS.TEMPLE_CD AND ACCEPT_SEQ = RS.ACCEPT_SEQ AND SEQ = RS.SEQ) AS AMOUNTS
+				  		,CASE WHEN RID.LIMIT_YN = 'T' THEN 
+			    			CASE WHEN RID.INDEUNG_PERIOD > 0 THEN RID.PAYMENT_PLAN_AMT/RID.INDEUNG_PERIOD
+			    		 ELSE 0 END
+			    		 ELSE RDCM.AMOUNT
+						 END AS B_AMT
+						,RM.MEMO
+						,RID.REMARK AS REMARK_DETAIL
+				    FROM REC_MASTER RM
+			    		,REC_SUB RS
+			    		,REC_INDEUNG_DETAIL RID
+			    		,REC_DEUNG_CLASS_MGT RDCM
+				   WHERE 1=1
+					 AND RM.TEMPLE_CD    = RS.TEMPLE_CD
+					 AND RM.ACCEPT_SEQ   = RS.ACCEPT_SEQ
+					 AND RS.TEMPLE_CD    = RID.TEMPLE_CD
+					 AND RS.ACCEPT_SEQ   = RID.ACCEPT_SEQ
+					 AND RS.SEQ          = RID.SEQ
+					 AND RID.TEMPLE_CD   = RDCM.TEMPLE_CD
+					 AND RID.INDEUNG_GBN = RDCM.LIGHT_CODE
+					 AND RID.ACCEPT_GBN  = RDCM.ACCEPT_GBN
+					 AND RM.TEMPLE_CD    = #{V_TEMPLE_CD}
+					 AND RM.PROPOSAL_BUD_NO like #{V_SEARCH_BUD}
+					 AND RS.ACCEPT_GBN   = '2'
+					 AND RS.DEL_YN       = 'F'
+					 AND RID.CLOSE_YN    = 'F'	) MGT
+				,REC_INDEUNG_JOIN_MGT RIJM
+				,SIN_CARD_MASTER SIN
+		   WHERE MGT.TEMPLE_CD = RIJM.TEMPLE_CD(+)
+			 AND MGT.ACCEPT_SEQ = RIJM.ACCEPT_SEQ(+)
+			 AND MGT.SEQ = RIJM.SEQ(+)
+			 AND RIJM.SORT_SEQ(+) = '1'
+			 AND MGT.TEMPLE_CD = SIN.TEMPLE_CD
+			 AND MGT.PROPOSAL_BUD_NO = SIN.BUD_NO
+		   ORDER BY MGT.ACCEPT_SEQ DESC
+		   		,MGT.SEQ DESC
+	</select>
+	
+	
+	
+	<select id="GET_DEUNG_PRICE_MGT" parameterType="java.util.Map"  resultType="String">
+		 SELECT AMOUNT                  
+		   FROM REC_DEUNG_PRICE_MGT     
+		  WHERE TEMPLE_CD      = #{TEMPLE_CD}      
+		    AND LIGHT_CODE     = #{LIGHT_CODE}
+		    AND TO_DATE(#{V_PAYMENT_YYYYMM}, 'YYYYMM')     >= TO_DATE(START_YYYYMM, 'YYYYMM') 
+		    AND TO_DATE(#{V_PAYMENT_YYYYMM}, 'YYYYMM')  &lt;= TO_DATE(END_YYYYMM, 'YYYYMM') 
+	</select>
+	
+</mapper>

@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="PgCardDAO">
+	
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="CHK" column="CHK"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+	
+	<select id="SELECT_CARD_DETAIL"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+		      ,SUB1_TRADE_ID
+		      ,SUB1_TRADE_PW
+		      ,SUB2_TRADE_ID
+		      ,SUB2_TRADE_PW
+		      ,KEYIN_LICENSE
+		      ,KEYIN_LICENSE as MERCHANTKEY
+		  FROM ASP_TEMPLE_PG_INFO
+		 WHERE PGCODE    = '01'
+		   AND TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND ROWNUM    = 1
+	</select>
+	
+	<select id="SELECT_CARD_AUTHCODE_LIST"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		 SELECT  'F' AS CHK
+				,A.TEMPLE_CD
+				,B.ACCEPT_SEQ
+				,B.SEQ
+				,C.PGCODE
+				,B.ACCEPT_GBN
+				,D.PGAUTHCODE
+				,D.PGAUTHDATE
+				,D.END_PRICE
+				,C.PAYMENT_YYYYMM
+				,TO_DATE(SYSDATE)  - TO_DATE(D.PGAUTHDATE, 'YY/MM/DD')    AS DIFFDAY 				
+				,SUM(C.AMOUNT) AS AMOUNT
+				,NVL(D.PARTCANCELCNT,0) AS PARTCANCELCNT
+				,FN_CARDAPRROV_NAME(A.TEMPLE_CD,B.ACCEPT_GBN,B.ACCEPT_SEQ,B.SEQ) AS APPROVNAME
+				,D.CARDQUOTA
+				,D.NICE_AUTHDATE
+				,D.TID as ORG_TID
+		 FROM  REC_MASTER A
+		 	 , REC_SUB B
+		 	 , REC_PAYMENT_HIS C 
+		 	 , REC_CARDPAY D 
+		 	 ,(SELECT TEMPLE_CD
+				     ,PGCODE
+				     ,AUTHCODE
+				     ,SUM(AMOUNT) AS ROWAMOUNT
+				 FROM REC_PAYMENT_HIS 
+				WHERE 1=1
+				  AND TEMPLE_CD       = '${V_TEMPLE_CD}'
+				  AND ACCEPT_SEQ      = '${ACCEPT_SEQ}'
+				  <choose>
+				  	<when test='PAYMENT_YYYYMM != null and  PAYMENT_YYYYMM != ""'>
+				  		AND PAYMENT_YYYYMM  = #{PAYMENT_YYYYMM}
+				  	</when>
+				  	<when test='SUB_DATE != null and  SUB_DATE != ""'>
+				  		AND SUB_DATE  = #{SUB_DATE}
+				  	</when>
+				  </choose>
+				 AND APPROVAL_GBN =2
+			   GROUP BY TEMPLE_CD
+				       ,PGCODE
+				       ,AUTHCODE ) E
+		  WHERE A.TEMPLE_CD 	   = B.TEMPLE_CD
+			AND A.ACCEPT_SEQ 	   = B.ACCEPT_SEQ
+			AND B.TEMPLE_CD  	   = C.TEMPLE_CD
+			AND B.ACCEPT_SEQ 	   = C.ACCEPT_SEQ
+			AND B.SEQ	     	   = C.SEQ
+			AND C.TEMPLE_CD  	   = D.TEMPLE_CD
+			AND C.PGCODE     	   = D.PGCODE
+			AND TRIM(C.AUTHCODE)   = TRIM(D.PGAUTHCODE)
+			AND C.TEMPLE_CD  	   = E.TEMPLE_CD
+			AND C.PGCODE     	   = E.PGCODE
+			AND TRIM(C.AUTHCODE)   = TRIM(E.AUTHCODE)
+			AND D.END_PRICE 	  != 0
+			AND E.ROWAMOUNT 	  != 0
+		   GROUP BY  A.TEMPLE_CD
+					,B.ACCEPT_SEQ
+					,B.SEQ
+					,C.PGCODE
+					,B.ACCEPT_GBN
+					,D.PGAUTHCODE
+					,D.PGAUTHDATE
+					,D.END_PRICE
+					,C.PAYMENT_YYYYMM
+				 	,TO_DATE(D.PGAUTHDATE, 'YY/MM/DD') - TO_DATE(SYSDATE-3)   
+					,D.PARTCANCELCNT
+					,D.CARDQUOTA
+					,D.NICE_AUTHDATE
+					,D.TID 
+		   HAVING SUM(AMOUNT) > 0 
+		   ORDER BY PGAUTHCODE , PAYMENT_YYYYMM
+	</select>
+	
+	<insert id="INSERT_REC_CARDPAY_HIS" parameterType="java.util.Map">
+		INSERT INTO REC_CARDPAY_HIS ( 
+			 TEMPLE_CD
+			,PGCODE
+			,PGAUTHCODE
+			,SEQ
+			,AUTHGBN
+			,TID
+			,RESULTMSG
+			,ORG_TID
+			,PR_REMAINS
+			,GETRESULTPRICE
+			,CRT_DATE
+			,PAY_TYPE
+		) 
+		VALUES (
+			 #{TEMPLE_CD}
+			,#{PGCODE}
+			,#{CARDAUTHCODE}
+			,(SELECT 
+				NVL(MAX(SEQ),0) + 1
+			  FROM 
+				REC_CARDPAY_HIS
+			  WHERE 1=1
+				AND TEMPLE_CD  = #{TEMPLE_CD}
+				AND PGCODE     = #{PGCODE}
+				AND PGAUTHCODE = #{CARDAUTHCODE}
+			)
+			,#{AUTHGBN}
+			,#{TID}
+			,#{RESULTMSG}
+			,#{ORG_TID}
+			,#{PR_REMAINS}
+			,#{GETRESULTPRICE}
+			,SYSDATE
+			,#{PAY_TYPE}
+		)
+	</insert>
+	
+	
+	<insert id="UPDATE_REC_CARDPAY" parameterType="java.util.Map">
+		UPDATE REC_CARDPAY 
+		   SET CANCEL_PRICE   = CANCEL_PRICE + #{GETRESULTPRICE}
+			  ,END_PRICE      = #{PR_REMAINS}
+			  ,PARTCANCELCNT  = NVL(PARTCANCELCNT, 0) +1
+		 WHERE TEMPLE_CD      = #{TEMPLE_CD}
+		   AND PGCODE         = #{PGCODE}
+		   AND PGAUTHCODE     = #{CARDAUTHCODE}
+	</insert>
+	
+	
+	<insert id="INSERT_MISU_LIMIT" parameterType="java.util.Map">
+		INSERT INTO REC_PAYMENT_HIS (
+		       TEMPLE_CD
+		      ,SEQ
+		      ,ACCEPT_SEQ
+		      ,SUB_DATE
+		      ,AMOUNT
+		      ,PAYMENT_YYYYMM
+		      ,CRT_USER
+		      ,REMOTE
+		      ,REMARK
+		      ,APPROVAL_GBN
+		      ,PGCODE
+		      ,AUTHCODE
+		) VALUES (
+		       #{TEMPLE_CD}
+		      ,#{SEQ}
+		      ,#{ACCEPT_SEQ}
+		      ,(SELECT TO_CHAR(CURRENT_TIMESTAMP,'YYYYMMDDHH24MISSFF') 
+		          FROM DUAL)
+		      ,(#{AMOUNT} * -1)
+		      ,#{PAYMENT_YYYYMM}
+		      ,#{V_USER_ID}
+		      ,#{V_REMOTE}
+		      ,''
+		      ,'2'
+		      ,#{PGCODE}
+		      ,#{PGAUTHCODE} 
+		)
+	</insert>
+	
+	
+</mapper>

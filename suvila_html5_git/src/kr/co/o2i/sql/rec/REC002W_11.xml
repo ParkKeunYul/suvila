@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC002W_11DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="CONTENT"    column="CONTENT"      javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="USE_YN"     column="USE_YN"       typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+		<result  property="ACPT_CLOSE" column="ACPT_CLOSE"   typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+		 
+	</resultMap>
+
+
+	<!-- # 접수중인 목록 # -->
+	<select id="SELECT_Ing" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	<![CDATA[
+	    SELECT TEMPLE_CD
+	          ,ACPT_FDATE
+	          ,ACPT_FDATE as ACPT_FDATE_TEMP
+	          ,BULSA_CD
+	          ,BULSA_CD   as  BULSA_CD_TEMP
+	          ,ACPT_EDATE
+	          ,BULSA_NM
+	          ,ACPT_CLOSE
+	          ,USE_YN
+	          ,REMARK
+	          ,CRT_USER
+	          ,CRT_DATE
+	          ,UPT_DATE
+	          ,UPT_USER
+	          ,REMOTE
+		  FROM REC_BULSA_MGT
+		WHERE  TEMPLE_CD    = #{V_TEMPLE_CD}
+		  AND  BULSA_CD     = #{V_BULSA_CD}
+		  AND  USE_YN       = 'T'
+		  AND  ACPT_FDATE   <> '-1'
+		ORDER BY BULSA_CD ASC , ACPT_FDATE DESC
+	]]>
+	</select>
+	
+	<insert id="INSERT_Ing" parameterType="java.util.Map">
+		INSERT INTO REC_BULSA_MGT (
+	        TEMPLE_CD
+	       ,ACPT_FDATE
+	       ,BULSA_CD
+	       ,ACPT_EDATE
+	       ,BULSA_NM
+	       ,ACPT_CLOSE
+	       ,USE_YN
+	       ,REMARK
+	       ,CRT_USER
+	       ,CRT_DATE
+	       ,UPT_DATE
+	       ,UPT_USER
+	       ,REMOTE
+	) VALUES (
+	        #{TEMPLE_CD}
+	       ,#{ACPT_FDATE}
+	       ,#{BULSA_CD}
+	       ,#{ACPT_EDATE}
+	       ,#{BULSA_NM ,jdbcType=VARCHAR}
+	       ,#{ACPT_CLOSE}
+	       ,#{USE_YN}
+	       ,#{REMARK  ,jdbcType=VARCHAR}
+	       ,#{CRT_USER}
+	       ,SYSDATE
+	       ,SYSDATE
+	       ,#{UPT_USER}
+	       ,#{REMOTE}
+	)
+	</insert>
+	
+	<update id="UPDATE_Ing" parameterType="java.util.Map">
+		UPDATE REC_BULSA_MGT 
+		   SET BULSA_CD   = #{BULSA_CD}
+		      ,ACPT_EDATE = #{ACPT_EDATE}
+		      ,ACPT_CLOSE = #{ACPT_CLOSE}
+		      ,USE_YN     = #{USE_YN}
+		      ,REMARK     = #{REMARK ,jdbcType=VARCHAR}
+		      ,CRT_USER   = #{CRT_USER}
+		      ,CRT_DATE   = SYSDATE
+		      ,UPT_DATE   = SYSDATE
+		      ,UPT_USER   = #{UPT_USER}
+		      ,REMOTE     = #{REMOTE}
+		WHERE TEMPLE_CD   = #{TEMPLE_CD}
+	 	  AND BULSA_CD    = #{BULSA_CD_TEMP}
+	 	  AND ACPT_FDATE  = #{ACPT_FDATE}
+	</update>
+	
+	<delete id="DELETE_Ing" parameterType="java.util.Map">
+		DELETE FROM REC_BULSA_MGT
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		   AND BULSA_CD   = #{BULSA_CD}
+		   AND ACPT_FDATE = #{ACPT_FDATE}
+	</delete>
+	
+	<select id="SELECT_General" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	<![CDATA[
+	    SELECT TEMPLE_CD
+	    	  ,ACPT_FDATE
+	    	  ,ACPT_FDATE as ACPT_FDATE_TEMP
+	    	  ,BULSA_CD
+	    	  ,BULSA_CD   as  BULSA_CD_TEMP
+	    	  ,ACPT_EDATE
+	    	  ,BULSA_NM
+	    	  ,ACPT_CLOSE
+	    	  ,USE_YN
+	    	  ,REMARK
+	    	  ,ACCT_GBN
+	    	  ,IE_GBN
+	    	  ,KWAN
+	    	  ,HANG
+	    	  ,MOK
+	    	  ,FN_ACC_NAME(TEMPLE_CD, ACCT_GBN, IE_GBN, KWAN, HANG, MOK , 'MOK')  AS ACCNAME
+	    	  ,CRT_USER
+	    	  ,CRT_DATE
+	    	  ,UPT_DATE
+	    	  ,UPT_USER
+	    	  ,REMOTE
+		  FROM REC_BULSA_MGT
+		 WHERE TEMPLE_CD    = #{V_TEMPLE_CD}
+		   AND ACPT_FDATE   = '-1'
+		   AND USE_YN       = 'T'
+		ORDER BY BULSA_CD ASC
+	]]>
+	</select>
+	
+	<insert id="INSERT_General" parameterType="java.util.Map">
+		INSERT INTO REC_BULSA_MGT (
+	        TEMPLE_CD
+	       ,ACPT_FDATE
+	       ,BULSA_CD
+	       ,ACPT_EDATE
+	       ,BULSA_NM
+	       ,ACPT_CLOSE
+	       ,USE_YN
+	       ,REMARK
+	       ,CRT_USER
+	       ,CRT_DATE
+	       ,UPT_DATE
+	       ,UPT_USER
+	       ,REMOTE
+	       ,ACCT_GBN
+	       ,IE_GBN
+	       ,KWAN
+	       ,HANG
+	       ,MOK
+	) VALUES (
+	        #{TEMPLE_CD}
+	       ,'-1'
+	       ,BULSA_CD.NEXTVAL
+	       <!--  ,#{BULSA_CD}-->
+	       ,#{ACPT_EDATE ,jdbcType=VARCHAR}
+	       ,#{BULSA_NM}
+	       ,#{ACPT_CLOSE ,jdbcType=VARCHAR}
+	       ,#{USE_YN}
+	       ,#{REMARK     ,jdbcType=VARCHAR}
+	       ,#{CRT_USER}
+	       ,SYSDATE
+	       ,SYSDATE
+	       ,#{UPT_USER}
+	       ,#{REMOTE}
+	       ,#{ACCT_GBN ,jdbcType=VARCHAR}
+	       ,#{IE_GBN   ,jdbcType=VARCHAR}
+	       ,#{KWAN     ,jdbcType=VARCHAR}
+	       ,#{HANG     ,jdbcType=VARCHAR}
+	       ,#{MOK      ,jdbcType=VARCHAR}
+	)
+	</insert>
+	
+	
+	<update id="UPDATE_General" parameterType="java.util.Map">
+		UPDATE REC_BULSA_MGT 
+		   SET ACPT_EDATE = #{ACPT_EDATE   ,jdbcType=VARCHAR}
+		      ,BULSA_NM   = #{BULSA_NM}
+		      ,ACPT_CLOSE = #{ACPT_CLOSE  ,jdbcType=VARCHAR}
+		      ,USE_YN     = #{USE_YN      ,jdbcType=VARCHAR}
+		      ,REMARK     = #{REMARK ,jdbcType=VARCHAR}
+		      ,CRT_USER   = #{CRT_USER}
+		      ,CRT_DATE   = SYSDATE
+		      ,UPT_DATE   = SYSDATE
+		      ,UPT_USER   = #{UPT_USER}
+		      ,REMOTE     = #{REMOTE}
+		      ,ACCT_GBN   = #{ACCT_GBN ,jdbcType=VARCHAR}
+		      ,IE_GBN     = #{IE_GBN   ,jdbcType=VARCHAR}
+		      ,KWAN       = #{KWAN     ,jdbcType=VARCHAR}
+		      ,HANG       = #{HANG     ,jdbcType=VARCHAR}
+		      ,MOK        = #{MOK       ,jdbcType=VARCHAR}
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		   AND ACPT_FDATE = '-1'
+		   AND BULSA_CD   = #{BULSA_CD}
+		   AND  USE_YN    = 'T'
+	</update>
+	
+	<delete id="DELETE_General" parameterType="java.util.Map">
+		DELETE FROM REC_BULSA_MGT
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		   AND BULSA_CD   = #{BULSA_CD}
+		   AND ACPT_FDATE = '-1'
+	</delete>
+	
+	
+	<select id="SELECT_Detail" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT A.TEMPLE_CD
+			  ,A.BULSA_CD
+			  ,B.BULSA_NM
+			  ,A.BULSA_SEQ
+			  ,A.BULSA_DETAIL
+			  ,A.AMOUNT
+			  ,A.USE_YN
+			  ,A.REMARK
+			  ,A.CRT_USER
+			  ,A.CRT_DATE
+			  ,A.UPT_DATE
+			  ,A.UPT_USER
+			  ,A.REMOTE
+		  FROM REC_BULSA_DETAIL_MGT A
+		      ,REC_BULSA_MGT        B
+		 WHERE A.TEMPLE_CD  = B.TEMPLE_CD
+		   AND A.BULSA_CD   = B.BULSA_CD
+		   AND A.TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND A.BULSA_CD   = #{V_BULSA_CD}
+		   AND B.ACPT_FDATE = '-1'
+		ORDER BY A.BULSA_CD ASC , A.BULSA_SEQ ASC
+	</select>
+	
+	<insert id="INSERT_Detail" parameterType="java.util.Map">
+		INSERT INTO REC_BULSA_DETAIL_MGT (
+	        TEMPLE_CD
+	       ,BULSA_CD
+	       ,BULSA_SEQ
+	       ,AMOUNT
+	       ,BULSA_DETAIL
+	       ,USE_YN
+	       ,REMARK
+	       ,CRT_USER
+	       ,CRT_DATE
+	       ,UPT_DATE
+	       ,UPT_USER
+	       ,REMOTE
+	) VALUES (
+	        #{TEMPLE_CD}
+	       ,#{BULSA_CD}
+	       ,( SELECT NVL(MAX(BULSA_SEQ)+1,1)
+	            FROM REC_BULSA_DETAIL_MGT
+	           WHERE  TEMPLE_CD = #{TEMPLE_CD}
+	             AND  BULSA_CD  = #{BULSA_CD} )
+	       ,#{AMOUNT}
+	       ,#{BULSA_DETAIL,jdbcType=VARCHAR}
+	       ,#{USE_YN}
+	       ,#{REMARK  ,jdbcType=VARCHAR}
+	       ,#{CRT_USER}
+	       ,SYSDATE
+	       ,SYSDATE
+	       ,#{UPT_USER}
+	       ,#{REMOTE}
+	)
+	</insert>
+	
+	
+	<update id="UPDATE_Detail" parameterType="java.util.Map">
+		UPDATE REC_BULSA_DETAIL_MGT 
+		   SET AMOUNT       = #{AMOUNT}
+		   	  ,BULSA_DETAIL = #{BULSA_DETAIL ,jdbcType=VARCHAR}
+		   	  ,USE_YN       = #{USE_YN}
+		   	  ,REMARK       = #{REMARK ,jdbcType=VARCHAR}
+		   	  ,CRT_USER     = #{CRT_USER}
+		   	  ,CRT_DATE     = SYSDATE
+		   	  ,UPT_DATE     = SYSDATE
+		   	  ,UPT_USER     = #{UPT_USER}
+		   	  ,REMOTE       = #{REMOTE}
+		 WHERE TEMPLE_CD    = #{TEMPLE_CD}
+	  	   AND BULSA_CD     = #{BULSA_CD}
+	  	   AND BULSA_SEQ    = #{BULSA_SEQ}
+	</update>
+	
+	<delete id="DELETE_Detail" parameterType="java.util.Map">
+		DELETE FROM REC_BULSA_DETAIL_MGT
+		 WHERE TEMPLE_CD    = #{TEMPLE_CD}
+		   AND BULSA_CD     = #{BULSA_CD}
+		   AND BULSA_SEQ    = #{BULSA_SEQ}
+	</delete>
+	
+	
+	<select id="SELECT_bulsa_cd" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT BULSA_CD.NEXTVAL as BULSA_CD
+		  FROM DUAL
+	</select>
+	
+	<select id="SELECT_bulsa_nm" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT BULSA_CD
+			  ,BULSA_NM
+		  FROM REC_BULSA_MGT
+		 WHERE  TEMPLE_CD    = #{V_TEMPLE_CD}
+		   AND  ACPT_FDATE   = '-1'
+		   AND  USE_YN       = 'T'
+		 ORDER BY BULSA_CD ASC
+	</select>
+	
+	
+	<select id="SELECT_bulsa_nm_all" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT 0      BULSA_CD
+		      ,'전체'  BULSA_NM
+		  FROM REC_BULSA_MGT
+		 UNION
+		SELECT BULSA_CD
+		      ,BULSA_NM
+		  FROM DUAL
+		 WHERE TEMPLE_CD    = #{V_TEMPLE_CD}
+		   AND ACPT_FDATE   = '-1'
+		   AND USE_YN       = 'T'
+		ORDER BY BULSA_CD ASC
+	</select>
+	
+	<select id="SELECT_bulsa_nm_sel" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT 0      BULSA_CD
+			  ,'선택'  BULSA_NM
+		  FROM DUAL
+		UNION
+		SELECT BULSA_CD
+			  ,BULSA_NM
+		  FROM REC_BULSA_MGT
+		WHERE  TEMPLE_CD    = #{V_TEMPLE_CD}
+		  AND  ACPT_FDATE   = '-1'
+		  AND  USE_YN       = 'T'
+		ORDER BY BULSA_CD ASC
+	</select>
+	
+</mapper>

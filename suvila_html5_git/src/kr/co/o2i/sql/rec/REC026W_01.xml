@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC026W_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="SEL_YN" column="SEL_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+
+	<select id="SELECT_REC_PAYMENT_HIS" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT RPH.TEMPLE_CD
+			  ,RPH.ACCEPT_SEQ
+			  ,RPH.SEQ
+			  ,RPH.SUB_DATE
+			  ,SUBSTR(RPH.SUB_DATE,1,8) AS SUNAB_DATE
+			  ,RPH.AMOUNT
+			  ,RPH.REMARK
+			  ,RPH.APPROVAL_GBN
+			  ,APP.NAME AS APPROVAL_NM
+			  ,RS.ACCEPT_GBN
+			  ,ACC.NAME AS ACCPET_NM
+			  ,SUBSTR(RM.PROPOSAL_BUD_NO,0,8) AS PROPOSAL_BUD_NO
+			  ,ACCEPT_DATE
+			  ,SIN.NAME_KOR
+			  ,FN_GET_REC_MGT_NM (RPH.TEMPLE_CD, RPH.ACCEPT_SEQ, RPH.SEQ) AS REC_DETAIL_NM
+			  ,SIN.REPRESEN_REL
+			  ,DECODE(RPH.PAYMENT_YYYYMM,'0','','000000','',RPH.PAYMENT_YYYYMM) AS PAYMENT_YYYYMM
+		  FROM REC_PAYMENT_HIS RPH
+		  	  ,REC_SUB	RS
+		  	  ,REC_MASTER	RM
+		  	  ,SIN_CARD_MASTER SIN
+		  	  ,ASP_CODE_MGT APP
+		  	  ,ASP_CODE_MGT ACC
+		 WHERE RPH.TEMPLE_CD        = RS.TEMPLE_CD
+		   AND RPH.ACCEPT_SEQ       = RS.ACCEPT_SEQ
+		   AND RPH.SEQ              = RS.SEQ
+		   AND RS.TEMPLE_CD         = RM.TEMPLE_CD
+		   AND RS.ACCEPT_SEQ        = RM.ACCEPT_SEQ
+		   AND RM.TEMPLE_CD         = SIN.TEMPLE_CD(+)
+		   AND RM.PROPOSAL_BUD_NO   = SIN.BUD_NO(+)
+		   AND RPH.APPROVAL_GBN     = APP.CODE
+		   AND APP.GROUP_CD         = 'APPROV'
+		   AND RS.ACCEPT_GBN        = ACC.CODE
+		   AND ACC.GROUP_CD         = 'REC'
+		   AND RPH.TEMPLE_CD        = '${V_TEMPLE_CD}'
+		   AND RPH.PAYMENT_STATE_CD = '0'
+		   AND RPH.AMOUNT          != '0'
+		   AND SUBSTR(RPH.SUB_DATE,1,8) BETWEEN '${V_SDATE}' AND '${V_EDATE}'
+		   <if test="V_BUD_NO != '' and V_BUD_NO != null  ">
+		   	AND RM.PROPOSAL_BUD_NO LIKE '${V_BUD_NO}%'
+		   </if>
+		   <if test="V_ACCEPT_GBN != '' and V_ACCEPT_GBN != null  ">
+		   	AND RS.ACCEPT_GBN = '${V_ACCEPT_GBN}'
+		   </if>		
+		ORDER BY SUBSTR(RM.PROPOSAL_BUD_NO,1,8)
+			 ,SUBSTR(RPH.SUB_DATE,1,8)
+			 ,RS.ACCEPT_GBN, RPH.SUB_DATE	
+	</select>
+
+	<select id="SELECT_FAMILY_REC_PAYMENT_HIS" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+			  ,BUD_CODE
+			  ,DAEJU_BUD_NO
+			  ,DAEJU_NAME_KOR
+			  ,SUM(AMOUNT) AS AMOUNT
+			  ,ADDR1
+			  ,ADDR2
+			  ,ZIP_CD
+			  ,TELNO
+			  ,MOBILE_TELNO   
+		 FROM (           
+				SELECT M.TEMPLE_CD
+					  ,SCM.BUD_CODE
+					  ,M.DAEJU_BUD_NO
+					  ,(SELECT NAME_KOR
+					      FROM SIN_CARD_MASTER S3
+					     WHERE S3.BUD_NO=M.DAEJU_BUD_NO
+					       AND S3.TEMPLE_CD=M.TEMPLE_CD) AS DAEJU_NAME_KOR
+					  ,M.AMOUNT
+					  ,SCM.ADDR1
+					  ,SCM.ADDR2||' '||FN_ADDR_BLDG(SCM.BLDG_NUM) ADDR2
+					  ,SCM.ZIP_CD
+					  ,SCM.TELNO1 || DECODE(SCM.TELNO1,NULL,'','-') || SCM.TELNO2 || DECODE(SCM.TELNO2,NULL,'','-') || SCM.TELNO3 AS TELNO
+					  ,SCM.MOBILE_TELNO1 || DECODE(SCM.MOBILE_TELNO1,NULL,'','-') || SCM.MOBILE_TELNO2 || DECODE(SCM.MOBILE_TELNO2,NULL,'','-') || SCM.MOBILE_TELNO3 AS MOBILE_TELNO         
+				  FROM SIN_CARD_MASTER SCM 
+				  	  ,(SELECT S.TEMPLE_CD
+				  	  		  ,S.BUD_CODE
+				  	  		  ,SUM(S.AMOUNT) AS AMOUNT
+				  	  		  ,(SELECT S2.DAEJU_BUD_NO
+		                   		  FROM SIN_CARD_MASTER S2
+		                   		 WHERE S2.TEMPLE_CD = S.TEMPLE_CD
+		                    	   AND S2.DEL_YN    = 'F'
+		                    	   AND S2.BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = S.TEMPLE_CD)
+		                    	   AND S2.BUD_CODE  = S.BUD_CODE
+		                    	   AND ROWNUM=1) AS DAEJU_BUD_NO
+		            	 FROM (
+		                		SELECT SIN.TEMPLE_CD
+		                			  ,SIN.BUD_NO
+		                			  ,SIN.BUD_CODE
+		                			  ,RPH.AMOUNT
+		                			  ,RM.PROPOSAL_BUD_NO
+				            	  FROM SIN_CARD_MASTER SIN
+				            	  	  ,REC_PAYMENT_HIS RPH
+				            	  	  ,REC_SUB          RS
+				            	  	  ,REC_MASTER       RM
+				            	 WHERE SIN.TEMPLE_CD        = #{V_TEMPLE_CD}
+				            	   AND RPH.TEMPLE_CD        = RS.TEMPLE_CD
+				            	   AND RPH.ACCEPT_SEQ       = RS.ACCEPT_SEQ
+				            	   AND RPH.SEQ              = RS.SEQ
+				            	   AND RS.TEMPLE_CD         = RM.TEMPLE_CD
+				            	   AND RS.ACCEPT_SEQ        = RM.ACCEPT_SEQ
+				            	   AND RM.TEMPLE_CD         = SIN.TEMPLE_CD(+)
+				            	   AND RM.PROPOSAL_BUD_NO   = SIN.BUD_NO(+)
+				            	   AND RPH.PAYMENT_STATE_CD = '0'
+				            	   AND RPH.AMOUNT          != '0'
+				            	   AND RS.DEL_YN            = 'F'
+				            	   AND SIN.BUD_NO IS NOT NULL
+				            	   AND SUBSTR(RPH.SUB_DATE,1,8) BETWEEN #{V_SDATE} AND #{V_EDATE}
+				            	   <if test="V_BUD_NO != '' and V_BUD_NO != null  ">
+				            	   	AND RM.PROPOSAL_BUD_NO LIKE #{V_BUD_NO} || '%'
+				            	   </if>
+				            	   <if test="V_ACCEPT_GBN != '' and V_ACCEPT_GBN != null  ">
+				            	   	AND RS.ACCEPT_GBN = #{V_ACCEPT_GBN}
+				            	   </if>
+				            	   <if test="V_APPROVAL_GBN != '' and V_APPROVAL_GBN != null  ">
+				            	   	AND RPH.APPROVAL_GBN = #{V_APPROVAL_GBN}
+				            	   </if>
+				            	   <if test="V_CLASS_CD != '' and V_CLASS_CD != null and V_CLASS_CD != 0 ">
+				            	   	AND RM.PROPOSAL_BUD_NO IN (SELECT BUD_NO 
+				            	   								 FROM SIN_CLASS_INFO 
+				            	   								WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+				            	   								  AND CLASS_CD  = #{V_CLASS_CD}  )
+				            	   </if>
+									
+		                	  ) S
+		            GROUP BY S.BUD_CODE
+		            		,S.TEMPLE_CD
+		            		,S.PROPOSAL_BUD_NO
+		            ) M
+				WHERE SCM.BUD_NO     = M.DAEJU_BUD_NO 
+				  AND SCM.TEMPLE_CD  = M.TEMPLE_CD
+				  AND M.AMOUNT      != '0'
+				ORDER BY M.DAEJU_BUD_NO 
+			)
+		GROUP BY TEMPLE_CD
+				,BUD_CODE
+				,DAEJU_BUD_NO
+				,DAEJU_NAME_KOR
+				,ADDR1
+				,ADDR2
+				,ZIP_CD
+				,TELNO
+				,MOBILE_TELNO   
+	</select>
+	
+</mapper>

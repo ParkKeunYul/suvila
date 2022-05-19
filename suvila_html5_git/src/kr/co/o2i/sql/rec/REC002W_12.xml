@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC002W_12DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="CONTENT"    column="CONTENT"      javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+	</resultMap>
+
+
+	<select id="SELECT_BSREC" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	    SELECT TEMPLE_CD
+	    	  ,ACCEPT_SEQ
+	    	  ,SEQ
+	    	  ,ACCEPT_GBN
+	    	  ,ACCEPT_DATE
+	    	  ,ACCEPT_NAME
+	    	  ,PROPOSAL_BUD_NO
+	    	  ,PROPOSAL_NAME_KOR
+	    	  ,APPROVAL_GBN
+	    	  ,BUD_NO
+	    	  ,NAME_KOR
+	    	  ,BULSA_CD
+	    	  ,BULSA_SEQ
+	    	  ,BULSA_DETAIL
+	    	  ,BULSA_NM
+	    	  ,ACPT_FDATE
+	    	  ,ACPT_EDATE
+	    	  ,DECODE(R_NO,'1',PAYMENT_PLAN_AMT,'') PAYMENT_PLAN_AMT
+	    	  ,DECODE(R_NO,'1',PAYMENT_AMT,'') PAYMENT_AMT
+	    	  ,DECODE(R_NO,'1',MISU_AMT,'') MISU_AMT
+	    	  ,REMARK
+	    	  ,DEL_YN
+	    	  ,CRT_USER
+	    	  ,UPT_USER
+	    	  ,CRT_DATE
+	    	  ,UPT_DATE
+	    	  ,REMOTE
+	    	  ,TO_CHAR(TO_DATE(ACPT_FDATE, 'yyyymmdd'),'YYYY/MM/DD')  as ACPT_FDATE1
+	    	  ,TO_CHAR(TO_DATE(ACPT_EDATE, 'yyyymmdd'),'YYYY/MM/DD')  as ACPT_EDATE1
+		  FROM( 
+		  		SELECT ROW_NUMBER() OVER (PARTITION BY DET.ACCEPT_SEQ ORDER BY DET.SEQ) R_NO
+		  			  ,DET.TEMPLE_CD
+		  			  ,DET.ACCEPT_SEQ
+		  			  ,DET.SEQ
+		  			  ,SUB.ACCEPT_GBN
+		  			  ,MST.ACCEPT_DATE
+		  			  ,COD.NAME AS ACCEPT_NAME
+		  			  ,MST.PROPOSAL_BUD_NO
+		  			  ,SMS.NAME_KOR AS PROPOSAL_NAME_KOR
+		  			  ,MST.APPROVAL_GBN
+		  			  ,DET.BUD_NO
+		  			  ,SIN.NAME_KOR
+		  			  ,DET.BULSA_CD
+		  			  ,DET.BULSA_SEQ
+		  			  ,DMG.BULSA_DETAIL
+		  			  ,SGT.BULSA_NM
+		  			  ,MGT.ACPT_FDATE
+		  			  ,MGT.ACPT_EDATE
+		  			  ,DET.PAYMENT_PLAN_AMT
+		  			  ,(SELECT SUM(AMOUNT) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = DET.TEMPLE_CD AND ACCEPT_SEQ = DET.ACCEPT_SEQ AND SEQ = DET.SEQ) AS PAYMENT_AMT
+		  			  ,DET.PAYMENT_PLAN_AMT - (SELECT SUM(AMOUNT) FROM REC_PAYMENT_HIS WHERE TEMPLE_CD = DET.TEMPLE_CD AND ACCEPT_SEQ = DET.ACCEPT_SEQ AND SEQ = DET.SEQ) AS MISU_AMT
+		  			  ,DET.REMARK
+		  			  ,DET.DEL_YN
+		  			  ,DET.CRT_USER
+		  			  ,DET.UPT_USER
+		  			  ,TO_CHAR(DET.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+		  			  ,TO_CHAR(DET.UPT_DATE,'YYYYMMDD') AS UPT_DATE
+		  			  ,DET.REMOTE
+				  FROM REC_MASTER MST
+				  	  ,REC_SUB SUB
+				  	  ,SIN_CARD_MASTER SMS
+				  	  ,ASP_CODE_MGT COD
+				  	  ,REC_BULSA_DETAIL DET
+				  	  ,REC_BULSA_MGT MGT
+				  	  ,REC_BULSA_MGT SGT
+				  	  ,REC_BULSA_DETAIL_MGT DMG
+				  	  ,SIN_CARD_MASTER SIN 
+				 WHERE MST.TEMPLE_CD  = DET.TEMPLE_CD
+				   AND MST.ACCEPT_SEQ = DET.ACCEPT_SEQ
+				   AND MST.TEMPLE_CD  = SMS.TEMPLE_CD(+)
+				   AND MST.PROPOSAL_BUD_NO = SMS.BUD_NO(+)
+				   AND SMS.TEMPLE_CD = SIN.TEMPLE_CD
+				   AND SIN.BUD_NO LIKE SMS.BUD_CODE || '%'
+				   AND SUB.TEMPLE_CD  = DET.TEMPLE_CD
+				   AND SUB.ACCEPT_SEQ = DET.ACCEPT_SEQ
+				   AND SUB.SEQ        = DET.SEQ
+				   AND COD.GROUP_CD(+)= 'REC'
+				   AND SUB.ACCEPT_GBN = COD.CODE(+)
+				   AND DET.TEMPLE_CD  = MGT.TEMPLE_CD
+				   AND DET.BULSA_CD   = MGT.BULSA_CD
+				   AND DET.ACPT_FDATE  = MGT.ACPT_FDATE
+				   AND MGT.TEMPLE_CD  = SGT.TEMPLE_CD
+				   AND MGT.BULSA_CD   = SGT.BULSA_CD
+				   AND SGT.ACPT_FDATE = '-1'
+				   AND DET.TEMPLE_CD  = DMG.TEMPLE_CD
+				   AND DET.BULSA_CD   = DMG.BULSA_CD
+				   AND DET.BULSA_SEQ  = DMG.BULSA_SEQ
+				   AND SUB.DEL_YN     = 'F'
+				   AND SIN.BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = SIN.TEMPLE_CD)
+				   AND SIN.DEL_YN      = 'F'
+				   AND DET.TEMPLE_CD   = #{V_TEMPLE_CD}
+				   <if test="V_BUD_NO != '' and V_BUD_NO != null  ">
+				   	AND MST.PROPOSAL_BUD_NO LIKE SUBSTR(#{V_BUD_NO},0,10) || '%'
+				   </if>
+				   <if test="V_DATE_GBN == 1 ">
+				   	AND MST.ACCEPT_DATE BETWEEN #{V_SDATE} AND #{V_EDATE}
+				   </if>
+				   <if test="V_DATE_GBN == 2 ">
+				   	AND DET.ACPT_FDATE BETWEEN #{V_SDATE} AND #{V_EDATE} 
+				   </if>
+				   <if test="V_CLASS_CD != '' and V_CLASS_CD != null and V_CLASS_CD != 0 ">
+				   	 AND MST.PROPOSAL_BUD_NO IN (SELECT BUD_NO 
+				   	 							   FROM SIN_CLASS_INFO 
+				   	 							  WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+				   	 							   	AND CLASS_CD  = #{V_CLASS_CD})
+				   </if>
+				   <if test="V_CODE != '' and V_CODE != null and V_CODE != 0 ">
+				   		AND DET.BULSA_CD = #{V_CODE}
+				   </if>
+					ORDER BY DET.ACCEPT_SEQ
+							,DET.SEQ
+							,SIN.SORT_SEQ 
+			)
+	</select>
+	
+	
+	
+</mapper>

@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC020w_02DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="SEL_YN" column="SEL_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+
+
+	<select id="SELECT_TSKIND" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT #{V_TEMPLE_CD} AS TEMPLE_CD,
+		       '' AS TEMPLE_STAY_CD,
+		       '전체' AS TEMPLE_STAY_NM,
+		       0  AS AMT,
+		       0  AS PERIOD,
+		       '' AS PERIOD_STR
+		  FROM DUAL
+		UNION ALL
+		SELECT
+		       MGT.TEMPLE_CD,
+		       MGT.TEMPLE_STAY_CD,
+		       MGT.TEMPLE_STAY_NM,
+		       MGT.AMT,
+		       MGT.PERIOD,
+		       MGT.PERIOD -1 || '박 ' || MGT.PERIOD || '일' AS PERIOD_STR
+		  FROM REC_TEMPLE_STAY_MGT MGT, REC_TEMPLE_STAY_MGT DET
+		 WHERE MGT.TEMPLE_CD      = DET.TEMPLE_CD
+		   AND MGT.TEMPLE_STAY_CD = DET.TEMPLE_STAY_CD
+		   AND MGT.TEMPLE_CD      = #{V_TEMPLE_CD}
+		   AND MGT.FDATE          = '-1'
+		   AND DET.FDATE         != '-1'
+		   AND DET.USE_YN         = 'F'
+		GROUP BY MGT.TEMPLE_CD
+				,MGT.TEMPLE_STAY_CD
+				,MGT.TEMPLE_STAY_NM
+				,MGT.AMT
+				,MGT.PERIOD
+	</select>
+
+
+	<select id="SELECT_TSKIND_DETAIL" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT DET.TEMPLE_CD,
+		       DET.TEMPLE_STAY_CD,
+		       DET.TEMPLE_STAY_NM,
+		       MGT.AMT,
+		       MGT.PERIOD,
+		       MGT.PERIOD -1 || '박 ' || MGT.PERIOD || '일' AS PERIOD_STR,
+		       DET.FDATE,
+		       DET.RDATE,
+		       DET.CAPACITY,
+		       'F' AS SEL_YN
+		  FROM REC_TEMPLE_STAY_MGT DET, REC_TEMPLE_STAY_MGT MGT
+		 WHERE DET.TEMPLE_CD      = MGT.TEMPLE_CD
+		   AND DET.TEMPLE_STAY_CD = MGT.TEMPLE_STAY_CD
+		   AND MGT.FDATE          = '-1'
+		   AND DET.FDATE         != '-1'
+		   AND DET.USE_YN         = 'F'
+		   AND DET.TEMPLE_CD      = #{V_TEMPLE_CD}
+		   <if test="V_TEMPLE_STAY_CD != null and V_TEMPLE_STAY_CD != '' ">
+		   	AND DET.TEMPLE_STAY_CD = #{V_TEMPLE_STAY_CD}
+		   </if>
+	</select>
+	
+	
+	<select id="SELECT_TEMPLE_STAY_HIS" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD,
+		       BUD_NO,
+		       SEQ,
+		       TEMPLE_STAY_CD,
+		       TEMPLE_STAY_NM,
+		       REMARK,
+		       CRT_USER,
+		       CRT_DATE,
+		       UPT_DATE,
+		       UPT_USER,
+		       REMOTE
+		  FROM SIN_TEMPLE_STAY_HIS
+		 WHERE TEMPLE_CD      = #{V_TEMPLE_CD}
+		   AND BUD_NO         = #{V_BUD_NO}
+		UNION ALL
+		SELECT
+		       DET.TEMPLE_CD,
+		       DET.BUD_NO,
+		       DET.SEQ,
+		       DET.TEMPLE_STAY_CD,
+		       MGT.TEMPLE_STAY_NM || ' (' || FN_GET_DATE_FORMAT(DET.FDATE) || ')' AS TEMPLE_STAY_NM,
+		       DET.REMARK,
+		       DET.CRT_USER,
+		       DET.CRT_DATE,
+		       DET.UPT_DATE,
+		       DET.UPT_USER,
+		       DET.REMOTE
+		  FROM REC_TEMPLE_STAY_DETAIL DET, 
+		       (SELECT TEMPLE_CD,                                                                                      
+		               TEMPLE_STAY_CD,                                                                                 
+		               FDATE,                                                                                          
+		               TEMPLE_STAY_NM                                                                                  
+		          FROM REC_TEMPLE_STAY_MGT                                                    
+		         WHERE TEMPLE_CD  = #{V_TEMPLE_CD}                                                                      
+		           AND FDATE != '-1' ) MGT                                                                                    
+		 WHERE DET.TEMPLE_CD      = MGT.TEMPLE_CD
+		   AND DET.TEMPLE_STAY_CD = MGT.TEMPLE_STAY_CD
+		   AND DET.FDATE          = MGT.FDATE
+		AND DET.DEL_YN = 'F'
+		   AND DET.TEMPLE_CD      = #{V_TEMPLE_CD}
+		   AND DET.BUD_NO         = #{V_BUD_NO}
+	</select>
+	
+	
+	<select id="SELECT_TEMPLE_STAY_DETAIL" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT DET.TEMPLE_CD,
+		       DET.SEQ,
+		       DET.ACCEPT_SEQ,
+		       DET.TEMPLE_STAY_CD,
+		       DGT.TEMPLE_STAY_NM,
+		       DET.FDATE,
+		       DGT.RDATE,
+		       DET.BUD_NO,
+		       SIN.NAME_KOR,
+		       SIN.SEX_GBN,
+		       SIN.BIRTHDAY,
+		       SIN.TELNO1,
+		       SIN.TELNO2,
+		       SIN.TELNO3,
+		       SIN.MOBILE_TELNO1,
+		       SIN.MOBILE_TELNO2,
+		       SIN.MOBILE_TELNO3,
+		       SIN.EMAIL,
+		       SUBSTR(SIN.EMAIL,1,INSTR(SIN.EMAIL,'@')-1) AS EMAIL1,
+		       SUBSTR(SIN.EMAIL,INSTR(SIN.EMAIL,'@')+1)  AS EMAIL2,
+		       SIN.EMAIL_TRANS,
+		       SIN.ZIP_CD,
+		       SIN.ADDR1,
+		       SIN.ADDR2,
+		       SIN.RELIGION_CD,
+		       REL.NAME AS RELIGION_NM,
+		       SIN.NATION_CD,
+		       NAT.NAME AS NATION_NM,
+		       SIN.JOB_CD,
+		       JOB.NAME AS JOB_NM,
+		       DET.PAYMENT_PLAN_AMT,
+		       DET.PAYMENT_AMT,
+		       0 as MISU_AMT,
+		       DET.JOIN_EXPER_CD,
+		       DET.JOIN_PATH_CD,
+		       PAH.NAME AS JOIN_PATH_NM,
+		       DET.DEL_YN,
+		       DET.JOIN_REMARK,
+		       DET.REMARK,
+		       DET.CRT_USER,
+		       DET.CRT_DATE,
+		       DET.UPT_USER,
+		       DET.UPT_DATE,
+		       DET.REMOTE
+		  FROM REC_TEMPLE_STAY_DETAIL DET
+		  	  ,SIN_CARD_MASTER SIN
+		  	  ,REC_TEMPLE_STAY_MGT DGT
+		  	  ,ASP_CODE_MGT PAH
+		  	  ,ASP_CODE_MGT REL
+		  	  ,ASP_CODE_MGT NAT
+		  	  ,ASP_CODE_MGT JOB
+		 WHERE DET.TEMPLE_CD      = DGT.TEMPLE_CD
+		   AND DET.TEMPLE_STAY_CD = DGT.TEMPLE_STAY_CD
+		   AND DET.FDATE          = DGT.FDATE
+		   AND DET.TEMPLE_CD      = SIN.TEMPLE_CD
+		   AND DET.BUD_NO         = SIN.BUD_NO
+		   AND PAH.GROUP_CD(+)    = 'TS_JOINPATH'
+		   AND DET.JOIN_PATH_CD   = PAH.CODE(+)
+		   AND REL.GROUP_CD(+)    = 'RELIGION'
+		   AND SIN.RELIGION_CD    = REL.CODE(+)
+		   AND NAT.GROUP_CD(+)    = 'NATION'
+		   AND SIN.NATION_CD      = NAT.CODE(+)
+		   AND JOB.GROUP_CD(+)    = 'JOB'
+		   AND SIN.JOB_CD         = JOB.CODE(+)
+	</select>
+	
+	<insert id="INSERT_TEMPLE_STAY_DETAIL" parameterType="java.util.Map">
+		INSERT INTO REC_TEMPLE_STAY_DETAIL (
+		        TEMPLE_CD
+		       ,SEQ
+		       ,CRT_USER
+		       ,PAYMENT_PLAN_AMT
+		       ,CRT_DATE
+		       ,PAYMENT_AMT
+		       ,REMARK
+		       ,UPT_DATE
+		       ,JOIN_EXPER_CD
+		       ,JOIN_PATH_CD
+		       ,UPT_USER
+		       ,DEL_YN
+		       ,JOIN_REMARK
+		       ,REMOTE
+		       ,ACCEPT_SEQ
+		       ,BUD_NO
+		       ,FDATE
+		       ,TEMPLE_STAY_CD
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{V_USER_ID}
+		       ,#{PAYMENT_PLAN_AMT}
+		       ,SYSDATE
+		       ,#{PAYMENT_AMT}
+		       ,#{REMARK          ,jdbcType=VARCHAR}
+		       ,SYSDATE
+		       ,#{JOIN_EXPER_CD   ,jdbcType=VARCHAR}
+		       ,#{JOIN_PATH_CD    ,jdbcType=VARCHAR}
+		       ,#{V_USER_ID}
+		       ,NVL(#{DEL_YN ,jdbcType=VARCHAR},'F')
+		       ,#{JOIN_REMARK     ,jdbcType=VARCHAR}
+		       ,#{REMOTE}
+		       ,#{ACCEPT_SEQ}
+		       ,#{BUD_NO}
+		       ,#{FDATE}
+		       ,#{TEMPLE_STAY_CD}
+		)
+	</insert>
+	
+</mapper>

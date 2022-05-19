@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.o2i.dao.pgc.PGC001w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+
+	<!-- #사찰별 PG 정보 조회# -->
+	<select id="SELECT_TEMPLE_PG_INFO" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT 
+		     SEQNUM
+			,A.TEMPLE_CD
+			,A.PGCODE
+			,A.REP_TRADE_ID
+			,A.USE_YN
+			,A.ACCT_GBN
+			,A.IE_GBN
+			,A.KWAN
+			,A.HANG
+			,A.MOK
+			,A.SMS_FORMAT
+			,A.DEVICEPRICE
+			,B.SEQ
+			,B.TP_RATE_COMMISSION
+			,B.TP_COMMISSION_FROM
+			,B.TP_COMMISSION_TO
+		    ,C.MOK_NAME AS ACCNAME
+		FROM ASP_TEMPLE_PG_INFO A ,
+		(SELECT 
+		   RANK() OVER(PARTITION BY A.TEMPLE_CD,PGCODE ORDER BY  A.SEQ DESC ) AS SEQNUM
+		  ,A.TEMPLE_CD
+		  ,A.PGCODE 
+		  ,A.SEQ
+		  ,A.TP_RATE_COMMISSION
+		  ,A.TP_COMMISSION_FROM
+		  ,A.TP_COMMISSION_TO
+		FROM 
+		ASP_TEMPLE_PG_INFO_HIS A
+		)B
+		,(SELECT
+			 A.TEMPLE_CD
+		    ,A.ACCT_GBN
+		    ,A.IE_GBN
+		    ,A.KWAN
+		    ,A.HANG
+		    ,A.MOK
+			,A.MOK_NAME
+				FROM ACC_ACCOUNTS A
+				WHERE TEMPLE_CD = #{param.V_TEMPLE_CD}
+		) C	
+		WHERE 1=1
+		AND A.TEMPLE_CD = B.TEMPLE_CD
+		AND A.TEMPLE_CD = C.TEMPLE_CD(+)
+		AND A.KWAN 		= C.KWAN(+)
+		AND A.HANG 		= C.HANG(+)
+		AND A.MOK  		= C.MOK(+)
+		AND A.ACCT_GBN 	= C.ACCT_GBN(+)
+		AND A.IE_GBN 	= C.IE_GBN(+)
+		AND B.SEQNUM 	= 1
+		AND A.TEMPLE_CD = #{param.V_TEMPLE_CD}
+		AND A.PGCODE 	= #{param.PGCODE}
+	</select>
+
+	<!--  # 사찰별 PG 정보 이력 조회# -->
+	<select id="SELECT_TEMPLE_PG_INFO_HIS" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT 
+			 A.TEMPLE_CD
+			,A.PGCODE
+			,A.SEQ
+			,A.TP_RATE_COMMISSION
+			,A.TP_COMMISSION_FROM
+			,A.TP_COMMISSION_TO
+		FROM 
+			ASP_TEMPLE_PG_INFO_HIS A
+		WHERE 1=1
+		  AND A.TEMPLE_CD = #TEMPLE_CD#
+		  AND A.PGCODE 	  = #PGCODE#
+		ORDER BY A.SEQ DESC
+	</select>
+
+	<!-- #사찰별 PG 신용카드 사용 유무 -->
+	<select id="SELECT_PG_CARD_USE" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT NVL(MAX(USE_YN),'F') AS CARD_USE
+		  FROM ASP_TEMPLE_PG_INFO A
+		WHERE 1=1
+		  AND A.TEMPLE_CD = #{param.V_TEMPLE_CD}
+		  AND A.PGCODE    = #{param.PGCODE}
+		  AND A.USE_YN ='T'
+	</select>
+
+	<update  id="UPDATE_TEMPLE_PG_INFO"  parameterType="kr.co.o2i.util.CommonMap" >
+		UPDATE ASP_TEMPLE_PG_INFO 
+		   SET ACCT_GBN      = #{param.ACCT_GBN}     
+			  ,IE_GBN        = #{param.IE_GBN}       
+			  ,KWAN          = #{param.KWAN}         
+			  ,HANG          = #{param.HANG}         
+			  ,MOK           = #{param.MOK}          
+			  ,SMS_FORMAT	 = #{param.SMS_FORMAT} 
+			  ,DEVICEPRICE	 = #{param.DEVICEPRICE}
+		 WHERE 1=1
+		   AND TEMPLE_CD     = #{param.V_TEMPLE_CD}
+		   AND PGCODE 	     = #{param.PGCODE}
+	</update>
+
+</mapper>

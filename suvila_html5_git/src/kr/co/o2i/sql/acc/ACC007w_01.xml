@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ACC007w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+<!--
+	<resultMap id="acc006w_01a" type="java.util.Map"> 
+		<result  property="CHECK_P" column="CHECK_P"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+	</resultMap>
+-->
+	<select id="SELECT_ACC" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT AMM.TEMPLE_CD
+		      ,AMM.ACT_DATE
+		      ,AMM.ACT_NO
+		      ,AMM.ACCT_GBN
+		      ,AA.ACCT_NM
+		      ,AMM.IE_GBN
+		      ,( CASE
+		      		WHEN AMM.IE_GBN = 'I' THEN '세입'
+		      		ELSE '세출'
+		      	 END ) IE_GBN_NM
+		      ,AMM.KWAN
+		      ,AAC.KWAN_NAME
+		      ,AMM.HANG
+		      ,AAC.HANG_NAME
+		      ,AMM.MOK
+		      ,AAC.MOK_NAME
+		      ,AMM.AMOUNT
+		      ,AMM.REMARK
+		      ,ATU.USER_NM
+		      ,AMM.USER_ID
+		      ,(SELECT COUNT(*) FROM ACC_CHONGMU_MONEY_MGT WHERE TEMPLE_CD = AMM.TEMPLE_CD AND ACT_DATE = AMM.ACT_DATE AND ACT_NO = AMM.ACT_NO) AS CHONGMU_GBN
+		      ,AMM.ACT_DATE || AMM.ACT_NO AS SKIP
+		  FROM ACC_MONEY_MGT  			AMM
+		      ,ACC_ACCOUNTS 			AAC
+		      ,ASP_TEMPLE_MASTER 		ATM
+		      ,ASP_TEMPLE_USER			ATU
+		      ,(SELECT DISTINCT TEMPLE_CD
+		              ,ACCT_GBN
+		              ,ACCT_NM
+				  FROM ACC_ACCOUNTS
+				  WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+					AND KWAN = 1
+					AND HANG = 0
+					AND MOK  = 0 
+				) AA
+		 WHERE AMM.TEMPLE_CD 		  = AAC.TEMPLE_CD
+		   AND AMM.IE_GBN    		  = AAC.IE_GBN
+		   AND AMM.ACCT_GBN  		  = AAC.ACCT_GBN
+		   AND AMM.KWAN      		  = AAC.KWAN
+		   AND AMM.HANG      		  = AAC.HANG
+		   AND AMM.MOK       		  = AAC.MOK
+		   AND AMM.TEMPLE_CD 		  = ATM.TEMPLE_CD
+		   AND AMM.TEMPLE_CD   		  = AA.TEMPLE_CD
+		   AND AMM.ACCT_GBN			  = AA.ACCT_GBN
+		   AND AMM.TEMPLE_CD		  = ATU.TEMPLE_CD(+)
+		   AND AMM.USER_ID			  = ATU.USER_ID(+)
+		   AND AMM.TEMPLE_CD 		  = #{V_TEMPLE_CD}
+		   AND AMM.ACT_DATE  		 >= #{V_SACT_DATE}
+		   AND AMM.ACT_DATE  	  &lt;= #{V_EACT_DATE}
+		   <if test='V_ACCT_GBN != 0  and V_ACCT_GBN != "0" '>
+		   		AND AMM.ACCT_GBN = #{V_ACCT_GBN}
+		   </if>
+		 ORDER BY AMM.ACT_DATE
+		         ,AMM.ACT_NO
+	</select>
+	
+	<select id="SELECT_GET_TEMP_ACTNO" resultType="String" parameterType="java.util.Map" >
+			SELECT LPAD(NVL(MAX(ACT_NO),0) + 1,5,'0') AS ACT_NO	
+			  FROM (													
+					SELECT TO_NUMBER(NVL(MAX(ACT_NO),'0')) AS ACT_NO	
+					  FROM ACC_MONEY_MGT								
+					 WHERE TEMPLE_CD = #{TEMPLE_CD}								
+					   AND ACT_DATE  = #{ACT_DATE}								
+					 UNION ALL										
+					SELECT TO_NUMBER(NVL(MAX(ACT_NO),'0')) AS ACT_NO	
+					  FROM ACC_CHONGMU_MONEY_MGT 						
+					 WHERE TEMPLE_CD = #{TEMPLE_CD} 							
+					   AND ACT_DATE  = #{ACT_DATE}							
+				    )													
+	</select>
+	
+	<select id="SELECT_DUPLE_BOGO" resultType="Integer" parameterType="java.util.Map" >
+		SELECT COUNT(*) 
+		  FROM ACC_CHONGMU_MONEY_MGT 
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD} 
+		   AND ACT_DATE   = #{ACT_DATE} 
+		   AND ACT_NO     = #{ACT_NO} 
+	</select>
+	
+	
+	<insert  id="INSERT_ACT_BOGO" parameterType="java.util.Map">
+			INSERT INTO ACC_CHONGMU_MONEY_MGT (
+			 	TEMPLE_CD,		ACT_DATE,		ACT_NO,			ACCT_GBN,						AMOUNT,
+			 	KWAN,			HANG,			MOK,			REMARK,							IE_GBN,
+			 	USER_ID,		CRT_USER,		CRT_DATE,		UPT_USER,						UPT_DATE,
+			 	REMOTE
+			) VALUES (
+			 	#{TEMPLE_CD},	#{ACT_DATE}, 	#{ACT_NO},		#{ACCT_GBN},					#{AMOUNT},			
+			 	#{KWAN},		#{HANG},		#{MOK},			#{REMARK ,jdbcType=VARCHAR},	#{IE_GBN},			
+			 	#{USER_ID,jdbcType=VARCHAR},		#{CRT_USER},	SYSDATE,		#{UPT_USER},					SYSDATE,	
+			 	#{REMOTE}																			
+			)
+	</insert>
+	
+</mapper>

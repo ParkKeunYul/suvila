@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC011w_02DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="SEL_YN" column="SEL_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+
+
+	<select id="SELECT_REC_SUPPORT_MGT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+			  ,SUPPORT_CODE
+			  ,SUPPORT_NM
+			  ,'F' AS SEL_YN
+		  FROM REC_SUPPORT_MGT
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND USE_YN = 'T'
+		 ORDER BY (CASE WHEN NVL(SORT_SEQ, 0) = 0 THEN ROWNUM
+			   		    ELSE SORT_SEQ END )
+			     ,SUPPORT_CODE
+	</select>
+	
+	<select id="SELECT_SUPPORT_MGT_BACKUP" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT 0 AS SORT,
+		       ''    AS SUPPORT_CODE,
+		       '선택' AS SUPPORT_NM
+		  FROM REC_SUPPORT_MGT
+		UNION
+		SELECT 1 AS SORT,
+		       SUPPORT_CODE,
+		       SUPPORT_NM
+		  FROM REC_SUPPORT_MGT
+		 WHERE TEMPLE_CD   = #{V_TEMPLE_CD}
+		   AND USE_YN      = 'T'
+		ORDER BY SORT
+			    ,SUPPORT_CODE
+	</select>
+	
+	<insert id="INSERT_REC_SUPPORT_DETAIL" parameterType="java.util.Map">
+		INSERT INTO REC_SUPPORT_DETAIL (
+		       TEMPLE_CD,
+		       ACCEPT_SEQ,
+		       SEQ,
+		       SUPPORT_CODE,
+		       PAYMENT_AMT,
+		       SUPPORT_END_YN,
+		       REMARK,
+		       DEL_YN,
+			   RECEIPT_AMT,
+			   SUPPORT_PERIOD,
+			   FIRST_PAYMENT_YYYYMM,
+			   DONGCHAM_BUD_NO,
+		       CRT_USER,
+		       UPT_USER,
+		       CRT_DATE,
+		       UPT_DATE,
+		       REMOTE
+		) VALUES (
+		       #{TEMPLE_CD}
+		      ,#{ACCEPT_SEQ}
+		      ,#{SEQ}
+		      ,#{SUPPORT_CODE}
+		      ,#{BASE_AMT}
+		      ,DECODE(#{SUPPORT_END_YN ,jdbcType=VARCHAR},'','F',#{SUPPORT_END_YN ,jdbcType=VARCHAR})
+		      ,#{REMARK ,jdbcType=VARCHAR}
+		      ,DECODE(#{DEL_YN ,jdbcType=VARCHAR},'','F',#{DEL_YN ,jdbcType=VARCHAR})
+		      ,#{PAYMENT_PLAN_AMT}
+		      ,#{SUPPORT_PERIOD}
+		      ,#{FIRST_PAYMENT_YYYYMM}
+		      ,#{DONGCHAM_BUD_NO}
+		      ,#{V_USER_ID}
+		      ,#{V_USER_ID}
+		      ,SYSDATE
+		      ,SYSDATE
+		      ,#{REMOTE}
+		)
+	</insert>
+	
+	
+	<select id="SELECT_FAMILY_INFO_BACKUP" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT CAD.TEMPLE_CD,		<!-- 사찰코드 -->
+		       CAD.BUD_NO,          <!-- 개인번호 -->
+		       CAD.BUD_CODE,        <!-- 가족코드 -->
+		       CAD.SORT_SEQ,        <!-- 정렬순서 -->
+		       DECODE(SUBSTR(#{V_BUD_NO},0,10),SUBSTR(CAD.BUD_NO,0,10),'F','T') AS BUNGA_YN,
+		       CAD.DAEJU_BUD_NO,    <!-- 대주신도번호 -->
+		       CAD.REPRESEN_REL,    <!-- 관계 -->
+		       CAD.NAME_KOR,        <!-- 성명(한글) -->
+		       CAD.NAME_HAN,        <!-- 성명(한자) -->
+		       CAD.JUMIN_NO,        <!-- 주민등록번호 -->
+		       CAD.ZIP_CD,          <!-- 우편번호 -->
+		       CAD.ADDR1,           <!-- 주소1 -->
+		       CAD.ADDR2,           <!-- 주소2 -->
+		       CAD.ADDR1 || ' ' || CAD.ADDR2 AS ADDR,  <!-- 주소 -->
+		       CAD.TELNO1,          <!-- 전화번호1 -->
+		       CAD.TELNO2,          <!-- 전화번호2 -->
+		       CAD.TELNO3,          <!-- 전화번호3 -->
+		       CAD.TELNO1 || CAD.TELNO2 || CAD.TELNO3 AS TELNO_TYPE1, <!-- 전화번호 -->
+			   CAD.TELNO1 || DECODE(CAD.TELNO1,'','','-') || CAD.TELNO2 || DECODE(CAD.TELNO2,'','','-') || CAD.TELNO3 AS TELNO_TYPE2, <!-- 전화번호 -->
+		       CAD.MOBILE_TELNO1,   <!-- 휴대전화1 -->
+		       CAD.MOBILE_TELNO2,   <!-- 휴대전화2 -->
+		       CAD.MOBILE_TELNO3,   <!-- 휴대전화3 -->
+		       CAD.MOBILE_TELNO1 || CAD.MOBILE_TELNO2 || CAD.MOBILE_TELNO3 AS MOBILE_TELNO_TYPE1, <!-- 휴대전화 -->
+		       CAD.MOBILE_TELNO1 || DECODE(CAD.MOBILE_TELNO1,'','','-') || CAD.MOBILE_TELNO2 || DECODE(CAD.MOBILE_TELNO2,'','','-') || CAD.MOBILE_TELNO3 AS MOBILE_TELNO_TYPE2, <!-- 휴대전화 -->
+		       SUBSTR(CAD.EMAIL, 0, INSTR(CAD.EMAIL,'@')-1) AS EMAIL1,					<!-- 이메일1 -->
+		       SUBSTR(CAD.EMAIL, INSTR(CAD.EMAIL,'@')+1, LENGTH(CAD.EMAIL)) AS EMAIL2,	<!-- 이메일2 -->
+		       CAD.LAST_SCHOLA,     <!-- 최종학력 -->
+		       CAD.INTEREST,        <!-- 취미 -->
+		       CAD.SKILL,           <!-- 특기 -->
+		       CAD.COMPANY_NAME,    <!-- 직장명 -->
+		       CAD.COMPANY_POS,     <!-- 부서및직책 -->
+		       CAD.COMPANY_TEL1,    <!-- 직장전화1 -->
+		       CAD.COMPANY_TEL2,    <!-- 직장전화2 -->
+		       CAD.COMPANY_TEL3,    <!-- 직장전화3 -->
+		       CAD.ENTRANCE_CD,     <!-- 입문동기 -->
+		       CAD.NEWS_YN,         <!-- 불교신문구독 -->
+		       CAD.QUALIFICATION,   <!-- 자격증면허 -->
+		       CAD.SACHAL_NAME,     <!-- 재적사찰 -->
+		       CAD.POST_TRANS,      <!-- 우편발송여부 -->
+		       CAD.EMAIL_TRANS,     <!-- 이메일발송여부 -->
+		       NVL(CAD.SMS_TRANS,'F') AS SMS_TRANS, <!-- SMS발송여부 -->
+		       CAD.MEMO,            <!-- 메모 -->
+		       CAD.SEXAGENARY,      <!-- 간지코드 -->
+			   GAN.NAME AS SEXAGENARY_NM,  <!-- 간지명 -->
+		       CAD.LEAP_MONTH,      <!-- 윤달 -->
+		       CAD.LUNAR_SOLAR,     <!-- 음력양력 -->
+		       CAD.BIRTHTIME,       <!-- 생시생분 -->
+		       CAD.ISSUE_DATE,      <!-- 입회일자 -->
+		       CAD.BIRTHDAY,        <!-- 생년월일 -->
+		       CAD.SEX_GBN,         <!-- 성별코드 -->
+			   SEX.NAME AS SEX_NM,  <!-- 성별명 -->
+			   DECODE(#V_BUD_NO#,CAD.BUD_NO,'T','F') AS ONESELF_YN,
+		       CAD.CRT_USER,        <!-- 등록자 -->
+		       CAD.UPT_USER,        <!-- 수정자 -->
+			   TO_CHAR(CAD.CRT_DATE,'YYYYMMDD') AS CRT_DATE,	<!-- 등록일 -->
+		       TO_CHAR(CAD.UPT_DATE,'YYYYMMDD') AS UPT_DATE,	<!-- 수정일 -->
+		       CAD.REMOTE           <!-- IP -->
+		  FROM SIN_CARD_MASTER CAD, ASP_CODE_MGT SEX, ASP_CODE_MGT GAN
+		 WHERE CAD.TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND SEX.GROUP_CD(+)= 'SEXGBN'
+		   AND CAD.SEX_GBN    = SEX.CODE(+)
+		   AND GAN.GROUP_CD(+)= 'GANJI'
+		   AND CAD.SEXAGENARY = GAN.CODE(+)
+		   AND CAD.BUD_CODE LIKE SUBSTR(#{V_BUD_NO},0,DECODE(#{V_BUNGA},'true',8,10)) || '%'
+		   AND CAD.DEL_YN     = 'F'
+		   AND CAD.BUD_NO  NOT IN (SELECT BUD_NO
+		                             FROM SIN_DEATH_INFO DEA
+		                            WHERE DEA.TEMPLE_CD  = CAD.TEMPLE_CD
+		                              AND DEA.BUD_NO     = CAD.BUD_NO)
+		ORDER BY BUD_NO
+	</select>
+	
+
+
+	<select id="SELECT_SUPPORT_DETAIL_BACKUP" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT DET.TEMPLE_CD,		<!-- 사찰코드 -->
+		       DET.ACCEPT_SEQ,		<!-- 접수순번-->
+		       MST.ACCEPT_DATE,		<!-- 접수일-->
+		       DET.SEQ,				<!-- 순번-->
+		       SUB.ACCEPT_GBN,		<!-- 접수구분-->
+		       DET.SUPPORT_CODE,	<!-- 후원코드-->
+		       SPT.SUPPORT_NM,		<!-- 후원명-->
+		       DET.PAYMENT_AMT,		<!-- 후원금-->
+		       DET.SUPPORT_END_YN,	<!-- 후원종료여부-->
+		       DET.REMARK,			<!-- 비고-->
+		       DET.DEL_YN,			<!-- 삭제구분-->
+		       MST.PROPOSAL_BUD_NO, <!-- 신청자 번호-->
+		       CAD.NAME_KOR AS PROPOSAL_BUD_NM, <!-- 신청자 명-->
+		       CAD.COMPANY_POS,		<!-- 직업-->
+		       CAD.LUNAR_SOLAR,		<!-- 음력/양력-->
+		       CAD.BIRTHDAY,		<!-- 생년월일-->
+		       CAD.SEX_GBN,			<!-- 성별-->
+		       CAD.TELNO1,          <!-- 전화번호1-->
+		       CAD.TELNO2,          <!-- 전화번호2-->
+		       CAD.TELNO3,          <!-- 전화번호3-->
+		       CAD.MOBILE_TELNO1,   <!-- 휴대전화1-->
+		       CAD.MOBILE_TELNO2,   <!-- 휴대전화2-->
+		       CAD.MOBILE_TELNO3,   <!-- 휴대전화3-->
+		       CAD.COMPANY_NAME,	<!-- 직장명-->
+		       CAD.ZIP_CD,			<!-- 우편번호-->
+		       CAD.ADDR1,			<!-- 주소1-->
+		       CAD.ADDR2,			<!-- 주소2-->
+		       CAD.EMAIL,			<!-- 이메일-->
+		       MST.BANK_NO,			<!-- 은행번호-->
+		       MST.ACCOUNT_NUMBER,	<!-- 계좌번호-->
+		       MST.JUMIN_NO,		<!-- 주민번호-->
+		       (CASE WHEN MST.BUNNAB_DAY = '16' OR MST.BUNNAB_DAY = '26'
+		             THEN MST.BUNNAB_DAY
+		        ELSE '0' END) AS BUNNAB_DAY,       <!-- 출금일(분납일)-->
+			   (CASE WHEN MST.BUNNAB_DAY != '16' OR MST.BUNNAB_DAY != '26'
+			         THEN MST.BUNNAB_DAY
+			    ELSE '' END) AS BUNNAB_DAY_OTHERS, <!-- 출금일(분납일)-->
+		       MST.SMS_YN,			<!-- SMS설정 여부-->
+		       MST.MEMO,			<!-- 메모-->
+		       DET.CRT_USER,		<!-- 등록자-->
+		       DET.UPT_USER,		<!-- 수정자-->
+		       TO_CHAR(DET.CRT_DATE, 'YYYYMMDD') AS CRT_DATE,	<!-- 등록일-->
+		       TO_CHAR(DET.UPT_DATE, 'YYYYMMDD') AS UPT_DATE,	<!-- 수정일-->
+		       DET.REMOTE 			<!-- IP-->
+		  FROM REC_SUPPORT_DETAIL DET, REC_SUPPORT_MGT SPT, REC_SUB SUB, REC_MASTER MST, SIN_CARD_MASTER CAD
+		 WHERE DET.TEMPLE_CD      = SUB.TEMPLE_CD
+		   AND DET.ACCEPT_SEQ     = SUB.ACCEPT_SEQ
+		   AND DET.SEQ            = SUB.SEQ
+		   AND DET.TEMPLE_CD      = SPT.TEMPLE_CD
+		   AND DET.SUPPORT_CODE   = SPT.SUPPORT_CODE
+		   AND SUB.TEMPLE_CD      = MST.TEMPLE_CD
+		   AND SUB.ACCEPT_SEQ     = MST.ACCEPT_SEQ
+		   AND MST.TEMPLE_CD      = CAD.TEMPLE_CD
+		   AND MST.PROPOSAL_BUD_NO= CAD.BUD_NO
+		   AND DET.DEL_YN         = 'F'
+		   AND DET.TEMPLE_CD      = #{V_TEMPLE_CD}
+		   AND MST.PROPOSAL_BUD_NO= #{V_BUD_NO}
+		ORDER BY DET.SUPPORT_END_YN DESC
+			    ,MST.ACCEPT_DATE DESC
+	</select>
+	
+	
+</mapper>

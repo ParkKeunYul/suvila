@@ -1,0 +1,64 @@
+Ext.define('ExFrm.view.desk.announce001p_02Model', {
+    extend:'Ext.app.ViewModel', 
+    alias: 'viewmodel.announce001p_02', 
+    stores:{
+    	ds_main:{
+            fields:['field1'],
+            proxy:{
+                type:'ajax',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list',
+                }
+            },
+            autoLoad:false            
+        },
+        ds_sms:{
+            fields:['field1'],
+            proxy:{
+                type:'ajax',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list',
+                }
+            },
+            autoLoad:false            
+        },
+        ds_telno1 :{
+        	fields:['field1'],
+        	proxy:{
+                type:'ajax',
+                url:'/asp/CodeSearch/ComCodeSelect.suvila?group_cd=TELNUMBER',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'                    
+                }
+            },
+            autoLoad:false  
+        },
+        ds_mobile_telno1 :{
+        	fields:['field1'],
+        	proxy:{
+                type:'ajax',
+                url:'/asp/CodeSearch/ComCodeSelect.suvila?group_cd=MOBILE',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'                    
+                }
+            },
+            autoLoad:false  
+        },
+        ds_accept_yn :{
+        	fields:['field1'],
+        	proxy:{
+                type:'ajax',
+                url:'/asp/CodeSearch/ComCodeSelect.suvila?group_cd=YN',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'                    
+                }
+            },
+            autoLoad:false  
+        },
+    }
+});

@@ -1,0 +1,447 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC001w_02DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />		
+	</resultMap>
+
+	<select id="SELECT_IDKIND" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+		 	  ,ACCEPT_GBN
+		 	  ,LIGHT_CODE AS PROD_CODE
+		 	  ,LIGHT_CODE
+		 	  ,LIGHT_NM
+		 	  ,AMOUNT AS PROD_AMT
+		 	  ,NVL(FAMILY_YN,'F') AS FAMILY_YN
+		 	  ,NVL(DEATH_YN,'F')  AS DEATH_YN
+		 	  ,CRT_USER
+		 	  ,UPT_USER
+		 	  ,TO_CHAR(CRT_DATE,'YYYYMMDD') AS CRT_DATE
+		 	  ,TO_CHAR(UPT_DATE,'YYYYMMDD') AS UPT_DATE
+		 	  ,REMOTE
+		 	  ,'' AS SEL_YN
+		 	  ,PERIOD
+		 	  ,( CASE 
+		       		WHEN NVL(SORT_SEQ, 0) = 0 THEN ROWNUM
+		       		ELSE SORT_SEQ
+		        END ) SORT_SEQ
+		  FROM REC_DEUNG_CLASS_MGT
+		 WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND ACCEPT_GBN = #{V_ACCEPT_GBN}
+		   AND USE_YN     = 'T'
+		 ORDER BY SORT_SEQ ASC  
+	</select>
+	
+	<select id="SELECT_JUNGAKKIND" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		  SELECT BUI.TEMPLE_CD
+		  		,BUI.ACCEPT_GBN
+		  		,JUN.JUNGAK_GBN
+		  		,TO_CHAR(BUI.JUNGAK_CD) AS JUNGAK_CD
+		  		,JUN.JUNGAK_NM
+		  		,BUI.HOZ_LINE
+		  		,BUI.VER_LINE
+		  		,BUI.USE_YN
+		  		,BUI.CRT_USER
+		  		,BUI.CRT_DATE
+		  		,BUI.UPT_DATE
+		  		,BUI.UPT_USER
+		  		,BUI.REMOTE
+		  		,(CASE 
+			       	WHEN NVL(JUN.SORT_SEQ, 0) = 9999 THEN ROWNUM
+			       	ELSE JUN.SORT_SEQ
+			     END ) SORT_SEQ
+		   FROM REC_BUILDING_MGT BUI
+		   	   ,ASP_JUNGAK_MGT JUN
+		   	   ,ASP_CODE_MGT COD
+		   	   ,(SELECT DISTINCT TEMPLE_CD
+		   	   		   ,ACCEPT_GBN
+		   	   		   ,JUNGAK_CD 
+			       FROM REC_DEUNG_MGT
+			      WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+			        AND ACCEPT_GBN = #{V_ACCEPT_GBN}
+			      ORDER BY JUNGAK_CD) MGT
+			 WHERE BUI.TEMPLE_CD  = JUN.TEMPLE_CD
+			   AND BUI.ACCEPT_GBN = JUN.ACCEPT_GBN
+			   AND BUI.JUNGAK_CD  = JUN.JUNGAK_CD
+			   AND BUI.TEMPLE_CD  = MGT.TEMPLE_CD
+			   AND BUI.ACCEPT_GBN = MGT.ACCEPT_GBN
+			   AND BUI.JUNGAK_CD  = MGT.JUNGAK_CD
+			   AND COD.GROUP_CD   = 'LIGHTGBN'
+			   AND JUN.JUNGAK_GBN = COD.CODE
+			   AND JUN.USE_YN     = 'T'
+			   AND BUI.TEMPLE_CD  = #{V_TEMPLE_CD}
+			   AND BUI.ACCEPT_GBN = #{V_ACCEPT_GBN}
+			   AND JUN.JUNGAK_GBN = #{V_JUNGAK_GBN}
+			ORDER by SORT_SEQ asc
+	</select>
+	
+	<select id="SELECT_GETLIGHT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT ROWNUM
+			  ,TEMPLE_CD
+			  ,ACCEPT_GBN
+			  ,JUNGAK_CD
+			  ,TO_CHAR(LIGHT_NO) AS LIGHT_NO
+			  ,CLOSE_YN
+		  FROM(
+		  	SELECT DEU.TEMPLE_CD
+		  		  ,DEU.ACCEPT_GBN
+		  		  ,DEU.JUNGAK_CD
+		  		  ,DEU.LIGHT_NO
+		  		  ,NVL(DET.CLOSE_YN,' ') AS CLOSE_YN
+		      FROM (SELECT TEMPLE_CD
+		      			  ,ACCEPT_GBN
+		      			  ,JUNGAK_CD
+		      			  ,LIGHT_NO
+		      			  ,CLOSE_YN
+		      	    <if test="V_ACCEPT_GBN == 2">
+		      	   	  FROM REC_INDEUNG_DETAIL
+		      	    </if>
+		      	    <if test="V_ACCEPT_GBN == 4">
+		      	   	  FROM REC_YEONDEUNG_DETAIL
+		      	    </if>
+		      	    <if test="V_ACCEPT_GBN == 12">
+		      	   	  FROM REC_WONBUL_DETAIL
+		      	    </if>
+		      	    <if test="V_ACCEPT_GBN == 14">
+		      	   	  FROM REC_YOUNGTOP_DETAIL
+		      	    </if>
+		              WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		                AND CLOSE_YN  = 'F'
+		            ) DET
+		             ,REC_DEUNG_MGT DEU
+		        WHERE DET.TEMPLE_CD(+)  = DEU.TEMPLE_CD
+		          AND DET.ACCEPT_GBN(+) = DEU.ACCEPT_GBN
+		          AND DET.JUNGAK_CD(+)  = DEU.JUNGAK_CD
+		          AND DET.LIGHT_NO(+)   = DEU.LIGHT_NO
+		   		    AND DEU.TEMPLE_CD   = #{V_TEMPLE_CD}
+		          AND DEU.ACCEPT_GBN    = #{V_ACCEPT_GBN}
+		          AND DEU.JUNGAK_CD     = #{V_JUNGAK_CD}
+		          AND DEU.USE_YN        = 'T'
+		          AND DEU.RESERVATION_YN='F'
+		       ORDER BY DEU.LIGHT_NO ASC
+		 )
+		 WHERE CLOSE_YN != 'F'
+		   AND ROWNUM = '1'
+	</select>
+	
+	<update id="UPDATE_GETLIGHT" parameterType="java.util.Map">
+		UPDATE REC_DEUNG_MGT
+		   SET UPT_USER         = #{UPT_USER},
+		       UPT_DATE         = SYSDATE,
+		       RESERVATION_YN   = #{V_RESERVATION_YN},
+		       RESERVATION_TIME = (SELECT TO_CHAR(CURRENT_TIMESTAMP,'YYYYMMDDHH24MISS') FROM DUAL)
+		 WHERE TEMPLE_CD  		= #{TEMPLE_CD}
+		   AND ACCEPT_GBN 		= #{V_ACCEPT_GBN}
+		   AND JUNGAK_CD  		= TO_NUMBER(#{JUNGAK_CD})
+		   AND LIGHT_NO   		= TO_NUMBER(#{LIGHT_NO})
+	</update>
+	
+	<select id="SELECT_LIGHT_USEDCHK" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT ROWNUM AS NUM
+			  ,DEU.TEMPLE_CD
+			  ,DEU.ACCEPT_GBN
+			  ,DEU.JUNGAK_CD
+			  ,TO_CHAR(DEU.LIGHT_NO) AS LIGHT_NO
+			  ,NVL(DET.CLOSE_YN,' ') AS CLOSE_YN
+		 FROM (SELECT TEMPLE_CD
+		 			 ,ACCEPT_GBN
+		 			 ,JUNGAK_CD
+		 			 ,LIGHT_NO
+		 			 ,CLOSE_YN
+		         FROM REC_INDEUNG_DETAIL
+		        WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		          AND CLOSE_YN  = 'F'
+		       ) DET
+		      , REC_DEUNG_MGT DEU
+		 WHERE DET.TEMPLE_CD(+)  = DEU.TEMPLE_CD
+		   AND DET.ACCEPT_GBN(+) = DEU.ACCEPT_GBN
+		   AND DET.JUNGAK_CD(+)  = DEU.JUNGAK_CD
+		   AND DET.LIGHT_NO(+)   = DEU.LIGHT_NO
+		   AND DEU.TEMPLE_CD     = #{V_TEMPLE_CD}
+		   AND DEU.ACCEPT_GBN    = #{V_ACCEPT_GBN}
+		   AND DEU.JUNGAK_CD     = #{V_JUNGAK_CD}
+		   AND DEU.LIGHT_NO      = #{V_LIGHT_NO}
+	</select>
+	
+	<insert id="INSERT_IDREC" parameterType="java.util.Map">
+		INSERT INTO REC_INDEUNG_DETAIL (
+		       TEMPLE_CD,
+		       SEQ,
+		       INDEUNG_GBN,
+		       CRT_USER,
+		       INDEUNG_YEAR,
+		       CRT_DATE,
+		       INDEUNG_MONTH,
+		       PAYMENT_PLAN_AMT,
+		       INDEUNG_PERIOD,
+		       PAYMENT_AMT,
+		       UPT_DATE,
+		       REMARK,
+		       UPT_USER,
+		       DEL_YN,
+		       REMOTE,
+		       ACCEPT_GBN,
+		       JUNGAK_CD,
+		       ACCEPT_SEQ,
+		       LIGHT_NO,
+		       CLOSE_YN,
+			   LIMIT_YN
+		) VALUES (
+		       #{TEMPLE_CD},
+		       #{SEQ},
+		       #{PROD_CODE},
+		       #{CRT_USER},
+		       #{INDEUNG_YEAR},
+		       SYSDATE,
+		       #{INDEUNG_MONTH},
+		       #{PAYMENT_PLAN_AMT},
+		       #{INDEUNG_PERIOD},
+		       #{PAYMENT_AMT},
+		       SYSDATE,
+		       #{REMARK ,jdbcType=VARCHAR},
+		       #{UPT_USER},
+		       DECODE(#{DEL_YN},'','F',#{DEL_YN}),
+		       #{REMOTE},
+		       #{V_ACCEPT_GBN},
+		       DECODE(#{JUNGAK_CD},'',0,TO_NUMBER(#{JUNGAK_CD})),
+		       #{ACCEPT_SEQ},
+		       TO_NUMBER(#{LIGHT_NO}),
+		       'F',
+			   #{LIMIT_YN}
+		)
+	</insert>
+	
+	
+	<insert id="INSERT_YDREC" parameterType="java.util.Map">
+		INSERT INTO REC_YEONDEUNG_DETAIL (
+		       TEMPLE_CD,
+		       SEQ,
+		       YEONDEUNG_GBN,
+		       CRT_USER,
+		       CRT_DATE,
+		       PAYMENT_PLAN_AMT,
+		       UPT_DATE,
+		       YEONDEUNG_YEAR,
+		       PAYMENT_AMT,
+		       UPT_USER,
+		       REMOTE,
+		       DEL_YN,
+		       REMARK,
+		       ACCEPT_GBN,
+		       JUNGAK_CD,
+		       ACCEPT_SEQ,
+		       LIGHT_NO,
+		       CLOSE_YN,
+			   YEONDEUNG_MONTH,
+			   YEONDEUNG_PERIOD
+		) VALUES (
+		       #{TEMPLE_CD},
+		       #{SEQ},
+		       #{PROD_CODE},
+		       #{CRT_USER},
+		       SYSDATE,
+		       #{PAYMENT_PLAN_AMT},
+		       SYSDATE,
+		       #{YEONDEUNG_YEAR},
+		       #{PAYMENT_AMT},
+		       #{UPT_USER},
+		       #{REMOTE},
+		       DECODE(#{DEL_YN},'','F',#{DEL_YN}),
+		       #{REMARK ,jdbcType=VARCHAR},
+		       #{V_ACCEPT_GBN},
+		       DECODE(#{JUNGAK_CD},'',0,TO_NUMBER(#{JUNGAK_CD})),
+		       #{ACCEPT_SEQ},
+		       TO_NUMBER(#{LIGHT_NO}),
+		       'F',
+			   #{YEONDEUNG_MONTH},
+			   #{YEONDEUNG_PERIOD}
+		)
+	</insert>
+	
+	<insert id="INSERT_YDREC_DONGCHAM" parameterType="java.util.Map">
+		INSERT INTO REC_YEONDEUNG_JOIN_MGT (
+		       DONGCHAM_BUD_NO,
+		       DEL_YN,
+		       REMARK,
+		       CRT_USER,
+		       CRT_DATE,
+		       UPT_DATE,
+		       UPT_USER,
+		       SORT_SEQ,
+		       REMOTE,
+		       TEMPLE_CD,
+		       SEQ,
+		       ACCEPT_GBN,
+		       JUNGAK_CD,
+		       ACCEPT_SEQ,
+		       LIGHT_NO,
+		       BOKWIJA_NO
+		) VALUES (
+		        #{DONGCHAM_BUD_NO}
+		       ,DECODE(#{DEL_YN},'','F',#{DEL_YN})
+		       ,#{REMARK ,jdbcType=VARCHAR}
+		       ,#{CRT_USER}
+		       ,SYSDATE
+		       ,SYSDATE
+		       ,#{UPT_USER}
+		       ,(SELECT NVL(MAX(SORT_SEQ)+1,1)
+		          FROM REC_YEONDEUNG_JOIN_MGT
+		         WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		           AND SEQ        = #{SEQ}
+		           AND ACCEPT_GBN = #{V_ACCEPT_GBN}
+		           AND JUNGAK_CD  = DECODE(#{JUNGAK_CD},'',0,TO_NUMBER(#{JUNGAK_CD}))
+		           AND ACCEPT_SEQ = #{ACCEPT_SEQ}
+		           AND LIGHT_NO   = #{LIGHT_NO})
+		       ,#{REMOTE}
+		       ,#{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{V_ACCEPT_GBN}
+		       ,DECODE(#{JUNGAK_CD},'',0,TO_NUMBER(#{JUNGAK_CD}))
+		       ,#{ACCEPT_SEQ}
+		       ,TO_NUMBER(#{LIGHT_NO})
+		       ,#{BOKWIJA_NO}
+		)
+	</insert>
+	
+	
+	<insert id="ACCEPT_SEQ" parameterType="java.util.Map">
+		INSERT INTO REC_SUB (
+		        TEMPLE_CD
+		       ,SEQ
+		       ,ACCEPT_SEQ
+		       ,ACCEPT_GBN
+		       ,DEL_YN
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{ACCEPT_SEQ}
+		       ,#{V_ACCEPT_GBN}
+		       ,'F'
+		)
+	</insert>
+	
+	<insert id="INSERT_IDREC_DONGCHAM" parameterType="java.util.Map">
+		INSERT INTO REC_INDEUNG_JOIN_MGT (
+		        DONGCHAM_BUD_NO
+		       ,DEL_YN
+		       ,REMARK
+		       ,CRT_USER
+		       ,CRT_DATE
+		       ,SORT_SEQ
+		       ,UPT_DATE
+		       ,UPT_USER
+		       ,REMOTE
+		       ,TEMPLE_CD
+		       ,SEQ
+		       ,ACCEPT_GBN
+		       ,JUNGAK_CD
+		       ,ACCEPT_SEQ
+		       ,LIGHT_NO
+		       ,BOKWIJA_NO
+		) VALUES (
+		        #{DONGCHAM_BUD_NO}
+		       ,DECODE( #{DEL_YN , jdbcType=VARCHAR} ,'','F', #{DEL_YN , jdbcType=VARCHAR} )
+		       ,#{REMARK  ,jdbcType=VARCHAR}
+		       ,#{CRT_USER}
+		       ,SYSDATE
+		       ,(SELECT NVL(MAX(SORT_SEQ)+1,1)
+		          FROM REC_INDEUNG_JOIN_MGT
+		         WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		           AND SEQ        = #{SEQ}
+		           AND ACCEPT_GBN = #{V_ACCEPT_GBN}
+		           AND JUNGAK_CD  = DECODE( #{JUNGAK_CD},'',0,TO_NUMBER(#{JUNGAK_CD}) )
+		           AND ACCEPT_SEQ = #{ACCEPT_SEQ}
+		           AND LIGHT_NO   = #{LIGHT_NO})
+		       ,SYSDATE
+		       ,#{UPT_USER}
+		       ,#{REMOTE}
+		       ,#{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{V_ACCEPT_GBN}
+		       ,DECODE(#{JUNGAK_CD},'',0,TO_NUMBER( #{JUNGAK_CD} ))
+		       ,#{ACCEPT_SEQ}
+		       ,TO_NUMBER( #{LIGHT_NO} )
+		       ,#{BOKWIJA_NO ,jdbcType=VARCHAR}
+		       
+		)
+	</insert>
+	
+	
+	<insert id="INSERT_MISU_NO_LIMIT" parameterType="java.util.Map">
+		INSERT INTO REC_PAYMENT_HIS (
+		        TEMPLE_CD
+		       ,SEQ
+		       ,ACCEPT_SEQ
+		       ,SUB_DATE
+		       ,PAYMENT_YYYYMM
+		       ,AMOUNT
+		       ,CRT_USER
+		       ,REMOTE
+		       ,REMARK
+		       ,APPROVAL_GBN
+		       ,PGCODE
+		       ,AUTHCODE    
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{ACCEPT_SEQ}
+		       ,(SELECT TO_CHAR(CURRENT_TIMESTAMP,'YYYYMMDDHH24MISSFF') FROM DUAL)
+		       ,#{V_PAYMENT_YYYYMM}
+		       ,#{V_BASE_PAYMENT_AMT}
+		       ,#{CRT_USER}
+		       ,#{REMOTE}
+		       ,#{REMARK ,jdbcType=VARCHAR}
+		       ,#{V_CASH_TYPE}
+		       ,#{V_PGCODE ,jdbcType=VARCHAR}
+		       ,#{V_AUTHCODE ,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<insert id="INSERT_SEQ" parameterType="java.util.Map">
+		INSERT INTO REC_SUB (
+		        TEMPLE_CD
+		       ,SEQ
+		       ,ACCEPT_SEQ
+		       ,ACCEPT_GBN
+		       ,DEL_YN
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{ACCEPT_SEQ}
+		       ,#{V_ACCEPT_GBN}
+		       ,'F'
+		)
+	</insert>
+	
+	
+	<insert id="INSERT_MISU" parameterType="java.util.Map">
+		INSERT INTO REC_PAYMENT_HIS (
+		        TEMPLE_CD
+		       ,SEQ
+		       ,ACCEPT_SEQ
+		       ,SUB_DATE
+		       ,AMOUNT
+		       ,CRT_USER
+		       ,REMOTE
+		       ,REMARK
+		       ,APPROVAL_GBN
+		       ,PGCODE
+		       ,AUTHCODE       
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{ACCEPT_SEQ}
+		       ,(SELECT TO_CHAR(CURRENT_TIMESTAMP,'YYYYMMDDHH24MISSFF') FROM DUAL)
+		       ,#{PAYMENT_AMT}
+		       ,#{CRT_USER}
+		       ,#{REMOTE}
+		       ,#{REMARK       ,jdbcType=VARCHAR}
+		       ,#{V_CASH_TYPE }
+		       ,#{V_PGCODE     ,jdbcType=VARCHAR}
+		       ,#{V_AUTHCODE   ,jdbcType=VARCHAR} 
+		)
+	</insert>
+	
+</mapper>

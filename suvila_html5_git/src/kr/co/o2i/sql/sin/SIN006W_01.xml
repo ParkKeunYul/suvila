@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SIN006W_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="CONTENT"    column="CONTENT"  javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		 <result  property="CHECK_P" column="CHECK_P"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+	</resultMap>
+
+	<select id="SELECT_SIN_CARD_HIS"  parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT A.TEMPLE_CD
+			  ,A.BUD_NO
+			  ,B.NAME_KOR
+			  ,A.SEQ
+			  ,A.CARD_NO
+			  ,A.ENTRY_DATE
+			  ,A.MEMO
+			  ,A.CRT_USER
+			  ,A.CRT_DATE
+			  ,A.UPT_DATE
+			  ,A.UPT_USER
+			  ,A.REMOTE
+		  FROM SIN_CARD_HIS A
+		  	  ,SIN_CARD_MASTER B
+		 WHERE A.TEMPLE_CD =B.TEMPLE_CD
+		   AND A.BUD_NO         = B.BUD_NO
+		   AND A.TEMPLE_CD      = #{V_TEMPLE_CD}
+		   AND A.ENTRY_DATE &gt;= #{V_S_DATE}
+		   AND A.ENTRY_DATE &lt;= #{V_E_DATE}
+		   <if test="V_BUD_NO != '' and V_BUD_NO != null  ">
+		   	AND	A.BUD_NO = #{V_BUD_NO}
+		   </if>
+		   <if test="V_CLASS_CD != '' and V_CLASS_CD != null and V_CLASS_CD != 0 ">
+		   	AND A.BUD_NO IN (SELECT BUD_NO 
+		   					   FROM SIN_CLASS_INFO 
+		   					  WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   					    AND CLASS_CD  = #{V_CLASS_CD})
+		   </if>
+		ORDER BY A.BUD_NO
+			    ,A.ENTRY_DATE
+	</select>
+	
+	<select id="SELECT_SIN_CARD_NEW"  parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		 SELECT T1.*												
+		  FROM (	
+		  		SELECT A.TEMPLE_CD
+		  			  ,(CASE  												
+		    		 		WHEN NVL(A.SUNAP_YN,'F') = 'F' THEN 'F' 													
+		     		 		ELSE ''										
+		   				END )  CHECK_P
+		   			  ,0 ACCT_GBN
+		   			  ,A.SEQ
+		   			  ,'I' IE_GBN
+		   			  ,A.CARD_NO
+		   			  ,KWAN
+		   			  ,HANG
+		   			  ,MOK
+		   			  ,A.MEMO
+		   			  ,TO_CHAR(A.CRT_DATE,'YYYYMMDD')	CRT_DATE
+		   			  ,A.ACCEPT_SEQ
+		   			  ,A.SEQ as REC_SEQ
+		   			  ,A.PHOTO_FOLDER||'/'||A.TEMPLE_CD ||'/'||A.PHOTO as PHOTO 
+		   			  ,A.PHOTO as R_PHOTO
+		   			  ,A.PHOTO_IP
+		   			  ,TO_CHAR(A.REC_DATE,'YYYYMMDD')	REC_DATE
+		   			  ,A.ISSUE_STATE
+		   			  ,A.DEL_YN
+		   			  ,B.NAME_KOR
+		   			  ,A.BUD_NO													 																		
+		 		 FROM SIN_CARD_ISSUE_DETAIL A 						 																
+		     		 ,SIN_CARD_MASTER B 									 																
+		 		WHERE A.TEMPLE_CD 				= B.TEMPLE_CD 										
+		 		  AND A.BUD_NO 					= B.BUD_NO 												
+		 		  AND A.DEL_YN 					= 'F' 														
+		 		  AND NVL(A.CANCEL_YN , 'F') 	= 'F'															
+		 		  AND A.TEMPLE_CD 			    = #{V_TEMPLE_CD} 		
+		 		  AND TO_CHAR(A.REC_DATE,'YYYY-MM-DD')   BETWEEN  TO_DATE( #{V_ACT_DATE}, 'YYYY-MM-DD')  AND  TO_DATE(  #{V_ACT_DATE}, 'YYYY-MM-DD') 
+		 	  UNION ALL 		
+		 	  SELECT DET.TEMPLE_CD
+		 	  		,'F' CHECK_P
+		 	  		,MGT.ACCT_GBN
+		 	  		,0 SEQ
+		 	  		,MGT.IE_GBN
+		 	  		,'' CARD_NO
+		 	  		,MGT.KWAN
+		 	  		,MGT.HANG
+		 	  		,MGT.MOK
+		 	  		,'' MEMO
+		 	  		,'' CRT_DATE
+		 	  		,DET.ACCEPT_SEQ
+		 	  		,DET.SEQ as REC_SEQ
+		 	  		,'' PHOTO
+		 	  		,'' R_PHOTO
+		 	  		,'' PHOTO_IP
+		 	  		,TO_CHAR(DET.CRT_DATE,'YYYYMMDD')	REC_DATE
+		 	  		,0 ISSUE_STATE
+		 	  		,'F' DEL_YN
+		 	  		,(SELECT B.NAME_KOR												
+		        		FROM REC_MASTER A												
+		             	    ,SIN_CARD_MASTER B									
+		       		   WHERE A.TEMPLE_CD       = B.TEMPLE_CD					
+		         		 AND A.PROPOSAL_BUD_NO = B.BUD_NO				
+		         		 AND A.TEMPLE_CD       = #{V_TEMPLE_CD}	
+		         		 AND B.DEL_YN          = 'F'           					
+		         		 AND ACCEPT_SEQ        =  DET.ACCEPT_SEQ ) NAME_KOR
+		         	,(SELECT PROPOSAL_BUD_NO  									
+		         		FROM REC_MASTER 												
+		        	   WHERE TEMPLE_CD   = #{V_TEMPLE_CD}	
+		          		 AND ACCEPT_SEQ  =  DET.ACCEPT_SEQ ) BUD_NO 																
+		 		FROM REC_PRAY_DETAIL DET												
+		    		,REC_PRAY_MGT MGT													
+		 	   WHERE DET.TEMPLE_CD  = MGT.TEMPLE_CD						
+		  		 AND DET.PRAY_GBN   = MGT.PRAY_GBN							
+		  		 AND DET.PRAY_CODE  = MGT.PRAY_CODE						
+		  		 AND MGT.FDATE      = '-1'											
+		  		 AND DET.TEMPLE_CD  = #{V_TEMPLE_CD}	
+		  		 AND MGT.KWAN       = 9															
+		  		 AND MGT.HANG       = 3															
+		  		 AND MGT.MOK        = 11															
+		  		 AND MGT.ACCT_GBN   = 1											
+		  		 AND MGT.IE_GBN     = 'I'													
+		  		 AND DET.DEL_YN     = 'F'													
+		  		 AND TO_CHAR(DET.CRT_DATE, 'YYYYMMDD')	= #{V_ACT_DATE}	
+		  		 AND NVL(DET.ACCEPT_SEQ||DET.SEQ,'-1') NOT IN(	SELECT NVL(ACCEPT_SEQ||REC_SEQ	,'-1')			
+		       													  FROM SIN_CARD_ISSUE_DETAIL								
+		      													 WHERE NVL(CANCEL_YN , 'F')	= 	'F'															
+		        												   AND TEMPLE_CD = #{V_TEMPLE_CD}  
+		        											  )		
+		        										 																							        												   
+		  		GROUP by DET.TEMPLE_CD
+		  				,MGT.ACCT_GBN
+		  				,MGT.IE_GBN
+		  				,MGT.KWAN
+		  				,MGT.HANG
+		  				,MGT.MOK
+		  				,DET.ACCEPT_SEQ
+		  				,DET.SEQ
+		  				,TO_CHAR(DET.CRT_DATE,'YYYYMMDD') 		
+		 ) T1          																	 
+		ORDER by T1.ACCEPT_SEQ  
+				,T1.SEQ       					
+	</select>
+	
+	
+	<insert id="INSERT_SIN_CARD_HIS" parameterType="java.util.Map">
+		INSERT INTO SIN_CARD_HIS(
+			TEMPLE_CD
+			,BUD_NO
+			,SEQ
+			,CARD_NO
+			,ENTRY_DATE
+			,MEMO
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+		) VALUES (
+			 #{V_TEMPLE_CD}
+			,#{BUD_NO}
+			,(
+				SELECT NVL(MAX(SEQ),0)+1 AS SEQ
+				  FROM SIN_CARD_HIS
+				 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+				   AND BUD_NO    = #{BUD_NO}
+			  )
+			,#{CARD_NO ,jdbcType=VARCHAR}
+			,#{ENTRY_DATE}
+			,#{MEMO ,jdbcType=VARCHAR}
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_REMOTE}
+		)
+	</insert>
+	
+	<update id="UPDATE_SIN_CARD_HIS"  parameterType="java.util.Map">
+		UPDATE SIN_CARD_HIS
+		   SET CARD_NO 	   = #{CARD_NO,jdbcType=VARCHAR}
+		   	  ,ENTRY_DATE  = #{ENTRY_DATE}
+		   	  ,MEMO        = #{MEMO,jdbcType=VARCHAR}
+		   	  ,UPT_USER    = #{V_USER_ID}
+		   	  ,UPT_DATE    = SYSDATE
+		   	  ,REMOTE      = #{V_REMOTE}
+		 WHERE TEMPLE_CD   = #{V_TEMPLE_CD}
+		   AND BUD_NO      = #{BUD_NO}
+		   AND SEQ         = #{SEQ}
+	</update>
+	
+	
+	<delete id="DELETE_SIN_CARD_HIS" parameterType="java.util.Map">
+		DELETE FROM SIN_CARD_HIS
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND BUD_NO    = #{BUD_NO} 
+		   AND SEQ       = #{SEQ}
+	</delete>
+	
+	<insert id="NEW_INSERT_SIN_CARD_HIS" parameterType="java.util.Map">
+		INSERT INTO SIN_CARD_ISSUE_DETAIL(
+			 SEQ
+			,TEMPLE_CD
+			,BUD_NO
+			,CARD_NO
+			,PHOTO
+			,CRT_DATE
+			,CRT_USER
+			,ISSUE_STATE
+			,PRICE
+			,MEMO
+			,UPT_DATE
+			,UPT_USER
+			,DEL_YN
+			,REMOTE
+		) VALUES (
+			 (SELECT NVL(MAX(SEQ),0)+1 AS SEQ 
+			 	FROM SIN_CARD_ISSUE_DETAIL)
+			,#{V_TEMPLE_CD}
+			,#{V_BUD_NO}
+			,#{V_CARD_NO}
+			,#{V_PHOTO#
+			,sysdate
+			,#{V_USER_ID}
+			,1
+			,'0'
+			,#{V_USER_ID}
+			,sysdate
+			,#{V_USER_ID}
+			,'F'
+			,#{V_REMOTE}
+		)
+	</insert>
+	
+	<update id="NEW_UPDATE_SIN_CARD_HIS"  parameterType="java.util.Map">
+		UPDATE SIN_CARD_ISSUE_DETAIL
+		   SET MEMO      	 = #{MEMO}
+		      ,PHOTO     	 = #{V_RENAME}
+		      ,PHOTO_IP  	 = #{V_REMOTE}
+		      ,PHOTO_FOLDER  = #{V_FODER}
+		      ,UPT_DATE  	 = sysdate
+		      ,UPT_USER  	 = #{V_USER_ID}
+		      ,DEL_YN    	 = #{DEL_YN} 
+		 WHERE TEMPLE_CD 	 = #{V_TEMPLE_CD}
+		   AND SEQ       	 = #{SEQ}
+		   AND BUD_NO    	 = #{BUD_NO}
+	</update>
+	
+	<update id="NEW_UPDATE_SIN_CARD_HIS2"  parameterType="java.util.Map">
+		UPDATE SIN_CARD_ISSUE_DETAIL
+		   SET MEMO      	 = #{MEMO}
+		      ,UPT_DATE  	 = sysdate
+		      ,UPT_USER  	 = #{V_USER_ID}
+		      ,DEL_YN    	 = #{DEL_YN}     
+		 WHERE TEMPLE_CD 	 = #{V_TEMPLE_CD}
+		   AND SEQ       	 = #{SEQ}
+		   AND BUD_NO    	 = #{BUD_NO}
+	</update>
+	
+	<delete id="NEW_DELETE_SIN_CARD_HIS"  parameterType="java.util.Map">
+		UPDATE SIN_CARD_ISSUE_DETAIL
+		   SET DEL_YN    = 'T'
+		      ,UPT_DATE  = sysdate
+		      ,UPT_USER  = #{V_USER_ID}
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND SEQ       = #{SEQ}
+		   AND BUD_NO    = #{BUD_NO}
+	</delete>
+	
+	<update id="UPDATE_SETTING"  parameterType="java.util.Map">
+		UPDATE SIN_CARD_ISSUE_DETAIL
+		   SET SETTING_DATE = #{SETTING_DATE}
+		      ,SETTING_USER = #{V_USER_ID}
+		      ,UPT_DATE     = s V_USER_ID}
+		 WHERE TEMPLE_CD    = #{V_TEMPLE_CD}
+		   AND SEQ          = #{SEQ}
+		   AND BUD_NO       = #{BUD_NO}
+	</update>
+	
+	
+	<select id="SELECT_SINDO_CARD_INFO" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT (CASE   																																	
+		    		WHEN NVL(A.SUNAP_YN,'F') = 'F' THEN 'F' 															
+		    		ELSE '' 																															
+		  		END )  CHECK_P
+		  	 ,A.TEMPLE_CD
+		  	 ,A.BUD_NO
+		  	 ,B.NAME_KOR
+		  	 ,A.SEQ
+		  	 ,A.CARD_NO
+		  	 ,FN_TEMPLE_NAME(A.TEMPLE_CD,'FULL_NAME') TEMPLE_NM 
+		  	 ,A.MEMO
+		  	 ,A.CRT_USER
+		  	 ,TO_CHAR(A.CRT_DATE,'YYYYMMDD')	CRT_DATE
+		  	 ,TO_CHAR(A.UPT_DATE,'YYYYMMDD')	UPT_DATE
+		  	 ,A.UPT_USER
+		  	 ,A.REMOTE
+		  	 ,A.DEL_YN
+		  	 ,A.ISSUE_STATE
+		  	 ,TO_CHAR(A.ISSUE_DATE,'YYYYMMDD') ISSUE_DATE
+		  	 ,A.PRICE
+		  	 ,(CASE WHEN TO_CHAR(A.SETTING_DATE,'YYYYMMDD') is not null  THEN  A.TEMPLE_PRICE  			  			
+				    ELSE 0 																														
+			  END) TEMPLE_PRICE
+			 ,A.REMOTE
+			 ,NVL(A.SUNAP_YN,'F')  SUNAP_YN
+			 ,TO_CHAR(A.SUNAP_DATE,'YYYYMMDD')	SUNAP_DATE
+			 ,A.PHOTO_FOLDER||'/'||A.TEMPLE_CD ||'/'||A.PHOTO as PHOTO
+			 ,TO_CHAR(A.SETTING_DATE,'YYYYMMDD')	SETTING_DATE
+			 ,TO_CHAR(A.SETTING_DATE,'YYYYMMDD')	R_SETTING_DATE
+			 ,TO_CHAR(A.REC_DATE,'YYYYMMDD')	REC_DATE
+			 ,TO_CHAR(A.DELIVERY_DATE,'YYYYMMDD')	DELIVERY_DATE
+			 ,A.SETTING_USER
+			 ,A.PHOTO as R_PHOTO
+			 ,A.PHOTO_IP 																													
+		 FROM SIN_CARD_ISSUE_DETAIL A 						 																
+		     ,SIN_CARD_MASTER B 									 																
+		WHERE A.TEMPLE_CD	         = B.TEMPLE_CD 										
+		  AND A.BUD_NO		         = B.BUD_NO 												
+		  AND A.DEL_YN		         = 'F' 														
+		  AND NVL(A.CANCEL_YN, 'F')  = 'F' 														
+		  AND A.TEMPLE_CD 	 		 = 	#{V_TEMPLE_CD}
+		<choose>		  
+		  	<when test='V_SEARCH_DATE == "1" '>
+		  		AND TO_CHAR(A.CRT_DATE,'YYYY-MM-DD')   BETWEEN  TO_DATE(#{V_S_DATE}, 'YYYY-MM-DD')  AND  TO_DATE(#{V_E_DATE}, 'YYYY-MM-DD') 
+		  	</when>
+		  	<when test='V_SEARCH_DATE == "3" '>
+		  		AND TO_CHAR(A.SETTING_DATE,'YYYY-MM-DD')   BETWEEN  TO_DATE(#{V_S_DATE}, 'YYYY-MM-DD')  AND  TO_DATE(#{V_E_DATE}, 'YYYY-MM-DD') 
+		  	</when>
+		  	<when test='V_SEARCH_DATE == "4" '>
+		  		AND TO_CHAR(A.DELIVERY_DATE,'YYYY-MM-DD')   BETWEEN  TO_DATE(#{V_S_DATE}, 'YYYY-MM-DD')  AND  TO_DATE(#{V_E_DATE}, 'YYYY-MM-DD')
+		  	</when>
+		  	<when test='V_SEARCH_DATE == "5" '>
+		  		AND TO_CHAR(A.REC_DATE,'YYYY-MM-DD')   BETWEEN  TO_DATE(#{V_S_DATE}, 'YYYY-MM-DD')  AND  TO_DATE(#{V_E_DATE}, 'YYYY-MM-DD')
+		  	</when>
+		  	<otherwise>
+		  		AND TO_CHAR(A.ISSUE_DATE,'YYYY-MM-DD')   BETWEEN  TO_DATE(#{V_S_DATE}, 'YYYY-MM-DD')  AND  TO_DATE(#{V_E_DATE}, 'YYYY-MM-DD')
+		  	</otherwise>
+		</choose> 		
+		<choose>
+			<when test='V_CLASS_CD != "" and V_CLASS_CD != null  and V_CLASS_CD != "0" '>
+				AND A.BUD_NO IN (SELECT BUD_NO FROM SIN_CLASS_INFO WHERE TEMPLE_CD = #{V_TEMPLE_CD} AND CLASS_CD =  #{V_CLASS_CD} )
+			</when>
+			<when test='V_BUD_NO != "" and V_BUD_NO != null'>
+				AND A.BUD_NO = #{V_BUD_NO} 		
+			</when>
+		</choose>
+		<if test='V_ISSUE_STATE != "" and V_ISSUE_STATE != null'>
+			AND A.ISSUE_STATE = #{V_ISSUE_STATE}  
+		</if>
+		ORDER by A.SEQ asc 																											
+	</select>
+	
+</mapper>

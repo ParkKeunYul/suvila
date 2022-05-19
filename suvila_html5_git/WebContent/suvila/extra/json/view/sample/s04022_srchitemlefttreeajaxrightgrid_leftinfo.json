@@ -1,0 +1,30 @@
+{
+   "children":[
+        {"custNo":"A","custName":"홍길동"
+        ,"leaf":false,
+         "children":[]
+    }, {"custNo":"B","custName":"이순신"
+        ,"leaf":false,
+         "children":[]
+    }, {"custNo":"C","custName":"임걱정"
+        ,"leaf":false,
+         "children":[]
+    }, {"custNo":"D","custName":"임경업"
+        ,"leaf":false,
+         "children":[]
+    }, {"custNo":"E","custName":"유관순"
+        ,"leaf":false,
+         "children":[]
+    }, {"custNo":"F","custName":"전우치"
+        ,leaf:true
+    }, {"custNo":"G","custName":"정중부"
+        ,leaf:true
+    }, {"custNo":"H","custName":"이성계"
+        ,leaf:true
+    }, {"custNo":"I","custName":"안중근"
+        ,leaf:true
+    }, {"custNo":"J","custName":"김구"
+        ,leaf:true
+    }
+   ]
+}

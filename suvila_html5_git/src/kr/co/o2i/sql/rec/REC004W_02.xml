@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC004w_02DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+	
+	
+	<select id="SELECT_WEPAEKIND" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		  SELECT 
+		       #{V_TEMPLE_CD} AS TEMPLE_CD,
+		       0 AS EVENT_CD,
+		       DECODE(#{V_OPTION ,jdbcType=VARCHAR},'ALL','전체','선택') AS EVENT_NAME,
+		       'F' AS SET_YN,
+		       -9999 as SORT_SEQ
+		  FROM DUAL
+		UNION ALL
+		SELECT 
+		       MAI.TEMPLE_CD,
+		       MAI.EVENT_CD,
+			   MAI.EVENT_NAME,
+		       NVL(MAI.SET_YN,'F') AS SET_YN,
+		       (CASE
+		   		  WHEN NVL(SORT_SEQ, 0) = 0 THEN ROWNUM
+		   		  ELSE SORT_SEQ END 
+		   		)  as SORT_SEQ
+		  FROM REC_WEPAE_CHONHON_MGT MAI, REC_WEPAE_CHONHON_EVENT_MGT SUB
+		 WHERE MAI.TEMPLE_CD = SUB.TEMPLE_CD
+		   AND MAI.EVENT_CD  = SUB.EVENT_CD
+		   AND SUB.COMPLET_YN= 'F'
+		   AND MAI.TEMPLE_CD = #{V_TEMPLE_CD}
+		GROUP BY MAI.TEMPLE_CD, MAI.EVENT_CD, MAI.EVENT_NAME, MAI.SET_YN
+		        ,(CASE
+		   		  	WHEN NVL(SORT_SEQ, 0) = 0 THEN ROWNUM
+		   		  	ELSE SORT_SEQ END )
+		ORDER BY SORT_SEQ , EVENT_CD
+	</select>
+	
+	<select id="SELECT_WEPAEKINDDATE" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT 
+		       #{V_TEMPLE_CD} AS TEMPLE_CD,
+		       0 AS EVENT_CD,
+		       '' AS EVENT_DATE,
+		       DECODE(#{V_OPTION ,jdbcType=VARCHAR},'ALL','전체','선택') AS EVENT_NAME,
+		       0 AS AMOUNT,
+		       'F' AS SET_YN
+		  FROM DUAL
+		UNION ALL
+		SELECT 
+		       MAI.TEMPLE_CD,
+		       MAI.EVENT_CD,
+		       SUB.EVENT_DATE,
+		       FN_GET_DATE_FORMAT(SUB.EVENT_DATE) AS EVENT_NAME,
+		       SUB.AMOUNT,
+		       MAI.SET_YN
+		  FROM REC_WEPAE_CHONHON_MGT MAI, REC_WEPAE_CHONHON_EVENT_MGT SUB
+		 WHERE MAI.TEMPLE_CD = SUB.TEMPLE_CD
+		   AND MAI.EVENT_CD  = SUB.EVENT_CD
+		   AND SUB.COMPLET_YN= 'F'
+		   AND MAI.TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND MAI.EVENT_CD  = #{V_EVENT_CD}
+	</select>
+	
+	
+	<select id="SELECT_DETAIL" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT
+			   TEMPLE_CD,
+		       ACCEPT_SEQ,
+		       SEQ,
+		       EVENT_CD,
+		       EVENT_DATE,
+		       WEPAECNT,
+		       EVENT_TIME,
+		       PAYMENT_PLAN_AMT,
+		       PAYMENT_AMT,
+		       PAYMENT_PLAN_AMT - PAYMENT_AMT AS MISU_AMT,
+		       MEMO,
+		       CRT_USER,
+		       UPT_USER,
+		       TO_CHAR(CRT_DATE,'YYYYMMDD') AS CRT_DATE,
+		       TO_CHAR(UPT_DATE,'YYYYMMDD') AS UPT_DATE,
+		       REMOTE
+		  FROM REC_WEPAE_CHONHON_DETAIL
+	</select>
+	
+	
+	<insert id="INSERT_DETAIL" parameterType="java.util.Map">
+		INSERT INTO REC_WEPAE_CHONHON_DETAIL (
+			    SEQ
+			   ,CRT_USER
+			   ,CRT_DATE
+			   ,UPT_DATE
+			   ,UPT_USER
+			   ,PAYMENT_PLAN_AMT
+			   ,REMOTE
+			   ,WEPAECNT
+			   ,EVENT_TIME
+			   ,PAYMENT_AMT
+			   ,MEMO
+			   ,TEMPLE_CD
+			   ,ACCEPT_SEQ
+			   ,EVENT_DATE
+			   ,EVENT_CD
+			   ,DEL_YN
+			   ,PERIOD_MONTH
+		) VALUES (
+		       '1'
+		       ,#{CRT_USER}
+		       ,SYSDATE
+		       ,SYSDATE
+		       ,#{UPT_USER}
+		       ,#{PAYMENT_PLAN_AMT}
+		       ,#{REMOTE}
+		       ,#{WEPAECNT}
+		       ,#{EVENT_TIME   ,jdbcType=VARCHAR}
+		       ,#{PAYMENT_AMT}
+		       ,#{MEMO         ,jdbcType=VARCHAR}
+		       ,#{TEMPLE_CD}
+		       ,#{ACCEPT_SEQ}
+		       ,#{EVENT_DATE}
+		       ,#{EVENT_CD}
+		       ,DECODE(#{DEL_YN ,jdbcType=VARCHAR},'','F',#{DEL_YN ,jdbcType=VARCHAR})
+		       ,#{PERIOD_MONTH ,jdbcType=VARCHAR}
+		)	
+	</insert>
+	
+	
+	<select id="SELECT_DONGCHAMJA" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT
+		       TEMPLE_CD, 
+		       ACCEPT_SEQ, 
+		       SEQ, 
+		       EVENT_DATE, 
+		       EVENT_CD, 
+		       WEPAE_SEQ, 
+		       JOIN_SEQ, 
+		       WEPAECNT, 
+		       EVENT_SEQ,
+		       DECE_BUD_NO, 
+		       '' AS DECE_NAME_KOR,
+		       BOKWIJA_NO, 
+		       '' AS BOKWIJA_NM,
+		       '' AS DONGCHAMJA_GBN,
+		       CRT_USER, 
+		       UPT_USER, 
+		       TO_CHAR(CRT_DATE,'YYYYMMDD') AS CRT_DATE,
+		       TO_CHAR(UPT_DATE,'YYYYMMDD') AS UPT_DATE,
+		       REMOTE,
+		       '' AS SORT
+		  FROM REC_WEPAE_CHONHON_JOIN_MGT
+	</select>
+	
+	<insert id="INSERT_DONGCHAMJA" parameterType="java.util.Map">
+		INSERT INTO REC_WEPAE_CHONHON_JOIN_MGT (
+		        JOIN_SEQ
+		       ,WEPAE_SEQ
+		       ,EVENT_SEQ
+		       ,TEMPLE_CD
+		       ,DECE_BUD_NO
+		       ,BOKWIJA_NO
+		       ,ACCEPT_SEQ
+		       ,SEQ
+		       ,EVENT_DATE
+		       ,EVENT_CD
+		       ,CRT_USER
+		       ,WEPAECNT
+		       ,CRT_DATE
+		       ,UPT_USER
+		       ,UPT_DATE
+		       ,REMOTE
+		) VALUES (
+		        #{JOIN_SEQ}
+		       ,#{WEPAE_SEQ}
+		       ,#{EVENT_SEQ}
+		       ,#{TEMPLE_CD}
+		       ,#{DECE_BUD_NO}
+		       ,#{BOKWIJA_NO}
+		       ,#{ACCEPT_SEQ}
+		       ,'1'
+		       ,#{EVENT_DATE}
+		       ,#{EVENT_CD}
+		       ,#{CRT_USER}
+		       ,#{WEPAECNT}
+		       ,SYSDATE
+		       ,#{UPT_USER}
+		       ,SYSDATE
+		       ,#{REMOTE}
+		)
+	</insert>
+	
+	
+	
+	<!-- 위패순번을 생성 -->
+	<select id="selecWepaeSeq" parameterType="kr.co.o2i.util.CommonMap"  resultType="Integer">
+		SELECT NVL(MAX(WEPAE_SEQ)+1,1) AS WEPAE_SEQ                            
+		  FROM REC_WEPAE_CHONHON_JOIN_MGT                                      
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD}                                    
+		   AND ACCEPT_SEQ = #{ACCEPT_SEQ}                                   
+		   AND SEQ        = '1'                                                
+		   AND EVENT_DATE = #{EVENT_DATE}                                   
+		   AND EVENT_CD   = #{EVENT_CD}                                     
+		   AND WEPAECNT   = #{WEPAECNT}                                     
+	</select>
+	
+	<!-- 동참자순번을 생성 -->
+	<select id="selecJoinSeq" parameterType="kr.co.o2i.util.CommonMap"  resultType="Integer">
+		SELECT NVL(MAX(JOIN_SEQ)+1,1) AS JOIN_SEQ                                 
+		      FROM REC_WEPAE_CHONHON_JOIN_MGT                                     
+		     WHERE TEMPLE_CD  = #{TEMPLE_CD}                                   
+		       AND ACCEPT_SEQ = #{ACCEPT_SEQ}                                  
+		       AND SEQ        = '1'                                               
+		       AND EVENT_DATE = #{EVENT_DATE}                                  
+		       AND EVENT_CD   = #{EVENT_CD}                                    
+		       AND WEPAECNT   = #{WEPAECNT}                                    
+		       AND WEPAE_SEQ  = #{WEPAE_SEQ}                                   
+	</select>
+	
+	<!-- 위패번호를 생성 -->
+	<select id="selecEventSeq" parameterType="kr.co.o2i.util.CommonMap"  resultType="Integer">
+		SELECT SUVILA.FN_NEW_WEPAE_SEQ( #{TEMPLE_CD} , #{EVENT_DATE} , #{EVENT_CD} ) AS EVENT_SEQ 
+    	  FROM DUAL                                      
+	</select>
+	
+</mapper>

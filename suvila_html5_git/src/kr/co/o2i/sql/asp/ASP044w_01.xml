@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ASP044w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="CHECK_P" column="CHECK_P"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 		
+	</resultMap>
+
+
+	<select id="selectSindoCardNew" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT 																	 																
+			A.TEMPLE_CD,  													 																
+			A.BUD_NO, 															 																
+			B.NAME_KOR, 														 																
+			A.SEQ,  																 																
+			A.CARD_NO,  														 																
+			FN_TEMPLE_NAME(A.TEMPLE_CD,'JONGDAN') TEMPLE_NM , 								 		
+			A.MEMO, 																 																
+			A.CRT_USER, 														 																
+			TO_CHAR(A.CRT_DATE,'YYYYMMDD')	CRT_DATE,																
+			TO_CHAR(A.UPT_DATE,'YYYYMMDD')	UPT_DATE,																
+			TO_CHAR(A.SETTING_DATE,'YYYYMMDD')	SETTING_DATE,												
+			TO_CHAR(A.DELIVERY_DATE,'YYYYMMDD')	DELIVERY_DATE,											
+			A.UPT_USER,  														 																
+			A.REMOTE, 															 																
+			A.DEL_YN, 															 																
+			A.ISSUE_STATE, 													 																
+		    A.PHOTO as R_PHOTO, 																									
+		    A.PHOTO_IP, 																													
+			A.SEC_SEQ, 													 																		
+			(CASE																																		 
+			    WHEN A.ISSUE_STATE  = 2 THEN TO_CHAR(A.ISSUE_DATE ,'YYYYMMDD')    	
+			    END ) AS ISSUE_DATE ,																								
+			(CASE 																																		
+				WHEN  NVL(A.PHOTO , '-1') = '-1' THEN '1'															
+				ELSE  '2'																															
+			END )  AS PHOTO_FLAG  ,																									
+			(CASE WHEN TO_CHAR(A.SETTING_DATE,'YYYYMMDD') is not null  THEN  'T'  			  			
+				    ELSE 'F' 																														
+			  END) SETTING_YN,																										
+			A.PRICE, 																 																
+			NVL(A.TEMPLE_PRICE , (SELECT PRICE_CARD_TEMPLE FROM ASP_TEMPLE_MASTER WHERE TEMPLE_CD = A.TEMPLE_CD  )  ) TEMPLE_PRICE, 																 																
+			A.REMOTE, 															 																
+			(SELECT CARD_CODE 
+			   FROM SIN_CARD_SEC_MGT 
+			  WHERE SEQ = A.SEC_SEQ 
+			    AND USE_YN = 'Y' 
+			    AND TEMPLE_CD = A.TEMPLE_CD ) AS CARD_CODE, 	
+		    A.PHOTO_FOLDER||'/'||A.TEMPLE_CD ||'/'||A.PHOTO as PHOTO,
+		    (CASE
+		    	WHEN A.CARD_NO is not null
+		    	THEN substr(A.CARD_NO , 0, 4) || '-' || substr(A.CARD_NO , 5, 4) || '-' || substr(A.CARD_NO , 9, 4) || '-' || substr(A.CARD_NO , 13)
+		     END ) 	CARD_NO_MASK					
+		FROM  SIN_CARD_ISSUE_DETAIL A 						 																
+		    , SIN_CARD_MASTER B 									 																
+		WHERE A.TEMPLE_CD 					=		B.TEMPLE_CD 										
+		  AND A.BUD_NO 						= 	B.BUD_NO 												
+		  AND A.DEL_YN 						= 	'F' 														
+		  AND NVL(A.CANCEL_YN, 'F') 		= 	'F'
+		  <if test="V_SEARCH_ISSUE != '' and V_SEARCH_ISSUE != null">
+		  	AND A.ISSUE_STATE = #{V_SEARCH_ISSUE}
+		  </if>
+		  <if test="V_SEARCH_TEMPLE != '' and V_SEARCH_TEMPLE != null">
+		  	AND A.TEMPLE_CD = #{V_SEARCH_TEMPLE}
+		  </if>
+		  <if test="V_BUD_NO != '' and V_BUD_NO != null">
+		  	AND A.BUD_NO = #{V_BUD_NO}
+		  </if>
+		  
+		  <choose>
+		  	<when test="V_SETTING_TYPE == 1">
+		  		AND  A.SETTING_DATE is not null   	
+		  	</when>
+		  	<when test="V_SETTING_TYPE == 2">
+		  		AND  A.SETTING_DATE is  null 
+		  	</when>
+		  </choose>
+		  
+		  <choose>
+		  	<when test="V_SEARCH_DATE == 1">
+		  		AND  TO_CHAR(A.CRT_DATE,'YYYY-MM-DD')   BETWEEN  TO_DATE( #{V_S_DATE}, 'YYYY-MM-DD')  AND  TO_DATE(#{V_E_DATE}, 'YYYY-MM-DD')
+		  		ORDER by A.CRT_DATE asc   	
+		  	</when>
+		  	<when test="V_SEARCH_DATE == 3">
+		  		AND  TO_CHAR(A.SETTING_DATE,'YYYY-MM-DD')   BETWEEN  TO_DATE(#{V_S_DATE}, 'YYYY-MM-DD')  AND  TO_DATE(#{V_E_DATE}, 'YYYY-MM-DD')
+		  		ORDER by A.SETTING_DATE asc 
+		  	</when>
+		  	<otherwise>
+		  		AND  TO_CHAR(A.ISSUE_DATE,'YYYY-MM-DD')   BETWEEN  TO_DATE(#{V_S_DATE}, 'YYYY-MM-DD')  AND  TO_DATE(#{V_E_DATE}, 'YYYY-MM-DD')
+				ORDER by A.ISSUE_DATE asc 		
+		  	</otherwise>
+		  </choose>
+	</select>
+	
+	
+	<update id="UPDATE_IEDUNG_CLOSE_YN" parameterType="java.util.Map">
+		UPDATE REC_INDEUNG_DETAIL
+		   SET CLOSE_YN   = #{CLOSE_YN}
+		      ,UPT_USER   = 'SYSTEM_' || #{V_USER_ID}
+		      ,UPT_DATE   = sysdate
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		   AND ACCEPT_SEQ = #{ACCEPT_SEQ}
+		   AND SEQ        = #{SEQ}
+	</update>
+	
+	<update id="UPDATE_YDUNG_CLOSE_YN" parameterType="java.util.Map">
+		UPDATE REC_YEONDEUNG_DETAIL
+		   SET CLOSE_YN   = #{CLOSE_YN}
+		      ,UPT_USER   = 'SYSTEM_' || #{V_USER_ID}
+		      ,UPT_DATE   = sysdate
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		   AND ACCEPT_SEQ = #{ACCEPT_SEQ}
+		   AND SEQ        = #{SEQ}
+	</update>
+	
+	<insert id="INSERT_CSUPDATE" parameterType="java.util.Map">
+		INSERT into ASP_CS_UPDATE_INFO(
+		   SEQ
+		  ,TEMPLE_CD
+		  ,MENU
+		  ,REMARK
+		  ,UPT_USER
+		  ,UPT_DATE
+		) VALUES(
+		  (SELECT NVL(max(SEQ),0)+1 FROM ASP_CS_UPDATE_INFO )
+		  , #{TEMPLE_CD}
+		  , #{V_MENU_NAME}
+		  , #{V_REMARK}
+		  , #{V_USER_ID}
+		  , sysdate
+		)
+	</insert>
+	
+</mapper>

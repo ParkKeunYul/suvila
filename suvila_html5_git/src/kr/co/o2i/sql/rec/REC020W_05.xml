@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC020w_05DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="USE_YN" column="USE_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+
+
+	<select id="SELECT_MGT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD,
+		       TEMPLE_STAY_CD,
+		       FDATE,
+		       TEMPLE_STAY_NM,
+		       AMT,
+		       PERIOD,
+		       RDATE,
+		       CAPACITY,
+		       ACCT_GBN,
+		       IE_GBN,
+		       KWAN,
+		       HANG,
+		       USE_YN,
+		       MOK,
+		       FN_ACC_NAME(TEMPLE_CD, ACCT_GBN, IE_GBN, KWAN, HANG, MOK , 'MOK')  AS ACCNAME,
+		       REMARK,
+		       CRT_USER,
+		       CRT_DATE,
+		       UPT_DATE,
+		       UPT_USER,
+		       REMOTE
+		  FROM REC_TEMPLE_STAY_MGT
+		 WHERE TEMPLE_CD      = #{V_TEMPLE_CD}
+		   AND FDATE          = '-1'
+		ORDER BY TEMPLE_STAY_CD
+	</select>
+	
+	<select id="SELECT_MGT_DETAIL" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD,
+		       TEMPLE_STAY_CD,
+		       FDATE,
+		       TEMPLE_STAY_NM,
+		       AMT,
+		       PERIOD,
+		       RDATE,
+		       CAPACITY,
+		       ACCT_GBN,
+		       IE_GBN,
+		       KWAN,
+		       HANG,
+		       USE_YN,
+		       MOK,
+		       FN_ACC_NAME(TEMPLE_CD, ACCT_GBN, IE_GBN, KWAN, HANG, MOK , 'MOK')  AS ACCNAME,
+		       REMARK,
+		       CRT_USER,
+		       CRT_DATE,
+		       UPT_DATE,
+		       UPT_USER,
+		       REMOTE
+		  FROM REC_TEMPLE_STAY_MGT
+		 WHERE TEMPLE_CD      = #{V_TEMPLE_CD}
+		   AND TEMPLE_STAY_CD = #{V_TEMPLE_STAY_CD}
+		   AND FDATE         != '-1'
+		ORDER BY FDATE
+	</select>
+	
+	<insert id="INSERT_MGT" parameterType="java.util.Map">
+		INSERT INTO REC_TEMPLE_STAY_MGT (
+		       TEMPLE_CD,
+		       TEMPLE_STAY_CD,
+		       FDATE,
+		       TEMPLE_STAY_NM,
+		       AMT,
+		       PERIOD,
+		       RDATE,
+		       CAPACITY,
+		       ACCT_GBN,
+		       IE_GBN,
+		       KWAN,
+		       HANG,
+		       USE_YN,
+		       MOK,
+		       REMARK,
+		       CRT_USER,
+		       CRT_DATE,
+		       UPT_DATE,
+		       UPT_USER,
+		       REMOTE
+		) VALUES (
+		       #{TEMPLE_CD},
+		       (SELECT NVL(MAX(TO_NUMBER(TEMPLE_STAY_CD)),0)+1
+		          FROM REC_TEMPLE_STAY_MGT
+		         WHERE TEMPLE_CD      = #{TEMPLE_CD}
+		           AND FDATE          = '-1'),
+		       '-1',
+		       #{TEMPLE_STAY_NM},
+		       #{AMT},
+		       #{PERIOD},
+		       #{RDATE    ,jdbcType=VARCHAR},
+		       #{CAPACITY ,jdbcType=VARCHAR},
+		       #{ACCT_GBN ,jdbcType=VARCHAR},
+		       #{IE_GBN   ,jdbcType=VARCHAR},
+		       #{KWAN     ,jdbcType=VARCHAR},
+		       #{HANG     ,jdbcType=VARCHAR},
+		       #{USE_YN   ,jdbcType=VARCHAR},
+		       #{MOK      ,jdbcType=VARCHAR},
+		       #{REMARK   ,jdbcType=VARCHAR},
+		       #{V_USER_ID},
+		       sysdate,
+		       sysdate,
+		       #{V_USER_ID},
+		       #{REMOTE}
+		)
+	</insert>
+	
+	
+	<insert id="INSERT_MGT_DETAIL" parameterType="java.util.Map">
+		INSERT INTO REC_TEMPLE_STAY_MGT (
+		       TEMPLE_CD,
+		       TEMPLE_STAY_CD,
+		       FDATE,
+		       TEMPLE_STAY_NM,
+		       AMT,
+		       PERIOD,
+		       RDATE,
+		       CAPACITY,
+		       ACCT_GBN,
+		       IE_GBN,
+		       KWAN,
+		       HANG,
+		       USE_YN,
+		       MOK,
+		       REMARK,
+		       CRT_USER,
+		       CRT_DATE,
+		       UPT_DATE,
+		       UPT_USER,
+		       REMOTE
+		) VALUES (
+		       #{TEMPLE_CD},
+		       #{TEMPLE_STAY_CD},
+		       #{FDATE},
+		       #{TEMPLE_STAY_NM},
+		       #{AMT},
+		       #{PERIOD},
+		       #{RDATE},
+		       #{CAPACITY},
+		       #{ACCT_GBN  ,jdbcType=VARCHAR},
+		       #{IE_GBN    ,jdbcType=VARCHAR},
+		       #{KWAN      ,jdbcType=VARCHAR},
+		       #{HANG      ,jdbcType=VARCHAR},
+		       NVL(#{USE_YN ,jdbcType=VARCHAR},'F'),
+		       #{MOK       ,jdbcType=VARCHAR},
+		       #{REMARK    ,jdbcType=VARCHAR},
+		       #{V_USER_ID},
+		       SYSDATE,
+		       SYSDATE,
+		       #{V_USER_ID},
+		       #{REMOTE}
+		)
+	</insert>
+		
+	<update id="UPDATE_MGT" parameterType="java.util.Map">
+		UPDATE REC_TEMPLE_STAY_MGT 
+		   SET TEMPLE_STAY_NM = #{TEMPLE_STAY_NM},
+		       AMT            = #{AMT},
+		       PERIOD         = #{PERIOD},
+		       RDATE          = #{RDATE    ,jdbcType=VARCHAR},
+		       CAPACITY       = #{CAPACITY},
+		       ACCT_GBN       = #{ACCT_GBN  ,jdbcType=VARCHAR},
+		       IE_GBN         = #{IE_GBN    ,jdbcType=VARCHAR},
+		       KWAN           = #{KWAN      ,jdbcType=VARCHAR},
+		       HANG           = #{HANG      ,jdbcType=VARCHAR},
+		       USE_YN         = NVL(#{USE_YN ,jdbcType=VARCHAR},'F'),
+		       MOK            = #{MOK ,jdbcType=VARCHAR},
+		       REMARK         = #{REMARK ,jdbcType=VARCHAR},
+		       UPT_DATE       = SYSDATE,
+		       UPT_USER       = #{V_USER_ID},
+		       REMOTE         = #{REMOTE}
+		 WHERE TEMPLE_CD      = #{TEMPLE_CD}
+		   AND TEMPLE_STAY_CD = #{TEMPLE_STAY_CD}
+		   AND FDATE          = #{FDATE}
+	</update>
+	
+	<delete id="DELETE_MGT" parameterType="java.util.Map">
+		DELETE FROM REC_TEMPLE_STAY_MGT
+		 WHERE TEMPLE_CD      = #{TEMPLE_CD}
+		   AND TEMPLE_STAY_CD = #{TEMPLE_STAY_CD}
+		   AND FDATE          = #{FDATE}
+	</delete>
+	
+	<delete id="DELETE_MGT_DETAIL" parameterType="java.util.Map">
+		DELETE FROM REC_TEMPLE_STAY_MGT
+		 WHERE TEMPLE_CD      = #{TEMPLE_CD}
+		   AND TEMPLE_STAY_CD = #{TEMPLE_STAY_CD}
+		   AND FDATE          = #{FDATE}
+	</delete>
+	
+	
+	<select id="selectMgtCount" parameterType="kr.co.o2i.util.CommonMap"  resultType="String">
+		SELECT                                                               
+		      COUNT(*) AS USE_COUNT                                          
+		 FROM REC_TEMPLE_STAY_MGT                                            
+		WHERE TEMPLE_CD      = #{TEMPLE_CD} 
+		  AND TEMPLE_STAY_CD = #{TEMPLE_STAY_CD}       
+		  AND FDATE         != '-1'                                          
+	</select>
+	
+	<select id="selectMgtUseYN" parameterType="kr.co.o2i.util.CommonMap"  resultType="String">
+		SELECT COUNT(*) AS USE_COUNT                                          
+		  FROM REC_TEMPLE_STAY_DETAIL                                         
+		 WHERE TEMPLE_CD      = #{TEMPLE_CD} 
+		   AND TEMPLE_STAY_CD = #{TEMPLE_STAY_CD}       
+		   AND FDATE          = #{FDATE}     
+	</select>
+</mapper>

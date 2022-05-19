@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ASP044w_04DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="CHECK_P" column="CHECK_P"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 		
+	</resultMap>
+
+
+
+	<select id="SELECT_SINDO_INFO" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT  TEMPLE_CD
+				,BUD_NO
+				,BUD_CODE
+				,SUBSTR (BUD_NO,1,2) AS GBN_CODE
+				,SUBSTR (BUD_CODE,10,1) AS BRANCH_CODE
+				,SORT_SEQ
+				,DAEJU_BUD_NO
+				,TO_NUMBER(DECODE(DAEJU_BUD_NO,BUD_NO,1,0 ))AS DAEJU_YN
+				,REPRESEN_REL
+				,NAME_KOR
+				,NAME_HAN
+				,SACRED_KOR
+				,SACRED_HAN
+				,JUMIN_NO
+				,ZIP_CD
+				,TELNO1
+				,TELNO2
+				,TELNO3
+				,MOBILE_TELNO1
+				,MOBILE_TELNO2
+				,MOBILE_TELNO3
+				,EMAIL
+				,SUBSTR(EMAIL,1,INSTR(EMAIL,'@')-1) AS EMAIL1
+				,SUBSTR(EMAIL,INSTR(EMAIL,'@')+1)  AS EMAIL2
+				,LAST_SCHOLA
+				,INTEREST
+				,SKILL
+				,COMPANY_NAME
+				,COMPANY_POS
+				,COMPANY_TEL1
+				,COMPANY_TEL2
+				,COMPANY_TEL3
+				,ENTRANCE_CD
+				,TO_NUMBER(DECODE(NEWS_YN,'T',1,'F',0)) AS NEWS_YN
+				,QUALIFICATION
+				,SACHAL_NAME
+				,TO_NUMBER(DECODE(POST_TRANS,'T',1,'F',0)) AS POST_TRANS
+				,TO_NUMBER(DECODE(EMAIL_TRANS,'T',1,'F',0)) AS EMAIL_TRANS 
+				,TO_NUMBER(DECODE(SMS_TRANS,'T',1,'F',0)) AS SMS_TRANS 
+				,MEMO
+				,SEXAGENARY
+				,LEAP_MONTH
+				,LUNAR_SOLAR
+				,BIRTHTIME
+				,ISSUE_DATE
+				,BIRTHDAY
+				,SEX_GBN
+				,SINDO_GBN
+				,TO_NUMBER(DECODE(HWAJU_YN,'T',1,'F',0)) AS HWAJU_YN
+				,HWAJU_BUD_NO
+				,FN_GET_NM('BUD',TEMPLE_CD,HWAJU_BUD_NO)AS HWAJU_BUD_NAME
+				,CARD_ISSUE_DATE
+				,CARD_ISSUE_CNT
+				,CRT_USER
+				,CRT_DATE
+				,UPT_USER
+				,UPT_DATE
+				,REMOTE
+				,'F' AS CHECK_P
+				,BLDG_NUM
+				,FN_ADDR_BLDG2(BLDG_NUM) ADDR3
+				,TO_NUMBER(DECODE(SMS_BIRTH_TRANS,'T',1,'F',0)) AS SMS_BIRTH_TRANS 
+				,TO_NUMBER(DECODE(SMS_GROUP_TRANS,'T',1,'F',0)) AS SMS_GROUP_TRANS 
+				,(SELECT count(temple_cd)  FROM SIN_CMS_INFO WHERE TEMPLE_CD = #{V_TEMPLE_CD} AND DEL_YN = 'F' AND BUD_NO = A.BUD_NO) CMS_CNT
+				,A.DEL_YN 
+				,TO_CHAR(A.UPT_DATE,'YYYYMMDDHH24MISS') as UPT_DATE
+			FROM SIN_CARD_MASTER A
+			WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+			AND BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = A.TEMPLE_CD)
+			AND A.BUD_NO LIKE #{V_BUD_NO} || '%'  
+			ORDER BY SORT_SEQ									
+			  
+	</select>
+	
+	<select id="SELECT_SINDO_NAME_INFO" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT  TEMPLE_CD
+				,BUD_NO
+				,BUD_CODE
+				,SUBSTR (BUD_NO,1,2) AS GBN_CODE
+				,SUBSTR (BUD_CODE,10,1) AS BRANCH_CODE
+				,SORT_SEQ
+				,DAEJU_BUD_NO
+				,TO_NUMBER(DECODE(DAEJU_BUD_NO,BUD_NO,1,0 ))AS DAEJU_YN
+				,REPRESEN_REL
+				,NAME_KOR
+				,NAME_HAN
+				,SACRED_KOR
+				,SACRED_HAN
+				,JUMIN_NO
+				,ZIP_CD
+				,TELNO1
+				,TELNO2
+				,TELNO3
+				,MOBILE_TELNO1
+				,MOBILE_TELNO2
+				,MOBILE_TELNO3
+				,EMAIL
+				,SUBSTR(EMAIL,1,INSTR(EMAIL,'@')-1) AS EMAIL1
+				,SUBSTR(EMAIL,INSTR(EMAIL,'@')+1)  AS EMAIL2
+				,LAST_SCHOLA
+				,INTEREST
+				,SKILL
+				,COMPANY_NAME
+				,COMPANY_POS
+				,COMPANY_TEL1
+				,COMPANY_TEL2
+				,COMPANY_TEL3
+				,ENTRANCE_CD
+				,TO_NUMBER(DECODE(NEWS_YN,'T',1,'F',0)) AS NEWS_YN
+				,QUALIFICATION
+				,SACHAL_NAME
+				,TO_NUMBER(DECODE(POST_TRANS,'T',1,'F',0)) AS POST_TRANS
+				,TO_NUMBER(DECODE(EMAIL_TRANS,'T',1,'F',0)) AS EMAIL_TRANS 
+				,TO_NUMBER(DECODE(SMS_TRANS,'T',1,'F',0)) AS SMS_TRANS 
+				,MEMO
+				,SEXAGENARY
+				,LEAP_MONTH
+				,LUNAR_SOLAR
+				,BIRTHTIME
+				,ISSUE_DATE
+				,BIRTHDAY
+				,SEX_GBN
+				,SINDO_GBN
+				,TO_NUMBER(DECODE(HWAJU_YN,'T',1,'F',0)) AS HWAJU_YN
+				,HWAJU_BUD_NO
+				,FN_GET_NM('BUD',TEMPLE_CD,HWAJU_BUD_NO)AS HWAJU_BUD_NAME
+				,CARD_ISSUE_DATE
+				,CARD_ISSUE_CNT
+				,CRT_USER
+				,CRT_DATE
+				,UPT_USER
+				,UPT_DATE
+				,REMOTE
+				,'F' AS CHECK_P
+				,BLDG_NUM
+				,FN_ADDR_BLDG2(BLDG_NUM) ADDR3
+				,TO_NUMBER(DECODE(SMS_BIRTH_TRANS,'T',1,'F',0)) AS SMS_BIRTH_TRANS 
+				,TO_NUMBER(DECODE(SMS_GROUP_TRANS,'T',1,'F',0)) AS SMS_GROUP_TRANS 
+				,(SELECT count(temple_cd)  
+					FROM SIN_CMS_INFO 
+				   WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+					 AND DEL_YN    = 'F' 
+					 AND BUD_NO    = A.BUD_NO) CMS_CNT
+				,A.DEL_YN 
+				,TO_CHAR(A.UPT_DATE,'YYYYMMDDHH24MISS') AS ADDR2
+			FROM SIN_CARD_MASTER A
+		   WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+			 AND BUD_NO NOT IN (SELECT BUD_NO 
+			 					  FROM SIN_DEATH_INFO 
+			 					 WHERE TEMPLE_CD = A.TEMPLE_CD)
+			 <if test="V_NAME_KOR != '' and V_NAME_KOR != null  ">
+			 AND A.NAME_KOR LIKE  '%' || #{V_NAME_KOR} || '%'
+			 </if>  
+			ORDER BY SORT_SEQ
+	</select>
+	
+	<select id="SELECT_SIN_BRANCH_FAMILY_HIS" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT 
+			A.TEMPLE_CD,
+			A.BUD_NO,
+			B.NAME_KOR,
+			B.ADDR1 || ' ' || B.ADDR2 AS ADDR,
+			A.BUD_CODE,
+			A.BRANCH_GBN,
+			A.SEQ_NO,
+			A.BUD_CODE_AFTER,
+			A.BRANCH_DATE,
+			A.REMOTE,
+			A.CRT_USER,
+			A.CRT_DATE,
+			A.UPT_USER,
+			A.UPT_DATE 
+		FROM SIN_BRANCH_FAMILY_HIS A, SIN_CARD_MASTER B
+		WHERE A.TEMPLE_CD = B.TEMPLE_CD
+			AND A.BUD_NO = B.BUD_NO
+			AND A.TEMPLE_CD = #{V_TEMPLE_CD}
+			AND B.DEL_YN = 'F'
+			AND A.BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = #{V_TEMPLE_CD})
+			AND A.BUD_CODE like substr(#{V_BUD_CODE}, 0, 9)  || '%'
+		ORDER BY A.SEQ_NO
+	</select>
+	
+	<update id="UPDATE_SINDO_INFO" parameterType="java.util.Map">
+		UPDATE SIN_CARD_MASTER
+		  SET  DEL_YN     = #{DEL_YN}
+		      ,UPT_USER   = 'SYSTEM_' || #{V_USER_ID}
+		      ,UPT_DATE   = sysdate 
+		WHERE TEMPLE_CD   = #{TEMPLE_CD}
+		  AND BUD_NO      = #{BUD_NO}
+	</update>
+	
+	<delete id="DELETE_SINDO_INFO" parameterType="java.util.Map">
+		DELETE SIN_CARD_MASTER
+		WHERE TEMPLE_CD   = #{TEMPLE_CD}
+		  AND BUD_NO      = #{BUD_NO}
+		  AND DEL_YN      = #{DEL_YN}
+	</delete>
+	
+	<delete id="DELETE_BRANCH" parameterType="java.util.Map">
+		DELETE FROM SIN_BRANCH_FAMILY_HIS
+		WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		  AND BUD_NO     = #{BUD_NO}
+	</delete>
+	
+</mapper>

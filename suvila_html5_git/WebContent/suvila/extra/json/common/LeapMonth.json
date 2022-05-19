@@ -1,0 +1,10 @@
+{
+"success":true,
+"data":{
+    "list":[
+         {"value":"T"     ,"display":"운년"},
+         {"value":"F"     ,"display":"평년"}
+    ]
+},
+"msg":"정상조회됨"    
+}

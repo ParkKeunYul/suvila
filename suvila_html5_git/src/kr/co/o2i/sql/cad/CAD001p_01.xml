@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="CAD001p_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+
+	<!--  # 명함 기본정보 조회# -->
+	<select id="SELECT_SINDO" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT TEMPLE_CD
+		      ,BUD_NO
+		      ,BUD_CODE
+		      ,FAM_CODE
+		      ,DAEJU_NAME_KOR
+		      ,NAME_KOR
+		      ,SACRED_KOR
+		      ,ZIP_CD
+		      ,ADDR1
+		      ,ADDR2
+		      ,ADDR1 || ' ' || ADDR2 as ADDR
+		      ,TELNO1
+		      ,TELNO2
+		      ,TELNO3
+		      ,replace(TELNO1 ||'-'|| TELNO2|| '-'||TELNO3,'--', '') AS TELNO
+		      ,MOBILE_TELNO1
+		      ,MOBILE_TELNO2
+		      ,MOBILE_TELNO3
+		      ,replace(MOBILE_TELNO1 ||'-'|| MOBILE_TELNO2|| '-'||MOBILE_TELNO3,'--', '') AS MOBILE_TELNO
+		      ,COMPANY_NAME
+		      ,COMPANY_POS
+		      ,COMPANY_TEL1
+		      ,COMPANY_TEL2
+		      ,COMPANY_TEL3
+		      ,EMAIL
+		      ,'F' AS CHECKP
+		      ,BLDG_NUM
+		      ,FN_ADDR_BLDG2(BLDG_NUM) ADDR3
+		      ,rownum as SEQ
+		FROM 
+			(  SELECT TEMPLE_CD
+			         ,BUD_NO
+			         ,BUD_CODE
+			         ,SUBSTR(BUD_CODE,4,5) AS FAM_CODE
+			         ,FN_GET_NM('BUD',TEMPLE_CD,DAEJU_BUD_NO) AS DAEJU_NAME_KOR
+			         ,NAME_KOR
+			         ,SACRED_KOR
+			         ,ZIP_CD
+			         ,ADDR1
+			         ,ADDR2
+			         ,TELNO1
+			         ,TELNO2
+			         ,TELNO3
+			         ,TELNO1 || TELNO2 || TELNO3 AS TELNO
+			         ,MOBILE_TELNO1
+			         ,MOBILE_TELNO2
+			         ,MOBILE_TELNO3
+			         ,MOBILE_TELNO1 || MOBILE_TELNO2 || MOBILE_TELNO3 AS MOBILE_TELNO
+			         ,COMPANY_NAME
+			         ,COMPANY_POS
+			         ,COMPANY_TEL1
+			         ,COMPANY_TEL2
+			         ,COMPANY_TEL3
+			         ,DECODE(EMAIL,'@',NULL,EMAIL) AS EMAIL
+			         ,BLDG_NUM
+				FROM SIN_CARD_MASTER
+			   WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+				 AND DEL_YN    = 'F'
+		         AND BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = #{V_TEMPLE_CD})
+		     )
+		WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		<choose>
+		  	<when test='V_SEARCH_WORD != null and V_SEARCH_WORD != "" '>
+		  		<if test='V_SEARCH_GBN == "BUD_NO"'>
+		  			AND BUD_NO LIKE '%' || #{V_SEARCH_WORD} || '%'		  		
+		  		</if>
+		  		<if test='V_SEARCH_GBN == "NAME_KOR"'>	
+		  			AND NAME_KOR LIKE '%' || #{V_SEARCH_WORD} || '%'	  		
+		  		</if>
+		  		<if test='V_SEARCH_GBN == "SACRED_KOR"'>	
+		  			AND SACRED_KOR LIKE '%' || #{V_SEARCH_WORD} || '%'	  		
+		  		</if>
+		  		<if test='V_SEARCH_GBN == "MOBILE_TELNO"'>
+		  			AND MOBILE_TELNO1 || MOBILE_TELNO2 || MOBILE_TELNO3 LIKE '%'||#{V_SEARCH_WORD}||'%'		  		
+		  		</if>
+		  		<if test='V_SEARCH_GBN == "TELNO"'>	
+		  			AND TELNO1 || TELNO2 || TELNO3 LIKE '%'||#{V_SEARCH_WORD}||'%'	  		
+		  		</if>
+		  		<if test='V_SEARCH_GBN == "CARD"'>
+		  			AND NVL(A.CARD_CODE, '-1') != '-1' AND A.CARD_CODE  =  TRIM(#{V_SEARCH_WORD})		  		
+		  		</if>
+		  	</when>
+		  	<otherwise>
+		  		AND ROWNUM   = 1
+		  	</otherwise>
+		 </choose>
+		ORDER BY BUD_NO
+	</select>
+
+</mapper>

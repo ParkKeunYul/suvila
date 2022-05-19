@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="kr.co.o2i.dao.asp.ASP013w_01DAO">
+	
+	<select id="SELECT_SMS" parameterType="kr.co.o2i.util.CommonMap" resultType="java.util.Map">
+		SELECT TR_ETC1 AS TEMPLE_CD
+		       ,(SELECT TEMPLE_NM FROM ASP_TEMPLE_MASTER WHERE TEMPLE_CD = TR_ETC1)  || '(' || TR_ETC1 || ')' AS TEMPLE_NM
+		       ,TR_COMP 
+		       ,TR_MSG_GB
+		       ,SUM(DECODE(TR_SUCC_COUNT,1,1,0)) AS SUCC
+		       ,SUM(DECODE(TR_SUCC_COUNT,0,1,0)) AS FAIL
+		       ,COUNT(1) TOTAL
+		       ,TRUNC(SUM( CASE WHEN TR_ETC1 != '000064' THEN
+		       			CASE WHEN TR_MSG_GB='SMS' THEN #{param.GV_SMS_U}
+		                WHEN TR_MSG_GB='LMS' THEN #{param.GV_LMS_U}
+		                END
+		       		 ELSE
+		       		    CASE WHEN TR_SUCC_COUNT=1 AND TR_MSG_GB='SMS' THEN #{param.GV_SMS_U}
+		       		         WHEN TR_SUCC_COUNT=1 AND TR_MSG_GB='LMS' THEN #{param.GV_LMS_U}
+		       		         ELSE 0
+		       		         END 
+		       	 END) )AS T_FEE 
+		                      
+		       ,NVL(TRUNC(SUM(CASE WHEN TR_SUCC_COUNT=1 AND TR_MSG_GB='SMS' THEN #{param.GV_SMS_E}
+		                 WHEN TR_SUCC_COUNT=1 AND TR_MSG_GB='LMS' THEN #{param.GV_LMS_E}
+		                 END)),0) AS L_FEE
+		       ,TRUNC(NVL(SUM( CASE WHEN TR_ETC1 != '000064' THEN
+		       				CASE WHEN TR_MSG_GB='SMS' THEN #{param.GV_SMS_U}
+		                	WHEN TR_MSG_GB='LMS' THEN #{param.GV_LMS_U}
+		                	END
+		       		 	ELSE
+		       		    	CASE WHEN TR_SUCC_COUNT=1 AND TR_MSG_GB='SMS' THEN #{param.GV_SMS_U}
+		       		        WHEN TR_SUCC_COUNT=1 AND TR_MSG_GB='LMS' THEN #{param.GV_LMS_U}
+		       		        ELSE 0
+		       		        END 
+		       			END),0) -
+		        NVL(SUM(CASE WHEN TR_SUCC_COUNT=1 AND TR_MSG_GB='SMS' THEN #{param.GV_SMS_E}
+		                   WHEN TR_SUCC_COUNT=1 AND TR_MSG_GB='LMS' THEN #{param.GV_LMS_E}
+		                   END),0)) AS PROFIT
+		  FROM SMSKT.V_SMS_LOG2
+		 WHERE TR_SENDDATE LIKE #{param.V_YYYYMM} || '%'
+		 <if test='param.TR_MSG_GB != null and param.TR_MSG_GB != "" '>
+		 	AND TR_MSG_GB = #{param.TR_MSG_GB ,jdbcType=VARCHAR} 
+		 </if>		 
+		 GROUP BY TR_ETC1
+		         ,TR_COMP
+		         ,TR_MSG_GB
+		 ORDER BY TR_ETC1
+		         ,TR_COMP
+		         ,TR_MSG_GB
+	</select>
+	
+	
+	
+	
+	
+	<select id="SELECT_CMS" parameterType="kr.co.o2i.util.CommonMap" resultType="java.util.Map">
+		SELECT
+		    A.TEMPLE_CD,
+		    A.TEMPLE_NM,
+		    C.IF_TRAN_ID,
+		    SUCC_CNT, 
+		    FAIL_CNT
+		FROM ASP_TEMPLE_MASTER A,
+		     ASP_TEMPLE_CMS_INFO B,
+		    (
+		        SELECT
+		            IF_TRAN_ID,
+		            SUM(SUCC) AS SUCC_CNT, 
+		            SUM(FAIL) AS FAIL_CNT
+		        FROM
+		        (
+		            SELECT
+		                IF_TRAN_ID,
+		                COUNT(*) AS SUCC, 
+		                0 AS FAIL 
+		            FROM REC_CMS_PAYMENT_MGT
+		            WHERE 1=1
+		            AND IF_PROCESS_RESULT = 'Y'
+		            AND IF_REQUEST_DATE LIKE #{param.V_YYYYMM} || '%'
+		            GROUP BY IF_TRAN_ID
+		            UNION ALL
+		            SELECT
+		                IF_TRAN_ID,
+		                0 AS SUCC, 
+		                COUNT(*) AS FAIL 
+		            FROM REC_CMS_PAYMENT_MGT
+		            WHERE 1=1
+		            AND IF_PROCESS_RESULT = 'N'
+		            AND IF_REQUEST_DATE LIKE #{param.V_YYYYMM}|| '%'
+		            GROUP BY IF_TRAN_ID
+		        )GROUP BY IF_TRAN_ID
+		    ) C
+		WHERE A.TEMPLE_CD = B.TEMPLE_CD
+		AND B.CMS_TRADE_CD= C.IF_TRAN_ID
+		AND A.TEMPLE_CD != '000000'
+		AND B.USE_YN='T'
+	</select>
+	
+	<select id="SELECT_SMS_SUMMARY" parameterType="kr.co.o2i.util.CommonMap" resultType="java.util.Map">
+		SELECT  ''  TEMPLE_CD
+		       ,'' TEMPLE_NM
+		       ,TR_COMP 
+		       ,TR_MSG_GB
+		       ,SUM(DECODE(TR_SUCC_COUNT,1,1,0)) AS SUCC
+		       ,SUM(DECODE(TR_SUCC_COUNT,0,1,0)) AS FAIL
+		       ,COUNT(1) TOTAL    
+		       ,SUM( CASE WHEN TR_ETC1 != '000064' THEN
+		       			CASE WHEN TR_MSG_GB='SMS' THEN ${param.GV_SMS_U}
+		                WHEN TR_MSG_GB='LMS' THEN ${param.GV_LMS_U}
+		                END
+		       		 ELSE
+		       		    CASE WHEN TR_SUCC_COUNT=1 AND TR_MSG_GB='SMS' THEN ${param.GV_SMS_U}
+		       		         WHEN TR_SUCC_COUNT=1 AND TR_MSG_GB='LMS' THEN ${param.GV_LMS_U}
+		       		         ELSE 0
+		       		         END 
+		       	 END) AS T_FEE
+		       ,NVL(SUM(CASE WHEN TR_SUCC_COUNT=1 AND TR_MSG_GB='SMS' THEN ${param.GV_SMS_E}
+		                 WHEN TR_SUCC_COUNT=1 AND TR_MSG_GB='LMS' THEN ${param.GV_LMS_E}
+		                 END),0) AS L_FEE
+		       ,NVL(SUM( CASE WHEN TR_ETC1 != '000064' THEN
+		       				CASE WHEN TR_MSG_GB='SMS' THEN ${param.GV_SMS_U}
+		                	WHEN TR_MSG_GB='LMS' THEN ${param.GV_LMS_U}
+		                	END
+		       		 	ELSE
+		       		    	CASE WHEN TR_SUCC_COUNT=1 AND TR_MSG_GB='SMS' THEN ${param.GV_SMS_U}
+		       		        WHEN TR_SUCC_COUNT=1 AND TR_MSG_GB='LMS' THEN ${param.GV_LMS_U}
+		       		        ELSE 0
+		       		        END 
+		       			END),0) -
+		        NVL(SUM(CASE WHEN TR_SUCC_COUNT=1 AND TR_MSG_GB='SMS' THEN ${param.GV_SMS_E}
+		                     WHEN TR_SUCC_COUNT=1 AND TR_MSG_GB='LMS' THEN ${param.GV_LMS_E}
+		                     END),0) AS PROFIT
+		  FROM SMSKT.V_SMS_LOG2
+		 WHERE TR_SENDDATE LIKE #{param.V_YYYYMM} || '%'
+		 <if test='param.TR_MSG_GB != null and param.TR_MSG_GB != "" '>
+		 	AND TR_MSG_GB = #{param.TR_MSG_GB ,jdbcType=VARCHAR}
+		 </if>
+		 GROUP BY TR_COMP
+		         ,TR_MSG_GB
+		 ORDER BY TR_COMP
+		         ,TR_MSG_GB
+		
+	</select>
+</mapper>

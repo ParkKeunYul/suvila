@@ -1,0 +1,30 @@
+Ext.define('ExFrm.view.ser.ser023w_01Model', {
+    extend:'Ext.app.ViewModel', 
+    alias: 'viewmodel.ser023w_01', 
+    stores:{ 
+    	ds_main:{
+        	fields:['REMARK'],
+        	proxy:{
+                type:'ajax',
+                url:'/ser/SER023W_01/confCodeSelect.suvila',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'
+                }
+            }
+            ,autoLoad:false
+        },
+        ds_useYn:{
+        	fields:['CODE'],
+        	proxy:{
+                type:'ajax',
+                url:'/asp/CodeSearch/ComCode.suvila?group_cd=YN',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'
+                }
+            }
+            ,autoLoad:true
+        } 
+    }
+});

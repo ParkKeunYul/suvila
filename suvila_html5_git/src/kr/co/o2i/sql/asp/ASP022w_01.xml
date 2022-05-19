@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ASP022w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+
+	<!-- #사찰별 PG 정보 조회# -->
+	<select id="SELECT_TEMPLE_PG_INFO" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT 
+			 A.TEMPLE_CD
+			,A.PGCODE
+			,A.REP_TRADE_ID
+			,A.REP_TRADE_PW
+			,A.SUB1_TRADE_ID
+			,A.SUB1_TRADE_PW
+			,A.SUB2_TRADE_ID
+			,A.SUB2_TRADE_PW
+			,A.REMARK
+			,A.USE_YN
+			,A.ACCT_GBN
+			,A.IE_GBN
+			,A.KWAN
+			,A.HANG
+			,A.MOK
+			,A.SMS_FORMAT
+			,A.DEVICEPRICE
+			,B.SEQ
+			,B.TP_RATE_COMMISSION
+			,B.TP_COMMISSION_FROM
+			,B.TP_COMMISSION_TO,
+			(SELECT  MOK_NAME 
+		      FROM ACC_ACCOUNTS 
+		     WHERE A.TEMPLE_CD = TEMPLE_CD
+		       AND A.ACCT_GBN = ACCT_GBN 
+		       AND A.IE_GBN = IE_GBN 
+		       AND A.KWAN = KWAN 
+		       AND A.HANG = HANG 
+		       AND A.MOK = MOK 
+		       AND ROWNUM = 1
+		       ) as ACCNAME
+		FROM ASP_TEMPLE_PG_INFO A ,
+			(SELECT 
+			   RANK() OVER(PARTITION BY A.TEMPLE_CD,PGCODE ORDER BY  A.SEQ  DESC) AS SEQNUM
+			  ,A.TEMPLE_CD
+			  ,A.PGCODE 
+			  ,A.SEQ
+			  ,A.TP_RATE_COMMISSION
+			  ,A.TP_COMMISSION_FROM
+			  ,A.TP_COMMISSION_TO
+			FROM 
+			ASP_TEMPLE_PG_INFO_HIS A )B
+		WHERE 1=1
+		AND A.TEMPLE_CD = B.TEMPLE_CD
+		AND A.TEMPLE_CD = #{TEMPLE_CD}
+		AND A.PGCODE 	= #{PGCODE}
+		AND B.SEQNUM = 1
+	</select>
+	
+	
+	<select id="SELECT_PG_CNT" resultType="Integer" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT count(TEMPLE_CD) CNT
+		  FROM ASP_TEMPLE_PG_INFO
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND PGCODE    = #{PGCODE} 
+	</select>
+	
+
+	<!--# 사찰별 PG 정보 이력 조회# -->
+	<select id="SELECT_TEMPLE_PG_INFO_HIS" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT 
+			 A.TEMPLE_CD
+			,A.PGCODE
+			,A.SEQ
+			,A.TP_RATE_COMMISSION
+			,A.TP_COMMISSION_FROM
+			,A.TP_COMMISSION_TO
+		FROM 
+			ASP_TEMPLE_PG_INFO_HIS A
+		WHERE 1=1
+		  AND A.TEMPLE_CD = #{TEMPLE_CD}
+		  AND A.PGCODE 	  = #{PGCODE}
+		ORDER BY A.SEQ DESC
+	</select>	
+	
+	<!--#사찰별 PG 정보 수정#-->
+	<update id="UPDATE_TEMPLE_PG_INFO" parameterType="kr.co.o2i.util.CommonMap" >
+		UPDATE ASP_TEMPLE_PG_INFO 
+		   SET REP_TRADE_ID  =  #{REP_TRADE_ID} 
+			  ,REP_TRADE_PW  =  #{REP_TRADE_PW}
+			  ,SUB1_TRADE_ID =  #{SUB1_TRADE_ID ,jdbcType=VARCHAR}
+			  ,SUB1_TRADE_PW =  #{SUB1_TRADE_PW ,jdbcType=VARCHAR}
+			  ,SUB2_TRADE_ID =  #{SUB2_TRADE_ID ,jdbcType=VARCHAR}
+			  ,SUB2_TRADE_PW =  #{SUB2_TRADE_PW ,jdbcType=VARCHAR}
+			  ,REMARK        =  #{REMARK ,jdbcType=VARCHAR}       
+			  ,USE_YN        =  #{USE_YN}       
+			  ,ACCT_GBN      =  #{ACCT_GBN ,jdbcType=VARCHAR}     
+			  ,IE_GBN        =  #{IE_GBN ,jdbcType=VARCHAR}       
+			  ,KWAN          =  #{KWAN ,jdbcType=VARCHAR}         
+			  ,HANG          =  #{HANG ,jdbcType=VARCHAR}         
+			  ,MOK           =  #{MOK ,jdbcType=VARCHAR}          
+			  ,SMS_FORMAT	 =  #{SMS_FORMAT ,jdbcType=VARCHAR} 
+			  ,DEVICEPRICE	 =  #{DEVICEPRICE ,jdbcType=VARCHAR}
+			  ,PG_TYPE       =  #{PG_TYPE ,jdbcType=VARCHAR}          
+			  ,KEYIN_LICENSE =  #{KEYIN_LICENSE ,jdbcType=VARCHAR} 
+			  ,MERCHANTKEY	 =  #{MERCHANTKEY ,jdbcType=VARCHAR}
+		WHERE 1=1
+		AND  TEMPLE_CD       = #{TEMPLE_CD}
+		AND  PGCODE    	     = #{PGCODE}
+	</update>
+	
+	<insert id="INSERT_TEMPLE_PG_INFO" parameterType="kr.co.o2i.util.CommonMap" >
+		INSERT INTO ASP_TEMPLE_PG_INFO(
+			 TEMPLE_CD
+			,PGCODE
+			,REP_TRADE_ID
+			,REP_TRADE_PW
+			,SUB1_TRADE_ID
+			,SUB1_TRADE_PW
+			,SUB2_TRADE_ID
+			,SUB2_TRADE_PW
+			,REMARK
+			,USE_YN
+			,ACCT_GBN
+			,IE_GBN
+			,KWAN
+			,HANG
+			,MOK
+			,SMS_FORMAT
+			,DEVICEPRICE
+			,PG_TYPE
+			,KEYIN_LICENSE
+			,MERCHANTKEY
+		 )VALUES(
+			 #{TEMPLE_CD     ,jdbcType=VARCHAR}
+			,#{PGCODE        ,jdbcType=VARCHAR}
+			,#{REP_TRADE_ID  ,jdbcType=VARCHAR}
+			,#{REP_TRADE_PW  ,jdbcType=VARCHAR}
+			,#{SUB1_TRADE_ID ,jdbcType=VARCHAR}
+			,#{SUB1_TRADE_PW ,jdbcType=VARCHAR}
+			,#{SUB2_TRADE_ID ,jdbcType=VARCHAR}
+			,#{SUB2_TRADE_PW ,jdbcType=VARCHAR}
+			,#{REMARK        ,jdbcType=VARCHAR}
+			,#{USE_YN        ,jdbcType=VARCHAR}
+			,#{ACCT_GBN      ,jdbcType=VARCHAR}
+			,#{IE_GBN        ,jdbcType=VARCHAR}
+			,#{KWAN          ,jdbcType=VARCHAR}
+			,#{HANG          ,jdbcType=VARCHAR}
+			,#{MOK           ,jdbcType=VARCHAR}
+			,#{SMS_FORMAT    ,jdbcType=VARCHAR}
+			,#{DEVICEPRICE   ,jdbcType=VARCHAR}
+			,#{PG_TYPE       ,jdbcType=VARCHAR}
+			,#{KEYIN_LICENSE ,jdbcType=VARCHAR}
+			,#{KEYIN_LICENSE ,jdbcType=VARCHAR}
+		 )
+	</insert>
+
+
+	<!-- #사찰별 PG 정보 이력 수정#-->
+	<update id="UPDATE_TEMPLE_PG_INFO_HIS" parameterType="kr.co.o2i.util.CommonMap" >
+		UPDATE 	ASP_TEMPLE_PG_INFO_HIS SET
+		  TP_RATE_COMMISSION = #{TP_RATE_COMMISSION} 
+		 ,TP_COMMISSION_FROM = #{TP_COMMISSION_FROM} 
+		 ,TP_COMMISSION_TO	 = #{TP_COMMISSION_TO} 
+		WHERE 
+			TEMPLE_CD = #{TEMPLE_CD}
+		AND PGCODE	  = #{PGCODE}
+		AND SEQ 	  = #{SEQ}
+	</update>
+	
+	<!-- #사찰별 PG 정보 이력 추가# -->
+	<insert id="INSERT_TEMPLE_PG_INFO_HIS" parameterType="kr.co.o2i.util.CommonMap" >
+		INSERT INTO ASP_TEMPLE_PG_INFO_HIS(
+			 TEMPLE_CD
+			,PGCODE
+			,SEQ
+			,TP_RATE_COMMISSION
+			,TP_COMMISSION_FROM
+			,TP_COMMISSION_TO
+		)VALUES(
+			 #{TEMPLE_CD}
+			,#{PGCODE}
+			,(SELECT NVL(MAX(SEQ),0)+1 FROM 
+				ASP_TEMPLE_PG_INFO_HIS
+				WHERE 1=1
+				AND TEMPLE_CD = #{TEMPLE_CD}
+				AND PGCODE 	  = #{PGCODE}
+			)
+			,#{TP_RATE_COMMISSION}
+			,#{TP_COMMISSION_FROM}
+			,#{TP_COMMISSION_TO}
+		)
+		
+	</insert>
+</mapper>

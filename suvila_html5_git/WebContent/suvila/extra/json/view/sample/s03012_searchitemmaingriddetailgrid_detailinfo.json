@@ -1,0 +1,18 @@
+{
+   "success":true,
+   "data":{
+       "list":[
+        {"custNo":"A","custName":"A","birth":"A","point":"A","addr":"A" },
+        {"custNo":"B","custName":"B","birth":"B","point":"B","addr":"B" },
+        {"custNo":"C","custName":"C","birth":"C","point":"C","addr":"C" },
+        {"custNo":"D","custName":"D","birth":"D","point":"D","addr":"D" },
+        {"custNo":"E","custName":"E","birth":"E","point":"E","addr":"E" },
+        {"custNo":"F","custName":"F","birth":"F","point":"F","addr":"F" },
+        {"custNo":"G","custName":"G","birth":"G","point":"G","addr":"G" },
+        {"custNo":"H","custName":"H","birth":"H","point":"H","addr":"H" },
+        {"custNo":"I","custName":"I","birth":"I","point":"I","addr":"I" },
+        {"custNo":"J","custName":"J","birth":"J","point":"J","addr":"J" }],
+       "listTotalSize":20,
+   },
+   "msg":""
+}

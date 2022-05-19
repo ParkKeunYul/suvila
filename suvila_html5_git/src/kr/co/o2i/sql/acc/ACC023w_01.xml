@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ACC023w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+<!--
+	<resultMap id="acc006w_01a" type="java.util.Map"> 
+		<result  property="CHECK_P" column="CHECK_P"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+	</resultMap>
+-->
+	<select id="SELECT_LIST" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT GROUPING_ID(TEMPLE_CD,ACCT_GBN,IE_GBN,KWAN,HANG,MOK) BAND
+		      ,TEMPLE_CD
+		      ,FN_TEMPLE_NAME(TEMPLE_CD,'FULL_NAME') TEMPLE_NM
+		      ,DECODE(IE_GBN,'I','수입','O','지출','')||' 결의서('||FN_ACC_GBN_NAME(TEMPLE_CD,ACCT_GBN)||')' TITLE
+		      ,FN_FMT_DATE(#{V_DATE}) NOW_DATE
+		      ,ACCT_GBN
+		      ,FN_ACC_GBN_NAME(TEMPLE_CD,ACCT_GBN) ACCT_NM
+		      ,IE_GBN
+		      ,FN_CODE_NAME('IEGBN',IE_GBN) IE_GBN_NAME
+		      ,KWAN
+		      ,FN_ACC_NAME(TEMPLE_CD,ACCT_GBN,IE_GBN,KWAN,0,0,'KWAN') KWAN_NAME
+		      ,HANG
+		      ,FN_ACC_NAME(TEMPLE_CD,ACCT_GBN,IE_GBN,KWAN,HANG,0,'HANG') HANG_NAME
+		      ,MOK
+		      ,FN_ACC_NAME(TEMPLE_CD,ACCT_GBN,IE_GBN,KWAN,HANG,MOK,'MOK') MOK_NAME
+		      ,DECODE(GROUPING_ID(TEMPLE_CD,ACCT_GBN,IE_GBN,KWAN,HANG,MOK),0,MAX(MOK_REMARK),'합계') MOK_REMARK
+		      ,NVL(SUM(AMOUNT_NOW),0) AMOUNT_NOW
+		      ,NVL(SUM(BUDGET),0) BUDGET
+		      ,NVL(SUM(AMOUNT_SUM),0) AMOUNT_SUM
+		      ,DECODE(NVL(SUM(BUDGET),0), 0, 0, ROUND(100.0*NVL(SUM(AMOUNT_SUM),0)/NVL(SUM(BUDGET),0),2)) RATE_SUM
+		  FROM (
+		        SELECT TEMPLE_CD
+		              ,ACCT_GBN
+		              ,IE_GBN
+		              ,KWAN
+		              ,HANG
+		              ,MOK
+		              ,'' MOK_REMARK
+		              ,0 AMOUNT_NOW
+		              ,AMOUNT1 BUDGET
+		              ,0 AMOUNT_SUM
+		          FROM ACC_BUDGET
+		         WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		           AND YEAR = SUBSTR(#{V_DATE},1,4)
+		           <if test='V_ACCT_GBN != 0  and V_ACCT_GBN != "0" '>
+		           		AND ACCT_GBN = #{V_ACCT_GBN} 
+		           </if>
+		           <if test='V_IE_GBN != "0" '>
+		           		AND IE_GBN = #{V_IE_GBN}
+		           </if>
+		           <if test='V_KWAN != 0  and V_KWAN != "0" '>
+		           		AND KWAN = #{V_KWAN} 
+		           </if>
+		        UNION ALL
+		        SELECT TEMPLE_CD
+		              ,ACCT_GBN
+		              ,IE_GBN
+		              ,KWAN
+		              ,HANG
+		              ,MOK
+		              ,MAX(CASE WHEN ACT_DATE = #{V_DATE} THEN REMARK END) MOK_REMARK
+		              ,SUM(CASE WHEN ACT_DATE = #{V_DATE} THEN AMOUNT END) AMOUNT_NOW
+		              ,0 BUDGET
+		              ,SUM(AMOUNT) AMOUNT_SUM
+		          FROM
+		          <choose>
+			          	<when test='V_TYPE != "bogo"'>
+			          		ACC_MONEY_MGT
+			          	</when>
+			          	<otherwise>
+			          		ACC_CHONGMU_MONEY_MGT
+			          	</otherwise>
+			      </choose> 
+		         WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		           AND ACT_DATE BETWEEN SUBSTR(#{V_DATE},1,4)||'0101' AND #{V_DATE}
+		           <if test='V_ACCT_GBN != 0  and V_ACCT_GBN != "0" '>
+		           		AND ACCT_GBN = #{V_ACCT_GBN}
+		           </if>
+		           <if test='V_IE_GBN != "0" '>
+		           		AND IE_GBN = #{V_IE_GBN}
+		           </if>
+		           <if test='V_KWAN != 0  and V_KWAN != "0" '>
+		           		AND KWAN = #{V_KWAN} 
+		           </if>
+		         GROUP BY TEMPLE_CD
+		                 ,ACCT_GBN
+		                 ,IE_GBN
+		                 ,KWAN
+		                 ,HANG
+		                 ,MOK
+		       )
+		 GROUP BY ROLLUP(TEMPLE_CD,ACCT_GBN,IE_GBN,KWAN,HANG,MOK)
+		 HAVING GROUPING_ID(TEMPLE_CD,ACCT_GBN,IE_GBN,KWAN,HANG,MOK) IN (0,7)
+		    AND SUM(AMOUNT_NOW) != 0
+		 ORDER BY ACCT_GBN
+		         ,IE_GBN
+		         ,KWAN
+		         ,HANG
+		         ,MOK
+	</select>
+	
+</mapper>

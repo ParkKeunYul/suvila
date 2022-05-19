@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="MoyeonmunSearchDAO">
+	
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+	
+	<select id="SELECT_MOYEON" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT DIV.TEMPLE_CD
+		      ,DIV.MOYEONMUN_CODE
+		      ,DIV.MOYEONMUM_JONGRYU_CODE
+		      ,SBN.MOYEONMUN_NM
+		      ,GBN.MOYEONMUN_TITLE
+		      ,DIV.JOIN_YEAR
+		      ,DIV.MOYEONMUN_NO
+		      ,DIV.KWONSUN_NO
+		      ,DIV.BUD_NO
+		      ,CAD.NAME_KOR
+		      ,DIV.PAYMENT_PLAN_AMT
+		      ,DIV.PAYMENT_AMT
+		      ,DIV.DIVISION_DATE
+		      ,DIV.RETURN_DATE
+		      ,DIV.LOSS_DATE
+		      ,DIV.LOSS_YN
+		      ,DIV.CRT_USER
+		      ,DIV.UPT_USER
+		      ,DIV.CRT_DATE
+		      ,DIV.UPT_DATE
+		      ,DIV.REMOTE
+		  FROM REC_MOYEONMUN_DIVISION DIV
+		      ,REC_MOYEONMUN_MGT MGT
+		      ,REC_MOYEONMUN_GUBUN_MGT GBN
+		      ,REC_MOYEONMUN_GUBUN_MGT SBN
+		      ,SIN_CARD_MASTER CAD
+		 WHERE DIV.TEMPLE_CD              = MGT.TEMPLE_CD
+		   AND DIV.MOYEONMUN_CODE         = MGT.MOYEONMUN_CODE
+		   AND DIV.MOYEONMUM_JONGRYU_CODE = MGT.MOYEONMUM_JONGRYU_CODE
+		   AND DIV.JOIN_YEAR              = MGT.JOIN_YEAR
+		   AND MGT.PROGRESS_YN            = 'T'
+		   AND MGT.TEMPLE_CD              = GBN.TEMPLE_CD
+		   AND MGT.MOYEONMUN_CODE         = GBN.MOYEONMUN_CODE
+		   AND MGT.MOYEONMUM_JONGRYU_CODE = GBN.MOYEONMUM_JONGRYU_CODE
+		   AND GBN.TEMPLE_CD              = SBN.TEMPLE_CD
+		   AND GBN.MOYEONMUN_CODE         = SBN.MOYEONMUN_CODE
+		   AND GBN.MOYEONMUM_JONGRYU_CODE &lt;&gt; '-1'
+		   AND SBN.MOYEONMUM_JONGRYU_CODE = '-1'
+		   AND DIV.TEMPLE_CD              = CAD.TEMPLE_CD
+		   AND DIV.BUD_NO                 = CAD.BUD_NO
+		   AND (	DIV.RETURN_DATE         IS NULL
+		        OR TRUNC(DIV.RETURN_DATE - TO_CHAR(SYSDATE,'YYYYMMDD')) >= 0
+		        OR 	DIV.RETURN_DATE 		=''    
+		   )	
+		   AND DIV.TEMPLE_CD              = #{V_TEMPLE_CD}
+		   <if test='V_SEARCH_WORD != null and V_SEARCH_WORD != ""'>
+			   	<if test='V_SEARCH_GBN == "BUD_NO"'>
+		  			AND DIV.BUD_NO LIKE '%' || #{V_SEARCH_WORD} || '%'		  		
+		  	   </if>
+		  	   <if test='V_SEARCH_GBN == "NAME_KOR"'>
+		  			AND CAD.NAME_KOR LIKE '%'||#{V_SEARCH_WORD}||'%'		  		
+		  	   </if>
+		  	   <if test='V_SEARCH_GBN == "YYYY"'>
+		  			AND DIV.JOIN_YEAR = #{V_SEARCH_WORD}		  		
+		  	   </if>
+		  	   <if test='V_MOYEON != "0"'>
+		  	   		AND DIV.MOYEONMUN_CODE = #{V_MOYEON}
+		  	   </if>
+		   </if>
+		   
+		ORDER BY KWONSUN_NO
+	</select>
+	
+	
+</mapper>

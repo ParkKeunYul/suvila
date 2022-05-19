@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC030W_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="CONTENT"    column="CONTENT"      javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		 
+	</resultMap>
+
+
+	<update id="DELETE_SINDO_CARD" parameterType="kr.co.o2i.util.CommonMap"  >
+	    UPDATE SIN_CARD_ISSUE_DETAIL
+		   SET DEL_YN    = 'T'
+		      ,UPT_DATE  = sysdate 
+			  ,UPT_USER  = #{V_USER_ID}
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND SEQ       = #{SEQ}
+		   AND BUD_NO    = #{BUD_NO}
+	</update>
+	
+	<update id="CANCEL_SINDO_CARD" parameterType="kr.co.o2i.util.CommonMap"  >
+		UPDATE SIN_CARD_ISSUE_DETAIL
+		   SET CANCEL_YN = 'T'
+		      ,UPT_DATE  = sysdate 
+			  ,UPT_USER  = #{V_USER_ID}
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND SEQ       = #{SEQ}
+		   AND BUD_NO    = #{BUD_NO}
+	</update>
+	
+	<update id="UPDATE_SINDOCARD_NEW" parameterType="kr.co.o2i.util.CommonMap">
+		 UPDATE SIN_CARD_ISSUE_DETAIL 												
+		  SET MEMO      	 =  #{MEMO} 															
+		     ,UPT_DATE  	 = sysdate      										
+		     ,UPT_USER  	 = #{V_USER_ID}   														
+		     ,DEL_YN    	 = #{DEL_YN}
+		     <if test="FILE_YN == 'T'">
+		     	,PHOTO  	 	=  #{PHOTO}    														
+			    ,PHOTO_IP     	=  #{PHOTO_IP}															
+			    ,PHOTO_FOLDER 	=  #{PHOTO_FOLDER}	
+		     </if>
+		     <if test="SUNAP_YN == 'T' and TEMP_SUNAP_YN == 'F">
+		     	,SUNAP_YN   	 = #{SUNAP_YN} 	
+			    ,SUNAP_DATE 	 = sysdate
+		     </if>
+		 WHERE TEMPLE_CD 	 = #{V_TEMPLE_CD}   																	
+		   AND SEQ       	 = #{SEQ}    																
+		   AND BUD_NO    	 = #{BUD_NO}																	
+	</update>
+	
+	
+	<update id="UPDATE_SINDOCARD_NEW2" parameterType="kr.co.o2i.util.CommonMap">
+		UPDATE SIN_CARD_ISSUE_DETAIL 												
+		  SET MEMO      	 =  #{MEMO} 															
+		     ,UPT_DATE  	 = sysdate      										
+		     ,UPT_USER  	 = #{V_USER_ID}   														
+		     ,DEL_YN    	 = #{DEL_YN}
+		     <if test="SUNAP_YN == 'T' and TEMP_SUNAP_YN == 'F">
+		     	,SUNAP_YN   	 = #{SUNAP_YN} 	
+			    ,SUNAP_DATE 	 = sysdate
+		     </if>
+		 WHERE TEMPLE_CD 	 = #{V_TEMPLE_CD}   																	
+		   AND SEQ       	 = #{SEQ}    																
+		   AND BUD_NO    	 = #{BUD_NO}
+	</update>
+	
+	
+	<insert id="insertSindoCardNewQuery" parameterType="java.util.Map">
+		 INSERT INTO SIN_CARD_ISSUE_DETAIL( 																					
+		 	 SEQ 																			
+		 	,TEMPLE_CD 																
+		 	,BUD_NO 																	
+		 	,PHOTO 																		
+		 	,PHOTO_IP 																
+		 	,PHOTO_FOLDER 														
+		 	,CRT_DATE 																
+		 	,CRT_USER 																
+		 	,ISSUE_STATE 															
+		 	,PRICE 																		
+		 	,MEMO 																		
+		 	,UPT_DATE 																
+		 	,UPT_USER 																
+		 	,DEL_YN 																	
+		 	,REMOTE 																	
+		 	,TEMPLE_PRICE 														
+		 	,ACCEPT_SEQ 															
+		 	,REC_SEQ 																	
+		 	,KWAN 																		
+		 	,HANG 																		
+		 	,MOK 																			
+		 	,REC_DATE 																
+		 	,CANCEL_YN 																
+		 ) VALUES ( 																					
+		 	 (SELECT NVL(MAX(SEQ),0)+1 AS SEQ FROM SIN_CARD_ISSUE_DETAIL) 
+		 	,#{V_TEMPLE_CD}
+		 	,#{BUD_NO}
+		 	,#{V_RENAME   ,jdbcType=VARCHAR}
+		 	,#{V_HOST_IP  ,jdbcType=VARCHAR}
+		 	,#{V_FODER    ,jdbcType=VARCHAR}
+		 	,sysdate
+		 	,#{V_USER_ID}
+		 	,1
+		 	,#{PRICE      ,jdbcType=VARCHAR}
+		 	,#{MEMO       ,jdbcType=VARCHAR}
+		 	,sysdate
+		 	,#{V_USER_ID}
+		 	,'F'
+		 	,#{V_REMOTE}
+		 	,#{V_TEMPLE_PRICE}
+		 	,#{ACCEPT_SEQ}
+		 	,#{REC_SEQ}
+		 	,#{KWAN}
+		 	,#{HANG}
+		 	,#{MOK}
+		 	,#{REC_DATE} 																
+		 	,'F' 															
+		 ) 																	
+	</insert>
+	
+	<select id="SELECTE_CARD_PRICE" parameterType="kr.co.o2i.util.CommonMap" resultType="Integer">
+		SELECT NVL( PRICE_CARD_TEMPLE , 0) PRICE_CARD_TEMPLE  
+		  FROM ASP_TEMPLE_MASTER 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+	</select>
+	
+	<update id="updateSindoCardNewQuery" parameterType="java.util.Map">
+		 UPDATE SIN_CARD_ISSUE_DETAIL 												
+		  SET MEMO      	 =  #{MEMO ,jdbcType=VARCHAR}
+		     ,UPT_DATE  	 = sysdate
+		     ,UPT_USER  	 =  #{V_USER_ID}
+		     ,DEL_YN    	 =  #{DEL_YN}
+		     <if test='V_FILE_YN == "T" '>
+		     	 ,PHOTO  	   =  #{V_RENAME}													
+			     ,PHOTO_IP     =  #{V_HOST_IP} 															
+			     ,PHOTO_FOLDER =  #{V_FODER}
+		     </if>
+		     <if test="TEMP_SUNAP_YN == 'F' and SUNAP_YN == 'T'">
+		     	,SUNAP_DATE 	 = sysdate
+		     	,SUNAP_YN        = #{SUNAP_YN}
+		     </if>
+	    WHERE TEMPLE_CD 	 = #{V_TEMPLE_CD}   																	
+		  AND SEQ       	 = #{SEQ}    																
+		  AND BUD_NO    	 = #{BUD_NO}
+	</update>
+	
+</mapper>

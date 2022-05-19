@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC002W_18DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="CONTENT"    column="CONTENT"      javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		 
+	</resultMap>
+
+
+	<select id="SELECT_INDEUNG_MONTH_TOT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	    SELECT TEMPLE_CD,      
+		       CMS_TRADE_CD,    
+		       FILTER_KEY,
+		       ACCEPT_SEQ,     
+		       SEQ,            
+		       ACCEPT_GBN,     
+		       ACCEPT_DATE,    
+		       ACCEPT_NAME,    
+		       PROPOSAL_BUD_NO,
+		       PROPOSAL_NAME_KOR, 
+		       APPROVAL_GBN,
+		       JUNGAK_CD,         
+		       JUNGAK_NM,         
+		       LIGHT_NO,          
+		       DONGCHAM_BUD_NO,   
+		       DECE_GBN,          
+		       NAME_KOR,          
+		       SORT_SEQ,          
+		       INDEUNG_GBN,       
+		       LIGHT_NM,          
+		       FAMILY_YN,         
+		       INDEUNG_YEAR,      
+		       INDEUNG_MONTH,     
+		       INDEUNG_PERIOD,    
+		       PAYMENT_PLAN_AMT,  
+		       PAYMENT_MONTH,
+		       PAYMENT_MONTH1,
+		       PAYMENT_MONTH2,
+		       PAYMENT_MONTH3,
+		       PAYMENT_MONTH4,
+		       PAYMENT_MONTH5,
+		       PAYMENT_MONTH6,
+		       PAYMENT_MONTH7,
+		       PAYMENT_MONTH8,
+		       PAYMENT_MONTH9,
+		       PAYMENT_MONTH10,
+		       PAYMENT_MONTH11,
+		       PAYMENT_MONTH12,       
+		       PAYMENT_AMT,       
+		       DECODE(LIMIT_YN,'F',0,(PAYMENT_PLAN_AMT-PAYMENT_AMT)) MISU_AMT, <!-- 미수금액(인등무한일경우 미수금액은 0처리) -->
+		       MEMO,  			   
+		       REMARK,             
+		       DEL_YN,             
+		       CRT_USER,           
+		       UPT_USER,           
+		       CRT_DATE,           
+		       UPT_DATE,           
+		       REMOTE,             
+		       CLOSE_YN,           
+		       LIMIT_YN,
+		       SMS_YN,             
+		       MOBILE_TELNO        
+		FROM (SELECT
+		             DET.TEMPLE_CD,
+		             MST.CMS_TRADE_CD,
+		             DET.ACCEPT_SEQ || DET.SEQ AS FILTER_KEY,
+		             DET.ACCEPT_SEQ,
+		             DET.SEQ,
+		             DET.ACCEPT_GBN,
+		             MST.ACCEPT_DATE,
+		             COD.NAME AS ACCEPT_NAME,
+		             MST.PROPOSAL_BUD_NO,
+		             SMS.NAME_KOR AS PROPOSAL_NAME_KOR,
+					       MST.APPROVAL_GBN,
+		             DET.JUNGAK_CD,
+		             JUN.JUNGAK_NM,
+		             DET.LIGHT_NO,
+		             MGT.DONGCHAM_BUD_NO,
+		             DECODE(DEA.BUD_NO,NULL,'F','T') AS DECE_GBN,
+		             CAD.NAME_KOR,
+		             MGT.SORT_SEQ,
+		             DET.INDEUNG_GBN,
+		             DEU.LIGHT_NM,
+		             DEU.FAMILY_YN,
+		             DET.INDEUNG_YEAR,
+		             DET.INDEUNG_MONTH,
+		             DET.INDEUNG_PERIOD,
+		             DET.PAYMENT_PLAN_AMT,
+		             (SELECT NVL(SUM(HIS.AMOUNT),0)
+		                FROM REC_PAYMENT_HIS HIS
+		               WHERE SUB.TEMPLE_CD  = HIS.TEMPLE_CD
+		                 AND SUB.ACCEPT_SEQ = HIS.ACCEPT_SEQ
+		                 AND SUB.SEQ        = HIS.SEQ
+		                 AND HIS.SUB_DATE  like  #{V_YEAR} ||'%'
+		              ) AS PAYMENT_MONTH,
+		             (SELECT NVL(SUM(HIS.AMOUNT),0)
+		                FROM REC_PAYMENT_HIS HIS
+		               WHERE SUB.TEMPLE_CD  = HIS.TEMPLE_CD
+		                 AND SUB.ACCEPT_SEQ = HIS.ACCEPT_SEQ
+		                 AND SUB.SEQ        = HIS.SEQ
+		                 AND HIS.SUB_DATE  like #{V_YEAR} ||'01%'
+		              ) AS PAYMENT_MONTH1,
+		             (SELECT NVL(SUM(HIS.AMOUNT),0)
+		                FROM REC_PAYMENT_HIS HIS
+		               WHERE SUB.TEMPLE_CD  = HIS.TEMPLE_CD
+		                 AND SUB.ACCEPT_SEQ = HIS.ACCEPT_SEQ
+		                 AND SUB.SEQ        = HIS.SEQ
+		                 AND HIS.SUB_DATE  like #{V_YEAR} ||'02%'
+		              ) AS PAYMENT_MONTH2,
+		              (SELECT NVL(SUM(HIS.AMOUNT),0)
+		                FROM REC_PAYMENT_HIS HIS
+		               WHERE SUB.TEMPLE_CD  = HIS.TEMPLE_CD
+		                 AND SUB.ACCEPT_SEQ = HIS.ACCEPT_SEQ
+		                 AND SUB.SEQ        = HIS.SEQ
+		                 AND HIS.SUB_DATE  like #{V_YEAR} ||'03%'
+		              ) AS PAYMENT_MONTH3,
+		              (SELECT NVL(SUM(HIS.AMOUNT),0)
+		                FROM REC_PAYMENT_HIS HIS
+		               WHERE SUB.TEMPLE_CD  = HIS.TEMPLE_CD
+		                 AND SUB.ACCEPT_SEQ = HIS.ACCEPT_SEQ
+		                 AND SUB.SEQ        = HIS.SEQ
+		                 AND HIS.SUB_DATE  like #{V_YEAR} ||'04%'
+		              ) AS PAYMENT_MONTH4,
+		              (SELECT NVL(SUM(HIS.AMOUNT),0)
+		                FROM REC_PAYMENT_HIS HIS
+		               WHERE SUB.TEMPLE_CD  = HIS.TEMPLE_CD
+		                 AND SUB.ACCEPT_SEQ = HIS.ACCEPT_SEQ
+		                 AND SUB.SEQ        = HIS.SEQ
+		                 AND HIS.SUB_DATE  like #{V_YEAR} ||'05%'
+		              ) AS PAYMENT_MONTH5,
+		              (SELECT NVL(SUM(HIS.AMOUNT),0)
+		                FROM REC_PAYMENT_HIS HIS
+		               WHERE SUB.TEMPLE_CD  = HIS.TEMPLE_CD
+		                 AND SUB.ACCEPT_SEQ = HIS.ACCEPT_SEQ
+		                 AND SUB.SEQ        = HIS.SEQ
+		                 AND HIS.SUB_DATE  like #{V_YEAR} ||'06%'
+		              ) AS PAYMENT_MONTH6,
+		              (SELECT NVL(SUM(HIS.AMOUNT),0)
+		                FROM REC_PAYMENT_HIS HIS
+		               WHERE SUB.TEMPLE_CD  = HIS.TEMPLE_CD
+		                 AND SUB.ACCEPT_SEQ = HIS.ACCEPT_SEQ
+		                 AND SUB.SEQ        = HIS.SEQ
+		                 AND HIS.SUB_DATE  like #{V_YEAR} ||'07%'
+		              ) AS PAYMENT_MONTH7,
+		              (SELECT NVL(SUM(HIS.AMOUNT),0)
+		                FROM REC_PAYMENT_HIS HIS
+		               WHERE SUB.TEMPLE_CD  = HIS.TEMPLE_CD
+		                 AND SUB.ACCEPT_SEQ = HIS.ACCEPT_SEQ
+		                 AND SUB.SEQ        = HIS.SEQ
+		                 AND HIS.SUB_DATE  like #{V_YEAR} ||'08%'
+		              ) AS PAYMENT_MONTH8,              
+		              (SELECT NVL(SUM(HIS.AMOUNT),0)
+		                FROM REC_PAYMENT_HIS HIS
+		               WHERE SUB.TEMPLE_CD  = HIS.TEMPLE_CD
+		                 AND SUB.ACCEPT_SEQ = HIS.ACCEPT_SEQ
+		                 AND SUB.SEQ        = HIS.SEQ
+		                 AND HIS.SUB_DATE  like #{V_YEAR} ||'09%'
+		              ) AS PAYMENT_MONTH9,
+		              (SELECT NVL(SUM(HIS.AMOUNT),0)
+		                FROM REC_PAYMENT_HIS HIS
+		               WHERE SUB.TEMPLE_CD  = HIS.TEMPLE_CD
+		                 AND SUB.ACCEPT_SEQ = HIS.ACCEPT_SEQ
+		                 AND SUB.SEQ        = HIS.SEQ
+		                 AND HIS.SUB_DATE  like #{V_YEAR} ||'10%'
+		              ) AS PAYMENT_MONTH10,
+		              (SELECT NVL(SUM(HIS.AMOUNT),0)
+		                FROM REC_PAYMENT_HIS HIS
+		               WHERE SUB.TEMPLE_CD  = HIS.TEMPLE_CD
+		                 AND SUB.ACCEPT_SEQ = HIS.ACCEPT_SEQ
+		                 AND SUB.SEQ        = HIS.SEQ
+		                 AND HIS.SUB_DATE  like  #{V_YEAR} ||'11%'
+		              ) AS PAYMENT_MONTH11,
+		              (SELECT NVL(SUM(HIS.AMOUNT),0)
+		                FROM REC_PAYMENT_HIS HIS
+		               WHERE SUB.TEMPLE_CD  = HIS.TEMPLE_CD
+		                 AND SUB.ACCEPT_SEQ = HIS.ACCEPT_SEQ
+		                 AND SUB.SEQ        = HIS.SEQ
+		                 AND HIS.SUB_DATE  like  #{V_YEAR} ||'12%'
+		              ) AS PAYMENT_MONTH12,
+		             (SELECT NVL(SUM(HIS.AMOUNT),0)
+		                FROM REC_PAYMENT_HIS HIS
+		               WHERE SUB.TEMPLE_CD  = HIS.TEMPLE_CD
+		                 AND SUB.ACCEPT_SEQ = HIS.ACCEPT_SEQ
+		                 AND SUB.SEQ        = HIS.SEQ
+		              ) AS PAYMENT_AMT,  
+		             MST.MEMO,  
+		             DET.REMARK,
+		             DET.DEL_YN,
+		             DET.CRT_USER,
+		             DET.UPT_USER,
+		             TO_CHAR(DET.CRT_DATE,'YYYYMMDD') AS CRT_DATE,
+		             TO_CHAR(DET.UPT_DATE,'YYYYMMDD') AS UPT_DATE,
+		             DET.REMOTE,
+		             DET.CLOSE_YN,
+		             MGT.BOKWIJA_NO,
+		             BOK.NAME_KOR AS BOKWIJA_NM,
+					       NVL(DET.LIMIT_YN,'T') AS LIMIT_YN,
+		             DECODE(MST.SMS_YN,'T',DECODE(SMS.MOBILE_TELNO1||SMS.MOBILE_TELNO2||SMS.MOBILE_TELNO3,NULL,'N','Y'),'N') SMS_YN,
+		             SMS.MOBILE_TELNO1||SMS.MOBILE_TELNO2||SMS.MOBILE_TELNO3 MOBILE_TELNO
+		       FROM REC_MASTER MST,
+		             SIN_CARD_MASTER SMS,
+		             REC_SUB SUB,
+		             REC_INDEUNG_DETAIL DET, 
+		             REC_INDEUNG_JOIN_MGT MGT,
+		             REC_BUILDING_MGT BID,
+		             REC_DEUNG_CLASS_MGT DEU,
+		             SIN_CARD_MASTER BOK,  
+		             ASP_JUNGAK_MGT JUN,
+		             SIN_CARD_MASTER CAD,
+		             ASP_CODE_MGT COD,
+		             SIN_DEATH_INFO DEA
+		       WHERE MST.TEMPLE_CD   = SUB.TEMPLE_CD
+		         AND MST.ACCEPT_SEQ  = SUB.ACCEPT_SEQ
+		         AND SUB.TEMPLE_CD   = DET.TEMPLE_CD
+		         AND SUB.ACCEPT_SEQ  = DET.ACCEPT_SEQ
+		         AND SUB.SEQ         = DET.SEQ
+		         AND MST.PROPOSAL_BUD_NO = SMS.BUD_NO(+)
+		         AND MST.TEMPLE_CD   = SMS.TEMPLE_CD(+)
+		         AND DET.TEMPLE_CD   = MGT.TEMPLE_CD
+		         AND DET.ACCEPT_GBN  = MGT.ACCEPT_GBN
+		         AND DET.SEQ         = MGT.SEQ
+		         AND DET.JUNGAK_CD   = MGT.JUNGAK_CD
+		         AND DET.ACCEPT_SEQ  = MGT.ACCEPT_SEQ
+		         AND DET.LIGHT_NO    = MGT.LIGHT_NO
+		         AND DET.TEMPLE_CD   = BID.TEMPLE_CD
+		         AND DET.ACCEPT_GBN  = BID.ACCEPT_GBN
+		         AND DET.JUNGAK_CD   = BID.JUNGAK_CD
+		         AND DET.TEMPLE_CD   = DEU.TEMPLE_CD
+		         AND DET.INDEUNG_GBN = DEU.LIGHT_CODE
+		         AND MGT.TEMPLE_CD   = CAD.TEMPLE_CD(+)
+		         AND MGT.DONGCHAM_BUD_NO = CAD.BUD_NO(+)
+		         AND MGT.TEMPLE_CD   = DEA.TEMPLE_CD(+)
+		         AND MGT.DONGCHAM_BUD_NO = DEA.BUD_NO(+)
+		         AND MGT.TEMPLE_CD   = BOK.TEMPLE_CD(+)
+		         AND MGT.BOKWIJA_NO  = BOK.BUD_NO(+)
+		         AND COD.GROUP_CD(+) = 'REC'
+		         AND DET.ACCEPT_GBN  = COD.CODE(+)
+		         AND MGT.SORT_SEQ    = '1'
+		         AND BID.TEMPLE_CD   = JUN.TEMPLE_CD
+		         AND BID.JUNGAK_CD   = JUN.JUNGAK_CD
+		         AND DEU.ACCEPT_GBN  = JUN.ACCEPT_GBN
+		         AND DEU.ACCEPT_GBN  = '2'
+		         AND SUB.DEL_YN     = 'F'
+		         AND DET.TEMPLE_CD   = #{V_TEMPLE_CD}
+		         <if test="V_PROPOSAL_BUD_NO != '' and V_PROPOSAL_BUD_NO != null  ">
+		         	AND MST.PROPOSAL_BUD_NO LIKE SUBSTR(#{V_PROPOSAL_BUD_NO},0,10) || '%'
+		         </if>
+		         <if test="V_JUNGAK_CD != '' and V_JUNGAK_CD != null and V_JUNGAK_CD != 0 ">
+		         	AND DET.JUNGAK_CD = #{V_JUNGAK_CD}
+		         </if>
+		         <if test="V_CODE != '' and V_CODE != null and V_CODE != 0 ">
+		         	AND DET.INDEUNG_GBN = #{V_CODE}
+		         </if>
+		         <if test="V_CLOSE_YN != '' and V_CLOSE_YN != null  ">
+		         	AND DET.CLOSE_YN = #{V_CLOSE_YN}
+		         </if>
+		         <if test="V_CLASS_CD != '' and V_CLASS_CD != null and V_CLASS_CD != 0 ">
+		         	AND MST.PROPOSAL_BUD_NO IN (SELECT BUD_NO 
+		         								  FROM SIN_CLASS_INFO 
+		         								 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		         								   AND CLASS_CD  = #{V_CLASS_CD})
+		         </if>
+		)
+		WHERE PAYMENT_MONTH > 0
+		ORDER BY ACCEPT_SEQ
+	</select>
+	
+</mapper>

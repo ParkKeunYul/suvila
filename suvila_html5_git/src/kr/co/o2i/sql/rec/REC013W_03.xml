@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC013w_03DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="SEL_YN" column="SEL_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+	
+	
+	<select id="SELECT_MANAGE_MGT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	    SELECT 0 AS SORT,
+		       ''    AS MANAGE_CODE,
+		       '선택' AS MANAGE_NM
+		  FROM REC_MANAGE_MGT
+		UNION
+		SELECT 1 AS SORT,
+		       MANAGE_CODE,
+		       MANAGE_NM
+		  FROM REC_MANAGE_MGT
+		 WHERE TEMPLE_CD   = #{V_TEMPLE_CD}
+		   AND USE_YN      = 'T'
+		ORDER BY SORT
+			 ,MANAGE_CODE
+	</select>
+	
+	<select id="SELECT_DETAIL" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT  TOP1.TEMPLE_CD, 
+				TOP1.CMS_TRADE_CD,
+				TOP1.REL_ACCEPT_SEQ, 
+				TOP1.REL_SEQ, 
+				TOP1.ACCEPT_SEQ, 
+				TOP1.SEQ, 
+				TOP1.PROPOSAL_BUD_NO,
+				TOP1.PROPOSAL_BUD_NM,
+				TOP1.MANAGE_BUD_NAME,
+				TOP1.APPROVAL_GBN,
+				TOP1.MANAGE_CODE,
+				TOP1.MANAGE_NM,
+				TOP1.BUNNAB_DAY,
+				TOP1.PAYMENT_AMT,
+				TOP1.FIRST_PAYMENT_YYYYMM,
+				TOP1.RECEIPT_AMT,
+				TOP1.MANAGE_END_YN, 
+				TOP1.MANAGE_PERIOD,
+				TOP1.REMARK, 
+				TOP1.DEL_YN,
+				TOP1.MEMO,
+				TOP1.AMOUNT,
+				TOP1.MISU_MONTH,
+				TOP1.SMS_YN,
+			  	TOP1.MOBILE_TELNO,
+			  	FN_GET_NM('MOBILE',TOP1.TEMPLE_CD,TOP1.PROPOSAL_BUD_NO) MANAGE_MOBILE_TELNO,
+			  	DECODE(TOP1.MANAGE_PERIOD,0,'',TO_CHAR(ADD_MONTHS(TO_DATE(TOP1.FIRST_PAYMENT_YYYYMM,'YYYYMM'),TOP1.MANAGE_PERIOD-1),'YYYYMM')) FINAL_PAYMENT_YYYYMM,
+			  	(CASE
+			  		WHEN TOP1.PERIOD_TYPE  = 2 THEN TOP1.PAYMENT_AMT - TOP1.AMOUNT
+			  		ELSE ABS(TOP1.PAYMENT_AMT * TOP1.MISU_MONTH ) 
+			  	  END ) as  MISU_TOTAL,
+			  	TOP1.MANAGE_END_DATE,
+			  	(SELECT (SELECT  JUNGAK_NM FROM  ASP_JUNGAK_MGT WHERE T1.JUNGAK_CD = JUNGAK_CD AND TEMPLE_CD = T1.TEMPLE_CD )||'-' || LIGHT_NO 
+			      FROM REC_YOUNGTOP_DETAIL T1 
+			     WHERE T1.TEMPLE_CD = TOP1.TEMPLE_CD
+			      AND T1.ACCEPT_SEQ =TOP1.REL_ACCEPT_SEQ
+			      AND ROWNUM = 1) as YOUNG_TOP,
+			    TOP1.PERIOD_TYPE,
+			    TOP1.ACCEPT_DATE,
+			    TO_CHAR(add_months(TOP1.ACCEPT_DATE ,TOP1.MANAGE_PERIOD), 'YYYYMMDD') EXPIRA_DATE
+			FROM
+			(
+				SELECT
+					DET.TEMPLE_CD, 
+					MST.CMS_TRADE_CD,
+					DET.REL_ACCEPT_SEQ, 
+					DET.REL_SEQ, 
+					DET.ACCEPT_SEQ, 
+					DET.SEQ, 
+					MST.PROPOSAL_BUD_NO,
+					FN_GET_NM('BUD',MST.TEMPLE_CD,MST.PROPOSAL_BUD_NO)AS PROPOSAL_BUD_NM, 
+					FN_GET_NM('BUD',DET.TEMPLE_CD,MST.PROPOSAL_BUD_NO)AS MANAGE_BUD_NAME,
+					MST.APPROVAL_GBN,
+					DET.MANAGE_CODE,
+					MGT.MANAGE_NM,
+					MST.BUNNAB_DAY,
+					DET.PAYMENT_AMT,
+					DET.FIRST_PAYMENT_YYYYMM,
+					DET.RECEIPT_AMT,
+					DET.MANAGE_END_YN, 
+					DET.MANAGE_PERIOD, 
+					DET.REMARK, 
+					DET.DEL_YN,
+					MST.MEMO,
+					SUM(RPH.AMOUNT) AS AMOUNT,
+					CASE
+					    WHEN NVL(DET.PERIOD_TYPE,'1') = 2 THEN  0
+					    WHEN DET.PAYMENT_AMT = 0 THEN 0
+			        	ELSE
+			            	CASE WHEN TO_CHAR(SYSDATE,'YYYYMM') &lt; DET.FIRST_PAYMENT_YYYYMM THEN 0
+			            	ELSE
+			                    CASE 
+			                     	WHEN DET.MANAGE_PERIOD = 0 AND DET.MANAGE_END_YN = 'F'
+			                        	THEN (SUM(RPH.AMOUNT)/DET.PAYMENT_AMT) - (TRUNC(MONTHS_BETWEEN(SYSDATE,TO_DATE(DET.FIRST_PAYMENT_YYYYMM,'YYYYMM')))+1)
+			                      	WHEN DET.MANAGE_PERIOD = 0 AND DET.MANAGE_END_YN = 'T'
+			                        	THEN (SUM(RPH.AMOUNT)/DET.PAYMENT_AMT) - (TRUNC(MONTHS_BETWEEN(NVL(TO_DATE( DET.MANAGE_END_DATE, 'YYYYMM'),DET.UPT_DATE), TO_DATE(DET.FIRST_PAYMENT_YYYYMM,'YYYYMM')))+1)
+			                        WHEN DET.MANAGE_PERIOD != 0 AND DET.MANAGE_END_YN = 'F'
+			                        	THEN (SUM(RPH.AMOUNT)/DET.PAYMENT_AMT) - DET.MANAGE_PERIOD
+			                        WHEN DET.MANAGE_PERIOD != 0 AND DET.MANAGE_END_YN = 'T' AND NVL(DET.MANAGE_END_DATE, '') = ''
+			                        	THEN (SUM(RPH.AMOUNT)/DET.PAYMENT_AMT) - DET.MANAGE_PERIOD
+			                        WHEN DET.MANAGE_PERIOD != 0 AND DET.MANAGE_END_YN = 'T' AND NVL(DET.MANAGE_END_DATE, '') != ''
+			                        	THEN (SUM(RPH.AMOUNT)/DET.PAYMENT_AMT) - (TRUNC(MONTHS_BETWEEN(NVL(TO_DATE( DET.MANAGE_END_DATE, 'YYYYMM'),DET.UPT_DATE), TO_DATE(DET.FIRST_PAYMENT_YYYYMM,'YYYYMM')))+1)
+			                        WHEN DET.RECEIPT_AMT &lt;= SUM(RPH.AMOUNT) THEN 0
+			                        WHEN DET.RECEIPT_AMT     > SUM(RPH.AMOUNT) 
+			                            THEN (SUM(RPH.AMOUNT) - DET.RECEIPT_AMT ) / DET.PAYMENT_AMT
+			                        ELSE 0
+			                    END
+			                END
+			        END AS MISU_MONTH,
+			    DECODE(MST.SMS_YN,'T',DECODE(SMS.MOBILE_TELNO1||SMS.MOBILE_TELNO2||SMS.MOBILE_TELNO3,NULL,'N','Y'),'N') SMS_YN,
+			    SMS.MOBILE_TELNO1 || DECODE(SMS.MOBILE_TELNO1,NULL,'','-') || SMS.MOBILE_TELNO2 || DECODE(SMS.MOBILE_TELNO2,NULL,'','-') || SMS.MOBILE_TELNO3 AS MOBILE_TELNO,
+			    (CASE
+			      WHEN DET.MANAGE_END_YN = 'T' AND NVL(DET.MANAGE_END_DATE , '') = '' THEN TO_CHAR(DET.UPT_DATE, 'YYYYMM')
+			      WHEN DET.MANAGE_END_YN = 'F' THEN ''
+			      ELSE DET.MANAGE_END_DATE    	
+			   	 END) MANAGE_END_DATE,
+			   	 NVL(DET.PERIOD_TYPE,'1')  PERIOD_TYPE,
+			   	 MST.ACCEPT_DATE   	 
+				FROM REC_MANAGE_DETAIL DET, 
+					REC_MANAGE_MGT MGT, 
+					REC_MASTER MST, 
+					REC_SUB RS, 
+					REC_PAYMENT_HIS RPH,
+					SIN_CARD_MASTER SMS
+				WHERE DET.TEMPLE_CD     	= MGT.TEMPLE_CD
+				AND DET.MANAGE_CODE    		= MGT.MANAGE_CODE
+				AND DET.TEMPLE_CD       	= MST.TEMPLE_CD
+				AND DET.ACCEPT_SEQ      	= MST.ACCEPT_SEQ
+				AND DET.DEL_YN            	= 'F'
+				AND MST.TEMPLE_CD 			= RS.TEMPLE_CD
+				AND MST.ACCEPT_SEQ 			= RS.ACCEPT_SEQ
+				AND RS.TEMPLE_CD 			= RPH.TEMPLE_CD
+				AND RS.ACCEPT_SEQ 			= RPH.ACCEPT_SEQ
+				AND RS.SEQ 					= RPH.SEQ
+				AND RS.TEMPLE_CD 			= DET.TEMPLE_CD
+				AND RS.ACCEPT_SEQ 			= DET.ACCEPT_SEQ
+				AND RS.SEQ 					= DET.SEQ
+				AND DET.TEMPLE_CD       	= #{V_TEMPLE_CD}
+			    AND MST.TEMPLE_CD  			= SMS.TEMPLE_CD(+)
+			    AND MST.PROPOSAL_BUD_NO 	= SMS.BUD_NO(+)
+			  <choose>
+	           	<when test="V_DATE_GBN == 1">
+	           		AND MST.ACCEPT_DATE BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+	           	</when>
+	           	<when test="V_DATE_GBN == 2">
+	           		AND RPH.PAYMENT_YYYYMM BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+	           	</when>
+	           	<otherwise></otherwise>
+	           </choose>
+			  <if test="V_PROPOSAL_BUD_NO != '' and V_PROPOSAL_BUD_NO != null  ">
+			  	AND MST.PROPOSAL_BUD_NO = #{V_PROPOSAL_BUD_NO}
+			  </if>
+			  <if test="V_MANAGE_CODE != '' and V_MANAGE_CODE != null  ">
+			  	AND DET.MANAGE_CODE    = #{V_MANAGE_CODE}
+			  </if>
+			  <if test="VV_USER_ID != '' and VV_USER_ID != null  ">
+			  	AND DET.CRT_USER = #{VV_USER_ID}
+			  </if>
+			  <if test="V_CLASS_CD != '0' and V_CLASS_CD != '' and V_CLASS_CD != null">
+			  	AND MST.PROPOSAL_BUD_NO IN (SELECT BUD_NO 
+           		 							  FROM SIN_CLASS_INFO 
+           		 							 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+           		 							   AND CLASS_CD  = #{V_CLASS_CD})
+			  </if>
+			  <if test="V_APPROV != '' and V_APPROV != null  ">
+			  	AND MST.APPROVAL_GBN = #{V_APPROV}
+			  </if>
+			  <if test="V_REL_ACCEPT_SEQ != '' and V_REL_ACCEPT_SEQ != null  ">
+			  	AND DET.REL_ACCEPT_SEQ = #{V_REL_ACCEPT_SEQ}
+			  </if>
+			  <if test="V_REL_SEQ != '' and V_REL_SEQ != null  ">
+			  	AND DET.REL_SEQ = #{V_REL_SEQ}
+			  </if>
+				GROUP BY DET.TEMPLE_CD,
+					MST.CMS_TRADE_CD,
+					DET.REL_ACCEPT_SEQ, 
+					DET.REL_SEQ, 
+					DET.ACCEPT_SEQ, 
+					DET.SEQ, 
+					MST.PROPOSAL_BUD_NO,
+					FN_GET_NM('BUD',MST.TEMPLE_CD,MST.PROPOSAL_BUD_NO), 
+					FN_GET_NM('BUD',DET.TEMPLE_CD,MST.PROPOSAL_BUD_NO),
+					MST.APPROVAL_GBN,
+					DET.MANAGE_CODE,
+					MGT.MANAGE_NM,
+					MST.BUNNAB_DAY,
+					DET.PAYMENT_AMT,
+					DET.FIRST_PAYMENT_YYYYMM,
+					DET.RECEIPT_AMT,
+					DET.MANAGE_END_YN, 
+					DET.MANAGE_PERIOD,
+					DET.REMARK, 
+					DET.DEL_YN,
+					MST.MEMO,
+					DECODE(MST.SMS_YN,'T',DECODE(SMS.MOBILE_TELNO1||SMS.MOBILE_TELNO2||SMS.MOBILE_TELNO3,NULL,'N','Y'),'N'),
+					SMS.MOBILE_TELNO1 || DECODE(SMS.MOBILE_TELNO1,NULL,'','-') || SMS.MOBILE_TELNO2 || DECODE(SMS.MOBILE_TELNO2,NULL,'','-') || SMS.MOBILE_TELNO3,
+					(CASE
+				      WHEN DET.MANAGE_END_YN = 'T' AND NVL(DET.MANAGE_END_DATE , '') = '' THEN TO_CHAR(DET.UPT_DATE, 'YYYYMM')
+				      WHEN DET.MANAGE_END_YN = 'F' THEN ''
+				      ELSE DET.MANAGE_END_DATE    	
+				   	 END),
+				   	 DET.MANAGE_END_DATE,
+			     	 DET.UPT_DATE,
+			     	DET.PERIOD_TYPE,
+			     	MST.ACCEPT_DATE
+			) TOP1
+			WHERE 1=1
+			<choose>
+	           	<when test="V_PAY_STATE == 1">
+	           		AND TOP1.MISU_MONTH >= 0
+	           	</when>
+	           	<when test="V_PAY_STATE == 2">
+	           		AND TOP1.MISU_MONTH &lt; 0
+	           	</when>
+	           	<otherwise></otherwise>
+           </choose>
+           <if test="V_DATE_GBN == 2">
+           	AND TOP1.AMOUNT > 0
+           </if>
+			ORDER BY TOP1.TEMPLE_CD
+					,TOP1.ACCEPT_SEQ
+					,TOP1.SEQ
+	</select>
+	
+	<update id="UPDATE_REC_MANAGE_DETAIL" parameterType="java.util.Map">
+		 UPDATE REC_MANAGE_DETAIL 
+		   SET  MANAGE_END_YN 		= #{MANAGE_END_YN},
+				REMARK				= #{REMARK ,jdbcType=VARCHAR},
+				UPT_USER			= #{V_USER_ID},
+				UPT_DATE			= SYSDATE,
+				REMOTE				= #{V_REMOTE},
+				MANAGE_END_DATE     = SUBSTR(#{MANAGE_END_DATE ,jdbcType=VARCHAR},0,6)
+		  WHERE TEMPLE_CD 			= #{V_TEMPLE_CD}
+		    AND SEQ					= #{SEQ}
+			AND ACCEPT_SEQ			= #{ACCEPT_SEQ}
+			AND MANAGE_CODE			= #{MANAGE_CODE}
+	</update>
+	
+</mapper>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="CMS001w_02DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+	
+	<select id="SELECT_SIN_CMS_INFO_T" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT
+		    SIN.TEMPLE_CD,
+		    SIN.BUD_NO,    
+		    (SELECT name FROM ASP_CODE_MGT WHERE GROUP_CD = 'BANK' AND CODE = CMS.IF_PAYMENT_BANK_CD ) as BUD_CODE,
+		    SIN.NAME_KOR,
+		    SIN.MOBILE_TELNO1,
+		    SIN.MOBILE_TELNO2,
+		    SIN.MOBILE_TELNO3,
+		    CMS.CMS_TRADE_CD,
+		    CMS.IF_PAYMENT_BANK_CD,
+		    CMS.IF_PAYMENT_ACCOUNT,
+		    CMS.CMS_PAYMENT_DAY,
+		    CMS.CMS_ACCOUNT_STATUS,
+		    CMS.REMARK,
+			CMS.CMS_ACCOUNT_STATUS AS ORG_CMS_ACCOUNT_STATUS,
+			CMS.CMS_PAYMENT_DAY AS ORG_CMS_PAYMENT_DAY,
+			CMS.CMS_TRADE_CD AS ORG_CMS_TRADE_CD,
+			CMS.IF_PAYMENT_BANK_CD AS ORG_IF_PAYMENT_BANK_CD,		    
+		    TO_CHAR(CMS.UPT_DATE,'YYYY/MM/DD') AS UPT_DATE,
+			CMS.USE_YN,
+			CMS.REG_GBN,
+			CMS.REG_NO,
+			CMS.REG_NO AS ORG_REG_NO,
+			CMS.ACCOUNT_SEQ,
+			CMS.ACCOUNT_SEQ AS ORG_ACCOUNT_SEQ,
+			TO_CHAR(CMS.CRT_DATE,'YYYY/MM/DD') AS CRT_DATE,
+			'' AS FILE_CHECK,
+		    CMS.UPT_USER
+		FROM SIN_CARD_MASTER SIN,
+		     SIN_CMS_INFO   CMS
+		WHERE 1=1
+		AND SIN.TEMPLE_CD = CMS.TEMPLE_CD
+		AND SIN.BUD_NO    = CMS.BUD_NO
+		AND SIN.TEMPLE_CD = #{V_TEMPLE_CD}
+		AND CMS.DEL_YN = 'T'		
+		AND SIN.BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = #{V_TEMPLE_CD})
+		<if test='V_BUD_NO != nul and  V_BUD_NO != "" '>
+				AND SIN.BUD_NO = #{V_BUD_NO} 
+		</if>
+		ORDER BY CMS.CMS_ACCOUNT_STATUS DESC, SIN.BUD_NO, CMS.CMS_TRADE_CD,  CMS.IF_PAYMENT_BANK_CD, CMS.IF_PAYMENT_ACCOUNT, CMS.ACCOUNT_SEQ
+	</select>
+
+	
+</mapper>

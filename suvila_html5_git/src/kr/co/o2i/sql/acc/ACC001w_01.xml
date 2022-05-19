@@ -1,0 +1,690 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ACC001w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+
+	<select id="SELECT_ACC_FETCH" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT
+			TEMPLE_CD,
+		    ACT_DATE,
+		    LPAD(ROWNUM, 5, '0') AS ACT_NO,
+		    ACCT_GBN,
+		    IE_GBN,
+		    KWAN,
+		    KWAN_NAME,
+		    HANG,
+		    HANG_NAME,
+		    MOK,
+		    MOK_NAME,
+		    AMOUNT,
+		    USER_ID,
+			OLD_YN,
+			(SUM(DECODE(IE_GBN,'I',AMOUNT, AMOUNT * -1)) OVER (ORDER BY ROWNUM RANGE UNBOUNDED PRECEDING)) +
+			NVL((
+				   	SELECT 
+						   SUM(NVL(DECODE(IE_GBN,'I',TO_NUMBER(ETC2),TO_NUMBER(ETC2*-1)),0)) AS SUM
+					FROM ACC_ACCOUNTS
+					WHERE TEMPLE_CD = TEMP.TEMPLE_CD
+					AND HANG = 0
+					AND MOK  = 0
+					AND ETC2 IS NOT NULL
+			   ),0) + 
+			   NVL((
+					SELECT 
+						SUM(DECODE(IE_GBN,'I',AMOUNT, AMOUNT*-1))
+					FROM ACC_MONEY_MGT 
+					WHERE TEMPLE_CD = TEMP.TEMPLE_CD
+		          )
+			   ,0) AS SUM_AMOUNT,
+			   REMARK
+		FROM
+		(
+		SELECT
+		       DET.TEMPLE_CD,
+		       ACT_DATE,
+		       DET.ACCT_GBN,
+		       DET.IE_GBN,
+		       DET.KWAN,
+		       ACC.KWAN_NAME,
+		       DET.HANG,
+		       ACC.HANG_NAME,
+		       DET.MOK,
+		       ACC.MOK_NAME,
+		       AMOUNT,
+		       '' AS USER_ID,
+			   '' AS REMARK,
+			   'T' AS OLD_YN
+		  FROM
+		       (SELECT 
+		               TEMPLE_CD,
+		               ACT_DATE,
+		               ACCT_GBN,
+		               IE_GBN,
+		               KWAN,
+		               HANG,
+		               MOK,
+		               SUM(AMOUNT) AS AMOUNT
+		          FROM (SELECT *
+		                  FROM (SELECT 
+		                               PAY.TEMPLE_CD,
+		                               SUBSTR(PAY.SUB_DATE,0,8) AS ACT_DATE,
+		                               MGT.ACCT_GBN,
+		                               MGT.IE_GBN,
+		                               MGT.KWAN,
+		                               MGT.HANG,
+		                               MGT.MOK,
+		                               PAY.AMOUNT
+		                          FROM REC_PAYMENT_HIS PAY, REC_PRAY_DETAIL DET, REC_PRAY_MGT MGT
+		                         WHERE PAY.TEMPLE_CD  = DET.TEMPLE_CD
+		                           AND PAY.ACCEPT_SEQ = DET.ACCEPT_SEQ
+		                           AND PAY.SEQ        = DET.SEQ
+		                           AND DET.TEMPLE_CD  = MGT.TEMPLE_CD
+		                           AND DET.PRAY_GBN   = MGT.PRAY_GBN
+		                           AND DET.PRAY_CODE  = MGT.PRAY_CODE
+		                           AND MGT.FDATE      = '-1'
+		                           AND PAY.TEMPLE_CD  = #{V_TEMPLE_CD})
+		                WHERE ACT_DATE = #{V_ACT_DATE}
+		               UNION ALL
+		                SELECT *
+		                  FROM (SELECT 
+		                               PAY.TEMPLE_CD,
+		                               SUBSTR(PAY.SUB_DATE,0,8) AS ACT_DATE,
+		                               MGT.ACCT_GBN,
+		                               MGT.IE_GBN,
+		                               MGT.KWAN,
+		                               MGT.HANG,
+		                               MGT.MOK,
+		                               PAY.AMOUNT
+		                          FROM REC_PAYMENT_HIS PAY, REC_INDEUNG_DETAIL DET, REC_DEUNG_CLASS_MGT MGT
+		                         WHERE PAY.TEMPLE_CD  = DET.TEMPLE_CD
+		                           AND PAY.ACCEPT_SEQ = DET.ACCEPT_SEQ
+		                           AND PAY.SEQ        = DET.SEQ
+		                           AND DET.TEMPLE_CD  = MGT.TEMPLE_CD
+		                           AND DET.ACCEPT_GBN = MGT.ACCEPT_GBN
+		                           AND DET.INDEUNG_GBN= MGT.LIGHT_CODE
+		                           AND PAY.TEMPLE_CD  = #{V_TEMPLE_CD})
+		                 WHERE ACT_DATE = #{V_ACT_DATE}
+		                UNION ALL
+		                SELECT *
+		                  FROM (SELECT 
+		                               PAY.TEMPLE_CD,
+		                               SUBSTR(PAY.SUB_DATE,0,8) AS ACT_DATE,
+		                               MGT.ACCT_GBN,
+		                               MGT.IE_GBN,
+		                               MGT.KWAN,
+		                               MGT.HANG,
+		                               MGT.MOK,
+		                               PAY.AMOUNT
+		                          FROM REC_PAYMENT_HIS PAY, REC_YEONDEUNG_DETAIL DET, REC_DEUNG_CLASS_MGT MGT
+		                         WHERE PAY.TEMPLE_CD    = DET.TEMPLE_CD
+		                           AND PAY.ACCEPT_SEQ   = DET.ACCEPT_SEQ
+		                           AND PAY.SEQ          = DET.SEQ
+		                           AND DET.TEMPLE_CD    = MGT.TEMPLE_CD
+		                           AND DET.ACCEPT_GBN   = MGT.ACCEPT_GBN
+		                           AND DET.YEONDEUNG_GBN= MGT.LIGHT_CODE
+		                           AND PAY.TEMPLE_CD    = #{V_TEMPLE_CD})
+		                 WHERE ACT_DATE = #{V_ACT_DATE}
+						UNION ALL
+		                SELECT *
+		                  FROM (SELECT 
+		                               PAY.TEMPLE_CD,
+		                               SUBSTR(PAY.SUB_DATE,0,8) AS ACT_DATE,
+		                               MGT.ACCT_GBN,
+		                               MGT.IE_GBN,
+		                               MGT.KWAN,
+		                               MGT.HANG,
+		                               MGT.MOK,
+		                               PAY.AMOUNT
+		                          FROM REC_PAYMENT_HIS PAY, REC_WONBUL_DETAIL DET, REC_DEUNG_CLASS_MGT MGT
+		                         WHERE PAY.TEMPLE_CD    = DET.TEMPLE_CD
+		                           AND PAY.ACCEPT_SEQ   = DET.ACCEPT_SEQ
+		                           AND PAY.SEQ          = DET.SEQ
+		                           AND DET.TEMPLE_CD    = MGT.TEMPLE_CD
+		                           AND DET.ACCEPT_GBN   = MGT.ACCEPT_GBN
+		                           AND DET.WONBUL_GBN= MGT.LIGHT_CODE
+		                           AND PAY.TEMPLE_CD    = #{V_TEMPLE_CD})
+		                 WHERE ACT_DATE = #{V_ACT_DATE}
+		                UNION ALL
+		                SELECT *
+		                  FROM (SELECT 
+				                       PAY.TEMPLE_CD,
+				                       SUBSTR(PAY.SUB_DATE,0,8) AS ACT_DATE,
+				                       MGT.ACCT_GBN,
+				                       MGT.IE_GBN,
+				                       MGT.KWAN,
+				                       MGT.HANG,
+				                       MGT.MOK,
+				                       PAY.AMOUNT
+				                  FROM REC_PAYMENT_HIS PAY, REC_BULSA_DETAIL DET, REC_BULSA_MGT MGT
+				                 WHERE PAY.TEMPLE_CD  = DET.TEMPLE_CD
+				                   AND PAY.ACCEPT_SEQ = DET.ACCEPT_SEQ
+				                   AND PAY.SEQ        = DET.SEQ
+				                   AND DET.TEMPLE_CD  = MGT.TEMPLE_CD
+				                   AND DET.BULSA_CD   = MGT.BULSA_CD
+				                   AND MGT.ACPT_FDATE = '-1'
+				                   AND PAY.TEMPLE_CD  = #{V_TEMPLE_CD})
+		                 WHERE ACT_DATE = #{V_ACT_DATE}
+		                UNION ALL
+		                SELECT *
+		                  FROM (SELECT 
+		                               PAY.TEMPLE_CD,
+		                               SUBSTR(PAY.SUB_DATE,0,8) AS ACT_DATE,
+		                               1 AS ACCT_GBN,
+		                               'I' AS IE_GBN,
+		                               2 AS KWAN,
+		                               2 AS HANG,
+		                               1 AS MOK,
+		                               PAY.AMOUNT
+		                          FROM REC_PAYMENT_HIS PAY, REC_FORTY_NINE_DETAIL DET
+		                         WHERE PAY.TEMPLE_CD  = DET.TEMPLE_CD
+		                           AND PAY.ACCEPT_SEQ = DET.ACCEPT_SEQ
+		                           AND PAY.SEQ        = DET.SEQ
+		                           AND PAY.TEMPLE_CD  = #{V_TEMPLE_CD})
+		                 WHERE ACT_DATE = #{V_ACT_DATE}
+		                UNION ALL
+		                SELECT *
+		                  FROM (SELECT 
+		                               PAY.TEMPLE_CD,
+		                               SUBSTR(PAY.SUB_DATE,0,8) AS ACT_DATE,
+		                               1 AS ACCT_GBN,
+		                               'I' AS IE_GBN,
+		                               2 AS KWAN,
+		                               2 AS HANG,
+		                               1 AS MOK,
+		                               PAY.AMOUNT
+		                          FROM REC_PAYMENT_HIS PAY, REC_GIJE_DETAIL DET
+		                         WHERE PAY.TEMPLE_CD  = DET.TEMPLE_CD
+		                           AND PAY.ACCEPT_SEQ = DET.ACCEPT_SEQ
+		                           AND PAY.SEQ        = DET.SEQ
+		                           AND PAY.TEMPLE_CD  = #{V_TEMPLE_CD})
+		                 WHERE ACT_DATE = #{V_ACT_DATE}
+		                UNION ALL
+		                SELECT *
+		                  FROM (SELECT 
+		                               PAY.TEMPLE_CD,
+		                               SUBSTR(PAY.SUB_DATE,0,8) AS ACT_DATE,
+		                               1 AS ACCT_GBN,
+		                               'I' AS IE_GBN,
+		                               2 AS KWAN,
+		                               2 AS HANG,
+		                               1 AS MOK,
+		                               PAY.AMOUNT
+		                          FROM REC_PAYMENT_HIS PAY, REC_CHONDOJE_DETAIL DET
+		                         WHERE PAY.TEMPLE_CD  = DET.TEMPLE_CD
+		                           AND PAY.ACCEPT_SEQ = DET.ACCEPT_SEQ
+		                           AND PAY.SEQ        = DET.SEQ
+		                           AND PAY.TEMPLE_CD  = #{V_TEMPLE_CD})
+		                 WHERE ACT_DATE = #{V_ACT_DATE}
+		                UNION ALL
+		                SELECT *
+		                  FROM (SELECT 
+		                               PAY.TEMPLE_CD,
+		                               SUBSTR(PAY.SUB_DATE,0,8) AS ACT_DATE,
+		                               MGT.ACCT_GBN,
+		                               MGT.IE_GBN,
+		                               MGT.KWAN,
+		                               MGT.HANG,
+		                               MGT.MOK,
+		                               PAY.AMOUNT
+		                          FROM REC_PAYMENT_HIS PAY, REC_WEPAE_CHONHON_DETAIL DET, REC_WEPAE_CHONHON_MGT MGT
+		                         WHERE PAY.TEMPLE_CD  = DET.TEMPLE_CD
+		                           AND PAY.ACCEPT_SEQ = DET.ACCEPT_SEQ
+		                           AND PAY.SEQ        = DET.SEQ
+		                           AND PAY.TEMPLE_CD  = MGT.TEMPLE_CD
+		                           AND DET.EVENT_CD   = MGT.EVENT_CD                           
+		                           AND PAY.TEMPLE_CD  = #{V_TEMPLE_CD})
+		                 WHERE ACT_DATE = #{V_ACT_DATE}
+		                UNION ALL
+		                SELECT *
+		                  FROM (SELECT 
+		                               PAY.TEMPLE_CD,
+		                               SUBSTR(PAY.SUB_DATE,0,8) AS ACT_DATE,
+		                               MGT.ACCT_GBN,
+		                               MGT.IE_GBN,
+		                               MGT.KWAN,
+		                               MGT.HANG,
+		                               MGT.MOK,
+		                               PAY.AMOUNT
+		                          FROM REC_PAYMENT_HIS PAY, REC_SUPPORT_DETAIL DET, REC_SUPPORT_MGT MGT
+		                         WHERE PAY.TEMPLE_CD   = DET.TEMPLE_CD
+		                           AND PAY.ACCEPT_SEQ  = DET.ACCEPT_SEQ
+		                           AND PAY.SEQ         = DET.SEQ
+		                           AND DET.TEMPLE_CD   = MGT.TEMPLE_CD
+		                           AND DET.SUPPORT_CODE= MGT.SUPPORT_CODE
+		                           AND PAY.TEMPLE_CD   = #{V_TEMPLE_CD})
+		                 WHERE ACT_DATE = #{V_ACT_DATE}
+		                UNION ALL
+		                SELECT *
+		                  FROM (SELECT 
+		                               PAY.TEMPLE_CD,
+		                               SUBSTR(PAY.SUB_DATE,0,8) AS ACT_DATE,
+		                               1 AS ACCT_GBN,
+		                               'I' AS IE_GBN,
+		                               3 AS KWAN,
+		                               1 AS HANG,
+		                               1 AS MOK,
+		                               PAY.AMOUNT
+		                          FROM REC_PAYMENT_HIS PAY, REC_BUD_BOX_DETAIL DET
+		                         WHERE PAY.TEMPLE_CD  = DET.TEMPLE_CD
+		                           AND PAY.ACCEPT_SEQ = DET.ACCEPT_SEQ
+		                           AND PAY.SEQ        = DET.SEQ
+		                           AND PAY.TEMPLE_CD  = #{V_TEMPLE_CD})
+		                 WHERE ACT_DATE = #{V_ACT_DATE}
+		                UNION ALL
+		                SELECT
+						       FEE.TEMPLE_CD,
+						       FEE.RECEIPT_DATE AS ACT_DATE,
+						       MGT.ACCT_GBN,
+						       MGT.IE_GBN,
+						       MGT.KWAN,
+						       MGT.HANG,
+						       MGT.MOK,
+						       MGT.FEE_AMT AS AMOUNT
+						  FROM SIN_GROUP_FEE FEE, SIN_GROUP_MGT MGT
+						 WHERE FEE.TEMPLE_CD    = MGT.TEMPLE_CD 
+						   AND FEE.ORG_CD       = MGT.ORG_CD
+						   AND FEE.TEMPLE_CD    = #{V_TEMPLE_CD}
+		                   AND FEE.RECEIPT_DATE = #{V_ACT_DATE}
+		                UNION ALL
+		                SELECT
+						       HIS.TEMPLE_CD,
+						       HIS.RECEIPT_DATE AS ACT_DATE,
+						       MGT.ACCT_GBN,
+						       MGT.IE_GBN,
+						       MGT.KWAN,
+						       MGT.HANG,
+						       MGT.MOK,
+						       HIS.AMOUNT
+						  FROM SIN_GROUP_ENTRANCE_HIS HIS, SIN_GROUP_MGT MGT
+						 WHERE HIS.TEMPLE_CD    = MGT.TEMPLE_CD 
+						   AND HIS.ORG_CD       = MGT.ORG_CD
+						   AND HIS.TEMPLE_CD    = #{V_TEMPLE_CD}
+		                   AND HIS.RECEIPT_DATE = #{V_ACT_DATE}
+		                UNION ALL
+		                SELECT *
+		                  FROM (SELECT 
+				                       PAY.TEMPLE_CD,
+				                       SUBSTR(PAY.SUB_DATE,0,8) AS ACT_DATE,
+				                       MGT.ACCT_GBN,
+				                       MGT.IE_GBN,
+				                       MGT.KWAN,
+				                       MGT.HANG,
+				                       MGT.MOK,
+				                       PAY.AMOUNT
+				                  FROM REC_PAYMENT_HIS PAY, REC_TEMPLE_STAY_DETAIL DET, REC_TEMPLE_STAY_MGT MGT
+				                 WHERE PAY.TEMPLE_CD      = DET.TEMPLE_CD
+				                   AND PAY.ACCEPT_SEQ     = DET.ACCEPT_SEQ
+				                   AND PAY.SEQ            = DET.SEQ
+				                   AND DET.TEMPLE_CD      = MGT.TEMPLE_CD
+				                   AND DET.TEMPLE_STAY_CD = MGT.TEMPLE_STAY_CD
+				                   AND MGT.FDATE = '-1'
+				                   AND PAY.TEMPLE_CD  = #{V_TEMPLE_CD})
+		                 WHERE ACT_DATE = #{V_ACT_DATE}
+						UNION ALL
+						SELECT *
+						  FROM (SELECT 
+						               PAY.TEMPLE_CD,
+						               SUBSTR(PAY.SUB_DATE,0,8) AS ACT_DATE,
+						               MGT.ACCT_GBN,
+						               MGT.IE_GBN,
+						               MGT.KWAN,
+						               MGT.HANG,
+						               MGT.MOK,
+						               PAY.AMOUNT
+						          FROM REC_PAYMENT_HIS PAY, REC_ALWAYS_PRAY_DETAIL DET, REC_ALWAYS_PRAY_MGT MGT
+						         WHERE PAY.TEMPLE_CD  = DET.TEMPLE_CD
+						           AND PAY.ACCEPT_SEQ = DET.ACCEPT_SEQ
+						           AND PAY.SEQ        = DET.SEQ
+						           AND DET.TEMPLE_CD  = MGT.TEMPLE_CD
+						           AND DET.PRAY_CODE  = MGT.PRAY_CODE
+						           AND PAY.TEMPLE_CD  = #{V_TEMPLE_CD})
+						WHERE ACT_DATE = #{V_ACT_DATE}
+									
+						)
+		        GROUP BY TEMPLE_CD
+		                ,ACT_DATE
+		                ,ACCT_GBN
+		                ,IE_GBN
+		                ,KWAN
+		                ,HANG, MOK) DET
+		                ,ACC_ACCOUNTS ACC
+		 WHERE DET.TEMPLE_CD  = ACC.TEMPLE_CD(+)
+		   AND DET.ACCT_GBN   = ACC.ACCT_GBN(+)
+		   AND DET.IE_GBN     = ACC.IE_GBN(+)
+		   AND DET.KWAN       = ACC.KWAN(+)
+		   AND DET.HANG       = ACC.HANG(+)
+		   AND DET.MOK        = ACC.MOK(+)
+		   AND DET.AMOUNT     &lt;&gt; 0
+		UNION ALL 
+		SELECT
+		       DET.TEMPLE_CD,
+		       ACT_DATE,
+		       DET.ACCT_GBN,
+		       DET.IE_GBN,
+		       DET.KWAN,
+		       ACC.KWAN_NAME,
+		       DET.HANG,
+		       ACC.HANG_NAME,
+		       DET.MOK,
+		       ACC.MOK_NAME,
+		       TO_NUMBER(AMOUNT) + TO_NUMBER(AMOUNT_BILL) as AMOUNT,
+		       USER_ID,	   
+			   '수수료 '|| replace(TO_CHAR( AMOUNT , '999,999,999,999'), ' ', '') ||'원 + 부가세 ' || replace(TO_CHAR( AMOUNT_BILL , '999,999,999,999'), ' ', '')  || '원 총 ' || replace((TO_CHAR( TO_NUMBER(AMOUNT)+TO_NUMBER(AMOUNT_BILL) , '999,999,999,999') ), ' ', '')|| '원'   AS REMARK,
+			   'T' AS OLD_YN
+		  FROM
+		       (SELECT 
+		               TEMPLE_CD,
+		               ACT_DATE,
+		               ACCT_GBN,
+		               IE_GBN,
+		               KWAN,
+		               HANG,
+		               MOK,
+		               SUM(AMOUNT) AS AMOUNT,
+		               SUM(AMOUNT_BILL) AS AMOUNT_BILL,
+		               USER_ID
+		          FROM (						
+						SELECT 
+							A.TEMPLE_CD
+							,SUBSTR(A.SUB_DATE,0,8) AS ACT_DATE
+							,B.ACCT_GBN
+							,B.IE_GBN
+							,B.KWAN
+							,B.HANG
+							,B.MOK
+							,SUM(COMMISSION) AS AMOUNT
+							,SUM(COMMISSION)*0.1 AS AMOUNT_BILL
+							,(SELECT ADMIN_ID FROM ASP_TEMPLE_MASTER WHERE TEMPLE_CD = #{V_TEMPLE_CD} AND ROWNUM = 1) USER_ID
+							FROM (
+									SELECT
+									  A.TEMPLE_CD
+									 ,TO_CHAR(B.CRT_DATE,'YYYYMMDD') AS SUB_DATE
+									 ,A.FST_PRICE AS AMOUNT
+									 ,SUM(B.GETRESULTPRICE) AS GETRESULTPRICE
+									 ,D.TP_RATE_COMMISSION
+									 ,ROUND(DECODE(D.TP_RATE_COMMISSION,NULL,0, ((A.FST_PRICE - SUM(B.GETRESULTPRICE) ) * D.TP_RATE_COMMISSION)/ 100),0) AS COMMISSION 
+									 ,A.PGCODE
+									 ,A.PGAUTHCODE
+								    FROM REC_CARDPAY A ,REC_CARDPAY_HIS B , ASP_TEMPLE_PG_INFO_HIS D
+									WHERE 1=1
+									 AND A.TEMPLE_CD = B.TEMPLE_CD
+									 AND A.PGCODE = B.PGCODE
+									 AND A.PGAUTHCODE = B.PGAUTHCODE
+									 AND A.TEMPLE_CD = D.TEMPLE_CD(+)
+									 AND A.PGCODE = D.PGCODE(+)
+									 AND A.PGAUTHDATE >= D.TP_COMMISSION_FROM(+)
+									 AND A.PGAUTHDATE &lt;= DECODE(D.TP_COMMISSION_TO(+),'00000000','99999999',D.TP_COMMISSION_TO(+))
+									 AND TO_CHAR(B.CRT_DATE,'YYYYMMDD') = A.PGAUTHDATE
+									 AND A.TEMPLE_CD =#{V_TEMPLE_CD}
+									 AND TO_CHAR(B.CRT_DATE,'YYYYMMDD')= #{V_ACT_DATE}
+									GROUP BY A.TEMPLE_CD
+									 	    ,TO_CHAR(B.CRT_DATE,'YYYYMMDD')
+									 		,A.FST_PRICE
+									 		,D.TP_RATE_COMMISSION
+									 		,A.PGCODE
+									 		,A.PGAUTHCODE
+							 )A, ASP_TEMPLE_PG_INFO B
+							 WHERE 1=1
+							 AND A.TEMPLE_CD = B.TEMPLE_CD
+							 AND A.PGCODE = B.PGCODE
+							 GROUP BY A.TEMPLE_CD
+								     ,SUBSTR(A.SUB_DATE,0,8) 
+								     ,B.ACCT_GBN
+								     ,B.IE_GBN
+								     ,B.KWAN
+								     ,B.HANG
+								     ,B.MOK						   
+		 				UNION ALL  
+							SELECT A.TEMPLE_CD
+		                          ,SUB_DATE AS ACT_DATE
+							      ,1 AS ACCT_GBN
+							      ,'I' AS IE_GBN
+							      ,9 AS KWAN
+							      ,3 AS HANG
+							      ,7 AS MOK
+							      ,SUM(COMMISSION) AS AMOUNT
+							      ,SUM(COMMISSION)*0.1 AS AMOUNT_BILL
+							      ,'' as USER_ID
+		                    FROM(
+		                     	  SELECT 
+		                         	A.TEMPLE_CD
+		                       	   ,TO_CHAR(B.CRT_DATE,'YYYYMMDD') AS SUB_DATE
+		                           ,SUM(B.GETRESULTPRICE) AS GETRESULTPRICE
+		                           ,D.TP_RATE_COMMISSION 
+		                           ,ROUND(DECODE(D.TP_RATE_COMMISSION,NULL,0, ((SUM(B.GETRESULTPRICE) ) * D.TP_RATE_COMMISSION)/ 100),0) AS COMMISSION 
+		                           ,A.PGCODE
+		  					      FROM REC_CARDPAY A 
+		  					          ,REC_CARDPAY_HIS B 
+		  					          ,ASP_TEMPLE_PG_INFO_HIS D 
+		                     	  WHERE 1=1
+		                        	AND A.TEMPLE_CD = B.TEMPLE_CD
+		                        	AND A.PGCODE = B.PGCODE
+		                        	AND A.PGAUTHCODE = B.PGAUTHCODE
+		                        	AND A.TEMPLE_CD = D.TEMPLE_CD(+)
+		                       	 	AND A.PGCODE = D.PGCODE(+)
+		                        	AND A.PGAUTHDATE >= D.TP_COMMISSION_FROM(+)
+		                       		AND A.PGAUTHDATE &lt;= DECODE(D.TP_COMMISSION_TO(+),'00000000','99999999',D.TP_COMMISSION_TO(+))
+		                        	AND TO_CHAR(B.CRT_DATE,'YYYYMMDD') &lt;> A.PGAUTHDATE 
+		                        	AND A.TEMPLE_CD =#{V_TEMPLE_CD}
+		                        	AND TO_CHAR(B.CRT_DATE,'YYYYMMDD')= #{V_ACT_DATE}
+		                          GROUP BY A.TEMPLE_CD 
+		                                  ,TO_CHAR(B.CRT_DATE,'YYYYMMDD')
+		                                  ,A.FST_PRICE 
+		                                  ,D.TP_RATE_COMMISSION 
+		                                  ,A.PGCODE
+		                         )A
+		                    GROUP BY A.TEMPLE_CD
+		                            ,SUB_DATE 
+						UNION ALL  
+			               SELECT
+						         #{V_TEMPLE_CD} TEMPLE_CD
+						        ,#{V_ACT_DATE} ACT_DATE
+						        ,1 AS ACCT_GBN 
+						        ,'O' AS IE_GBN
+						        ,9 AS KWAN
+						        ,3 AS HANG
+						        ,11 AS MOK
+						       ,NVL(SUM(TEMPLE_PRICE),0) AS AMOUNT
+						       ,NVL(SUM(TEMPLE_PRICE),0)*0.1 AS AMOUNT_BILL
+						       ,'' as USER_ID
+						  FROM SIN_CARD_ISSUE_DETAIL
+						 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+						   AND TO_CHAR(SETTING_DATE, 'YYYYMMDD') =  #{V_ACT_DATE}				
+						   AND NVL(DEL_YN, 'F')  != 'T'  
+						)
+		        GROUP BY TEMPLE_CD
+		                ,ACT_DATE
+		                ,ACCT_GBN
+		                ,IE_GBN
+		                ,KWAN
+		                ,HANG
+		                ,MOK
+		                ,USER_ID) DET
+		                ,ACC_ACCOUNTS ACC
+		 WHERE DET.TEMPLE_CD  = ACC.TEMPLE_CD(+)
+		   AND DET.ACCT_GBN   = ACC.ACCT_GBN(+)
+		   AND DET.IE_GBN     = ACC.IE_GBN(+)
+		   AND DET.KWAN       = ACC.KWAN(+)
+		   AND DET.HANG       = ACC.HANG(+)
+		   AND DET.MOK        = ACC.MOK(+)
+		   AND DET.AMOUNT     &lt;> 0
+		UNION ALL   
+		SELECT
+			AMTM.TEMPLE_CD,
+			AMTM.ACT_DATE,
+			AMTM.ACCT_GBN,
+			AMTM.IE_GBN,
+			AMTM.KWAN,
+			AA.KWAN_NAME,
+			AMTM.HANG,
+			AA.HANG_NAME,
+			AMTM.MOK,
+			AA.MOK_NAME,
+			AMTM.AMOUNT,
+			AMTM.USER_ID,
+			AMTM.REMARK,
+		    'Y' AS OLD_YN
+		FROM ACC_MONEY_TEMP_MGT 	AMTM,
+			 ACC_ACCOUNTS 			AA
+		WHERE AMTM.TEMPLE_CD		= AA.TEMPLE_CD
+		AND	  AMTM.ACCT_GBN			= AA.ACCT_GBN
+		AND	  AMTM.IE_GBN			= AA.IE_GBN
+		AND	  AMTM.KWAN				= AA.KWAN
+		AND	  AMTM.HANG				= AA.HANG
+		AND	  AMTM.MOK				= AA.MOK
+		AND   AMTM.TEMPLE_CD 		= #{V_TEMPLE_CD}
+		AND   AMTM.ACT_DATE 		= #{V_ACT_DATE}
+		AND   AMTM.CMS_YN           = 'Y'
+		ORDER BY ACCT_GBN,IE_GBN,KWAN,HANG,MOK
+		) TEMP
+	</select>
+
+	<select id="SELECT_ACC" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT AMM.TEMPLE_CD
+		      ,AMM.ACT_DATE
+		      ,AMM.ACT_NO
+		      ,AMM.ACCT_GBN
+		      ,AMM.IE_GBN
+		      ,AMM.KWAN
+		      ,AAC.KWAN_NAME
+		      ,AMM.HANG
+		      ,AAC.HANG_NAME
+		      ,AMM.MOK
+		      ,AAC.MOK_NAME
+		      ,AMM.AMOUNT
+		      ,AMM.USER_ID
+		      ,AMM.REMARK
+		      ,AMM.CRT_USER
+		      ,AMM.UPT_USER
+		      ,TO_CHAR(AMM.UPT_DATE) AS UPT_DATE
+		      ,TO_CHAR(AMM.CRT_DATE) AS CRT_DATE
+		      ,AMM.REMOTE
+		  FROM ACC_MONEY_MGT AMM, ACC_ACCOUNTS AAC
+		 WHERE AMM.TEMPLE_CD = AAC.TEMPLE_CD
+		   AND AMM.IE_GBN    = AAC.IE_GBN
+		   AND AMM.ACCT_GBN  = AAC.ACCT_GBN
+		   AND AMM.KWAN      = AAC.KWAN
+		   AND AMM.HANG      = AAC.HANG
+		   AND AMM.MOK       = AAC.MOK
+		   AND AMM.TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND AMM.ACT_DATE  = #{V_ACT_DATE}
+		   AND AMM.ACCT_GBN  = #{V_ACCT_GBN}
+		ORDER BY AMM.ACT_NO
+	</select>
+	
+	<insert id="INSERT_ACC" parameterType="java.util.Map" >
+		INSERT INTO ACC_MONEY_MGT (
+		        TEMPLE_CD
+		       ,ACT_DATE
+		       ,ACT_NO
+		       ,KWAN
+		       ,HANG
+		       ,MOK
+		       ,ACCT_GBN
+		       ,CRT_USER
+		       ,AMOUNT
+		       ,USER_ID
+		       ,REMARK
+		       ,IE_GBN
+		       ,CRT_DATE
+		       ,UPT_USER
+		       ,UPT_DATE
+		       ,REMOTE
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{ACT_DATE}
+		       ,#{ACT_NO}
+		       ,#{KWAN}
+		       ,#{HANG}
+		       ,#{MOK}
+		       ,#{ACCT_GBN}
+		       ,#{CRT_USER}
+		       ,#{AMOUNT}
+		       ,#{USER_ID ,jdbcType=VARCHAR}
+		       ,#{REMARK  ,jdbcType=VARCHAR}
+		       ,#{IE_GBN}
+		       ,SYSDATE
+		       ,#{UPT_USER}
+		       ,SYSDATE
+		       ,#{REMOTE}
+		)
+		
+	</insert>
+		
+	<update id="UPDATE_ACC" parameterType="java.util.Map" >
+		UPDATE ACC_MONEY_MGT 
+		   SET KWAN      = #{KWAN}
+		      ,HANG      = #{HANG}
+		      ,MOK       = #{MOK}
+		      ,ACCT_GBN  = #{ACCT_GBN}
+		      ,CRT_USER  = #{CRT_USER}
+		      ,AMOUNT    = #{AMOUNT}
+		      ,USER_ID   = #{USER_ID}
+		      ,REMARK    = #{REMARK}
+		      ,IE_GBN    = #{IE_GBN}
+		      ,CRT_DATE  = #{CRT_DATE}
+		      ,UPT_USER  = #{UPT_USER}
+		      ,UPT_DATE  = #{UPT_DATE}
+		      ,REMOTE    = #{REMOTE}
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND ACT_DATE  = #{ACT_DATE}
+   		   AND ACT_NO    = #{ACT_NO}
+	</update>
+	
+	<delete id="DELETE_ACC" parameterType="java.util.Map" >
+		DELETE FROM ACC_MONEY_MGT
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND ACT_DATE  = #{ACT_DATE}
+		   AND ACT_NO    = #{ACT_NO}
+	</delete>
+	
+	<select id="SELECT_APPROVAL" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT TEMPLE_CD
+		      ,SORT_SEQ
+		      ,APPROVAL_TITLE 
+		  FROM ASP_TEMPLE_APPROVAL_MGT
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		 ORDER BY SORT_SEQ
+	</select>
+	
+	
+	<select id="SELECT_REMAIN" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT SUM(SUM) AS AMOUNT
+          FROM ( 
+                  SELECT SUM(NVL(DECODE(IE_GBN,'I',TO_NUMBER(ETC2),TO_NUMBER(ETC2*-1)),0)) AS SUM
+				   FROM ACC_ACCOUNTS
+			      WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+				    AND HANG = 0
+					AND MOK  = 0
+					AND ETC2 IS NOT NULL
+				  UNION ALL
+				 SELECT SUM(NVL(DECODE(IE_GBN,'I',AMOUNT, AMOUNT*-1),0)) AS SUM
+				   FROM ACC_MONEY_MGT 
+			      WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+			   )
+	</select>
+	
+	
+	<update id="UPDATE_REMAIN" parameterType="kr.co.o2i.util.CommonMap" >
+		UPDATE ASP_TEMPLE_MASTER 
+		   SET REMAIN_AMOUNT = #{REMAIN_AMOUNT}
+		      ,UPT_DATE      = SYSDATE
+		      ,UPT_USER      = #{UPT_USER}
+		      ,REMOTE        = #{REMOTE}
+		 WHERE TEMPLE_CD     = #{TEMPLE_CD}
+	</update>
+	
+	
+	<select  id="EXT_SETTLE" parameterType="kr.co.o2i.util.CommonMap" resultType="Integer" >
+		SELECT COUNT(*) 
+		  FROM ACC_MONEY_MGT 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND ACT_DATE  = #{V_ACT_DATE}
+	</select>
+	
+</mapper>

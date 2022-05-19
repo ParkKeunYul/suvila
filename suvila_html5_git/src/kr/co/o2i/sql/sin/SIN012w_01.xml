@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SIN012w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="CHECK_P" column="CHECK_P"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+
+	
+	
+	<select id="SELECT_SINDO_F" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT SIN.TEMPLE_CD
+			  ,SIN.BUD_NO
+			  ,SIN.BUD_CODE
+			  ,SIN.SORT_SEQ
+			  ,SIN.DAEJU_BUD_NO
+			  ,SIN.REPRESEN_REL
+			  ,SIN.NAME_KOR
+			  ,SIN.ZIP_CD
+			  ,SIN.ADDR1
+			  ,SIN.ADDR2||' '|| FN_ADDR_BLDG2(SIN.BLDG_NUM) AS ADDR2
+			  ,SIN.TELNO1 || DECODE(SIN.TELNO1,NULL,'','-') || SIN.TELNO2 || DECODE(SIN.TELNO2,NULL,'','-') || SIN.TELNO3 AS TELNO
+			  ,SIN.MOBILE_TELNO1 || DECODE(SIN.MOBILE_TELNO1,NULL,'','-') || SIN.MOBILE_TELNO2 || DECODE(SIN.MOBILE_TELNO2,NULL,'','-') || SIN.MOBILE_TELNO3 AS MOBILE_TELNO
+			  ,SIN.POST_TRANS
+			  ,SIN.SMS_TRANS
+			  ,SIN.SEXAGENARY
+			  ,(SELECT NAME FROM ASP_CODE_MGT WHERE GROUP_CD = 'GANJI' AND CODE = SIN.SEXAGENARY) AS SEXAGENARY_NM
+			  ,SIN.LUNAR_SOLAR
+			  ,( SELECT NAME FROM ASP_CODE_MGT WHERE GROUP_CD = 'LUNAR_SOLAR' AND CODE = SIN.LUNAR_SOLAR) AS LUNAR_SOLAR_NM
+			  ,SIN.ISSUE_DATE
+			  ,SIN.BIRTHDAY
+			  ,(CASE
+			      WHEN length(REPLACE(BIRTHDAY, ' ', '')) =8 then (to_char(sysdate, 'YYYY') - substr(BIRTHDAY,0,4 )+1)||''
+			      ELSE ''
+			    END  ) as AGE
+			  ,SIN.SEX_GBN
+			  ,(SELECT NAME FROM ASP_CODE_MGT WHERE GROUP_CD = 'SEXGBN' AND CODE = SIN.SEX_GBN) AS SEX_GBN_NM
+			  ,SIN.SINDO_GBN
+			  ,( SELECT NAME FROM ASP_CODE_MGT WHERE GROUP_CD = 'SINDOGBN' AND CODE = SIN.SINDO_GBN) AS SINDO_GBN_NM
+			  ,SIN.MEMO
+			  ,SIN.EMAIL
+			  ,SIN.SACRED_KOR
+			  ,'T' as CHECK_P
+			  ,SIN.SMS_GROUP_TRANS
+			  ,(SELECT ZIP_NUM ||' ('||  ZIP_NM ||') '||  DELIVERY_NUM|| ' (' ||DELIVERY_NM ||')' || ' ' || LPAD(TEAM_NUM1, 2, '0') || ' ' || LPAD(TEAM_NUM2, 2, '0') FROM POST_DM_CODE WHERE ZIPCD = SIN.ZIP_CD) as ZIP_BAE
+		 FROM SIN_CARD_MASTER SIN
+		WHERE SIN.TEMPLE_CD = #{V_TEMPLE_CD}
+		  AND SIN.DEL_YN    = 'F'
+		  AND SIN.BUD_NO IN ( SELECT BUD_NO FROM SIN_CARD_MASTER WHERE TEMPLE_CD = SIN.TEMPLE_CD 
+			                   MINUS 
+			                  SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = SIN.TEMPLE_CD  )
+		<if test='V_BUD_NO != "" and V_BUD_NO != null  '>
+			AND SIN.BUD_NO = #{V_BUD_NO}
+		</if>                  
+		<if test='V_DAEJU == "1" '>
+			AND SIN.BUD_NO = SIN.DAEJU_BUD_NO
+		</if>
+		<if test='V_CLASS_CD != "0" '>
+			AND SIN.BUD_NO IN (SELECT BUD_NO FROM SIN_CLASS_INFO WHERE TEMPLE_CD = #{V_TEMPLE_CD} AND CLASS_CD = #{V_CLASS_CD})
+		</if>
+			
+		<if test='V_DATE_GBN == "1" '>
+			AND SIN.ISSUE_DATE    >= #{V_ISSUE_SDATE}
+			AND SIN.ISSUE_DATE &lt;= #{V_ISSUE_EDATE}
+		</if>
+		<if test='V_DATE_GBN == "2" '>
+			AND SIN.BIRTHDAY     >= #{V_FBIRTHDAY}
+			AND SIN.BIRTHDAY  &lt;= #{V_FBIRTHDAY}
+		</if>
+		<if test='V_DATE_GBN == "3" '>
+			AND SUBSTR(SIN.BIRTHDAY, 5, 2)    >= #{V_FBIRTHMONTH}
+			AND SUBSTR(SIN.BIRTHDAY, 5, 2) &lt;= #{V_FBIRTHMONTH}
+		</if>
+		<if test='V_ANIMAL != "" and V_ANIMAL != null  '>
+			AND SIN.SEXAGENARY IN (SELECT CODE FROM ASP_CODE_MGT WHERE GROUP_CD = 'GANJI' AND ETC1 = #{V_ANIMAL})
+		</if>
+		<if test='V_SEX_GBN != "" and V_SEX_GBN != null  '>
+			AND SIN.SEX_GBN = #{V_SEX_GBN}
+		</if>
+		<if test='V_SINDO_GBN != "" and V_SINDO_GBN != null  '>
+			AND SIN.SINDO_GBN = #{V_SINDO_GBN}
+		</if>
+		<if test='V_ADDR != "" and V_ADDR != null  '>
+			AND SIN.ADDR1 || ' ' || SIN.ADDR2|| ' ' || FN_ADDR_BLDG2(SIN.BLDG_NUM)    LIKE '%' || #{V_ADDR} || '%'
+		</if>
+		
+		<if test='V_ZIP_TYPE == "1" '>
+			AND length(SIN.ZIP_CD) = 6
+		</if>
+		<if test='V_ZIP_TYPE == "2" '>
+			AND length(SIN.ZIP_CD) = 5
+		</if>
+		
+		<if test='V_AGE != "" and V_AGE != null  '>
+			<choose>
+			  	<when test='V_AGEFN == "1"'>
+			  		AND (CASE WHEN length(REPLACE(BIRTHDAY, ' ', '')) =8 THEN (to_char(sysdate, 'YYYY') - substr(BIRTHDAY,0,4 )+1)||'' ELSE '' END)    >= #{V_AGE}
+			  	</when>
+			  	<when test='V_AGEFN == "2"'>
+			  		AND (CASE WHEN length(REPLACE(BIRTHDAY, ' ', '')) =8 THEN (to_char(sysdate, 'YYYY') - substr(BIRTHDAY,0,4 )+1)||'' ELSE '' END) &lt;= #{V_AGE}
+			  	</when>
+			  	<otherwise>
+			  		AND (CASE WHEN length(REPLACE(BIRTHDAY, ' ', '')) =8 THEN (to_char(sysdate, 'YYYY') - substr(BIRTHDAY,0,4 )+1)||'' ELSE '' END)    = #{V_AGE}
+			  	</otherwise>
+			  </choose>
+		</if>
+		
+		<if test='V_MEMO != "" and V_MEMO != null  '>
+			AND SIN.MEMO LIKE '%' || #{V_MEMO} || '%'
+		</if>	
+		ORDER BY BUD_NO
+	</select>
+	
+	
+	<select id="SELECT_SINDO_T" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT SIN.TEMPLE_CD
+		      ,SIN.BUD_NO
+		      ,SIN.BUD_CODE
+		      ,SIN.SORT_SEQ
+		      ,SIN.DAEJU_BUD_NO
+		      ,SIN.REPRESEN_REL
+		      ,SIN.NAME_KOR
+		      ,SIN.ZIP_CD
+		      ,SIN.ADDR1
+			  ,SIN.ADDR2||' '|| FN_ADDR_BLDG2(SIN.BLDG_NUM) AS ADDR2
+			 ,SIN.TELNO1 || DECODE(SIN.TELNO1,NULL,'','-') || SIN.TELNO2 || DECODE(SIN.TELNO2,NULL,'','-') || SIN.TELNO3 AS TELNO
+			 ,SIN.MOBILE_TELNO1 || DECODE(SIN.MOBILE_TELNO1,NULL,'','-') || SIN.MOBILE_TELNO2 || DECODE(SIN.MOBILE_TELNO2,NULL,'','-') || SIN.MOBILE_TELNO3 AS MOBILE_TELNO
+			 ,SIN.POST_TRANS
+			 ,SIN.SMS_TRANS
+			 ,SIN.SEXAGENARY
+			 ,(SELECT NAME FROM ASP_CODE_MGT WHERE GROUP_CD = 'GANJI' AND CODE = SIN.SEXAGENARY) AS SEXAGENARY_NM
+			 ,SIN.LUNAR_SOLAR
+			 ,(SELECT NAME FROM ASP_CODE_MGT WHERE GROUP_CD = 'LUNAR_SOLAR' AND CODE = SIN.LUNAR_SOLAR) AS LUNAR_SOLAR_NM
+			 ,SIN.ISSUE_DATE
+			 ,SIN.BIRTHDAY
+			 ,(CASE
+			      WHEN length(REPLACE(BIRTHDAY, ' ', '')) =8 then (to_char(sysdate, 'YYYY') - substr(BIRTHDAY,0,4 )+1)||''
+			      ELSE ''
+			   END)  as AGE
+			 ,SIN.SEX_GBN
+			 ,(SELECT NAME FROM ASP_CODE_MGT WHERE GROUP_CD = 'SEXGBN' AND CODE = SIN.SEX_GBN) AS SEX_GBN_NM
+			 ,SIN.SINDO_GBN
+			 ,(SELECT NAME FROM ASP_CODE_MGT WHERE GROUP_CD = 'SINDOGBN' AND CODE = SIN.SINDO_GBN) AS SINDO_GBN_NM
+			 ,SIN.MEMO
+			 ,SIN.EMAIL
+			 ,SIN.SACRED_KOR
+			 ,'T' as CHECK_P
+			 ,SIN.SMS_GROUP_TRANS
+			 ,(SELECT ZIP_NUM ||' ('||  ZIP_NM ||') '||  DELIVERY_NUM|| ' (' ||DELIVERY_NM ||')' || ' ' || LPAD(TEAM_NUM1, 2, '0') || ' ' || LPAD(TEAM_NUM2, 2, '0') FROM POST_DM_CODE WHERE ZIPCD = SIN.ZIP_CD) as ZIP_BAE
+		FROM SIN_CARD_MASTER SIN
+		    ,(SELECT BUD_NO 
+				FROM SIN_CARD_MASTER 
+			   WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+				AND POST_TRANS = 'T' 
+				AND DEL_YN     = 'F' 
+				AND BUD_NO     = DAEJU_BUD_NO
+			  UNION
+			 SELECT MIN(BUD_NO) BUD_NO
+			   FROM SIN_CARD_MASTER
+			  WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+				AND POST_TRANS = 'T' 
+				AND DEL_YN = 'F'
+				AND BUD_CODE IN( SELECT DISTINCT BUD_CODE
+					               FROM SIN_CARD_MASTER
+					              WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+					                AND POST_TRANS = 'T' 
+					                AND DEL_YN     = 'F'
+					              MINUS
+					             SELECT BUD_CODE 
+					               FROM SIN_CARD_MASTER 
+					              WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+					                AND POST_TRANS = 'T' 
+					                AND DEL_YN     = 'F' 
+					                AND BUD_NO     = DAEJU_BUD_NO   )
+			    GROUP BY BUD_CODE
+			   ) B
+		WHERE SIN.TEMPLE_CD = #{V_TEMPLE_CD}
+		  AND SIN.DEL_YN    = 'F'
+		  AND SIN.BUD_NO IN (SELECT BUD_NO FROM SIN_CARD_MASTER WHERE TEMPLE_CD = SIN.TEMPLE_CD 
+			                  MINUS 
+			                 SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = SIN.TEMPLE_CD  )
+		  AND SIN.BUD_NO = B.BUD_NO
+		<if test='V_BUD_NO != "" and V_BUD_NO != null  '>
+			AND SIN.BUD_NO = #{V_BUD_NO}
+		</if>
+		<if test='V_DAEJU == "1" '>
+			AND SIN.BUD_NO = SIN.DAEJU_BUD_NO
+		</if>
+		<if test='V_CLASS_CD != "0" '>
+			AND SIN.BUD_NO IN (SELECT BUD_NO FROM SIN_CLASS_INFO WHERE TEMPLE_CD = #{V_TEMPLE_CD} AND CLASS_CD = #{V_CLASS_CD})
+		</if>
+			
+		<if test='V_DATE_GBN == "1" '>
+			AND SIN.ISSUE_DATE    >= #{V_ISSUE_SDATE}
+			AND SIN.ISSUE_DATE &lt;= #{V_ISSUE_EDATE}
+		</if>
+		<if test='V_DATE_GBN == "2" '>
+			AND SIN.BIRTHDAY     >= #{V_FBIRTHDAY}
+			AND SIN.BIRTHDAY  &lt;= #{V_FBIRTHDAY}
+		</if>
+		<if test='V_DATE_GBN == "3" '>
+			AND SUBSTR(SIN.BIRTHDAY, 5, 2)    >= #{V_FBIRTHMONTH}
+			AND SUBSTR(SIN.BIRTHDAY, 5, 2) &lt;= #{V_FBIRTHMONTH}
+		</if>
+		<if test='V_ANIMAL != "" and V_ANIMAL != null  '>
+			AND SIN.SEXAGENARY IN (SELECT CODE FROM ASP_CODE_MGT WHERE GROUP_CD = 'GANJI' AND ETC1 = #{V_ANIMAL})
+		</if>
+		<if test='V_SEX_GBN != "" and V_SEX_GBN != null  '>
+			AND SIN.SEX_GBN = #{V_SEX_GBN}
+		</if>
+		<if test='V_SINDO_GBN != "" and V_SINDO_GBN != null  '>
+			AND SIN.SINDO_GBN = #{V_SINDO_GBN}
+		</if>
+		<if test='V_ADDR != "" and V_ADDR != null  '>
+			AND SIN.ADDR1 || ' ' || SIN.ADDR2|| ' ' || FN_ADDR_BLDG2(SIN.BLDG_NUM)    LIKE '%' || #{V_ADDR} || '%'
+		</if>
+		
+		<if test='V_ZIP_TYPE == "1" '>
+			AND length(SIN.ZIP_CD) = 6
+		</if>
+		<if test='V_ZIP_TYPE == "2" '>
+			AND length(SIN.ZIP_CD) = 5
+		</if>
+		
+		<if test='V_AGE != "" and V_AGE != null  '>
+			<choose>
+			  	<when test='V_AGEFN == "1"'>
+			  		AND (CASE WHEN length(REPLACE(BIRTHDAY, ' ', '')) =8 THEN (to_char(sysdate, 'YYYY') - substr(BIRTHDAY,0,4 )+1)||'' ELSE '' END)    >= #{V_AGE}
+			  	</when>
+			  	<when test='V_AGEFN == "2"'>
+			  		AND (CASE WHEN length(REPLACE(BIRTHDAY, ' ', '')) =8 THEN (to_char(sysdate, 'YYYY') - substr(BIRTHDAY,0,4 )+1)||'' ELSE '' END) &lt;= #{V_AGE}
+			  	</when>
+			  	<otherwise>
+			  		AND (CASE WHEN length(REPLACE(BIRTHDAY, ' ', '')) =8 THEN (to_char(sysdate, 'YYYY') - substr(BIRTHDAY,0,4 )+1)||'' ELSE '' END)    = #{V_AGE}
+			  	</otherwise>
+			  </choose>
+		</if>
+		
+		<if test='V_MEMO != "" and V_MEMO != null  '>
+			AND SIN.MEMO LIKE '%' || #{V_MEMO} || '%'
+		</if>
+		ORDER BY BUD_NO
+	</select>
+	
+</mapper>

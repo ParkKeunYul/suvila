@@ -1,0 +1,43 @@
+Ext.define('ExFrm.view.ser.ser025w_01Model', {
+    extend:'Ext.app.ViewModel', 
+    alias: 'viewmodel.ser025w_01', 
+    stores:{ 
+    	ds_detail:{
+        	fields:['REMARK'],
+        	proxy:{
+                type:'ajax',
+                url:'/ser/SER025w_01/recCancleList.suvila',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'
+                }
+            }
+            ,autoLoad:false
+        },
+        ds_MisuAmt:{
+        	fields:['REMARK'],
+        	proxy:{
+                type:'ajax',
+                url:'/rec/REC004W_04/selectMisu.suvila',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'
+                }
+            }
+            ,autoLoad:false
+        },
+        ds_recKind:{
+        	fields:['REMARK'],
+        	proxy:{
+                type:'ajax',
+                url:'/asp/CodeSearch/ComCodeAll.suvila?group_cd=REC',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'
+                }
+            }
+            ,autoLoad:true
+        }
+        
+    }
+});

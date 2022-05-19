@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SIN001p_09DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+	
+	
+	<select id="SELECT_GANJI" parameterType="kr.co.o2i.util.CommonMap" resultType="java.util.Map">
+		SELECT YEAR
+		      ,CODE
+		      ,NAME
+		      ,CURRENT_YEAR
+		      ,AGE
+		      ,RANK
+		FROM ( SELECT A.YEAR
+		             ,A.CODE
+		             ,B.NAME
+		             ,A.CURRENT_YEAR
+		             ,A.CURRENT_YEAR - A.YEAR +1 AS AGE
+		             ,RANK() OVER (ORDER BY A.YEAR DESC) as RANK	   
+			    FROM ( SELECT SUBSTR(MINUS_YYYYMMDD, 1,4) AS YEAR
+			                 ,ETC1 AS CODE
+			                 ,TO_CHAR(SYSDATE,'YYYY') AS CURRENT_YEAR
+				         FROM ASP_PLUS_MINUS_MAPPER
+						WHERE 1=1
+						<if test='V_SEARCH_GBN == "NAME"'>
+							AND ETC1 = (SELECT CODE FROM ASP_CODE_MGT WHERE GROUP_CD = 'GANJI'	AND NAME = #{V_SEARCH_WORD} )
+						</if>
+						<if test='V_SEARCH_GBN == "AGE"'>
+							AND MINUS_YYYYMMDD LIKE (TO_CHAR(SYSDATE,'YYYY')-#{V_SEARCH_WORD}+1) || '%'
+						</if>
+						<if test='V_SEARCH_GBN == "YEAR"'>
+							AND MINUS_YYYYMMDD LIKE #{V_SEARCH_WORD} || '%'
+						</if>
+				        GROUP BY SUBSTR(MINUS_YYYYMMDD, 1,4)
+				                ,ETC1
+			          )A 
+			        ,ASP_CODE_MGT B
+			  WHERE GROUP_CD      = 'GANJI'
+				AND A.CODE        = B.CODE
+				AND CURRENT_YEAR >= YEAR 
+		)
+		WHERE RANK &lt;=3
+	</select>
+	
+	
+	
+</mapper>

@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="CodeSearchProcDAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+	<insert id="INSERT_Accounts" parameterType="java.util.Map" >
+		INSERT INTO ACC_ACCOUNTS (
+		   	TEMPLE_CD
+		   ,KWAN
+		   ,HANG
+		   ,MOK
+		   ,KWAN_NAME
+		   ,HANG_NAME
+		   ,MOK_NAME
+		   ,ACCT_GBN
+		   ,ACCT_NM
+		   ,REMARK
+		   ,IE_GBN
+		   ,ETC1
+		   ,ETC2
+		   ,ETC3
+		   ,UPT_USER
+		   ,UPT_DATE
+		   ,REMOTE
+		) VALUES (
+		    #{TEMPLE_CD}
+		   ,#{KWAN}
+		   ,#{HANG}
+		   ,#{MOK}
+		   ,#{KWAN_NAME}
+		   ,#{HANG_NAME}
+		   ,#{MOK_NAME}
+		   ,#{ACCT_GBN}
+		   ,(SELECT DISTINCT
+			       ACCT_NM
+			  FROM ACC_ACCOUNTS
+			WHERE TEMPLE_CD = #{TEMPLE_CD}
+			  AND ACCT_GBN  = #{ACCT_GBN})
+		   ,#{REMARK  ,jdbcType=VARCHAR}
+		   ,#{IE_GBN}
+		   ,#{ETC1    ,jdbcType=VARCHAR}
+		   ,#{ETC2    ,jdbcType=VARCHAR}
+		   ,#{ETC3    ,jdbcType=VARCHAR}
+		   ,#{UPT_USER}
+		   ,Sysdate
+		   ,#{REMOTE}
+		)
+		
+	</insert>
+	
+	<update id="UPDATE_Accounts" parameterType="java.util.Map" >
+		 UPDATE ACC_ACCOUNTS 
+			SET KWAN      = #{KWAN}
+			   ,HANG      = #{HANG}
+			   ,MOK       = #{MOK}
+			   ,KWAN_NAME = #{KWAN_NAME}
+			   ,HANG_NAME = #{HANG_NAME}
+			   ,MOK_NAME  = #{MOK_NAME}
+			   ,UPT_USER  = #{UPT_USER}
+			   ,UPT_DATE  = Sysdate
+			   ,REMOTE    = #{REMOTE}
+		  WHERE TEMPLE_CD = #{TEMPLE_CD}
+			AND KWAN      = #{KWAN}
+			AND HANG      = #{HANG}
+			AND MOK       = #{MOK}
+			AND ACCT_GBN  = #{ACCT_GBN}
+			AND IE_GBN    = #{IE_GBN}
+		
+	</update>
+	
+	<delete  id="DELETE_Accounts" parameterType="java.util.Map" >
+		DELETE FROM ACC_ACCOUNTS
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND KWAN      = #{KWAN}
+		   AND HANG      = #{HANG}
+		   AND MOK       = #{MOK}
+		   AND ACCT_GBN  = #{ACCT_GBN}
+		   AND IE_GBN    = #{IE_GBN}
+	</delete>
+	
+	
+	<select id="SELECT_CLASS_CD" parameterType="kr.co.o2i.util.CommonMap" resultType="String">
+		SELECT NVL(MAX(CLASS_CD)+1,1)
+          FROM SIN_CLASS_MGT
+          WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+	</select>
+	
+	
+	<insert id="INSERT_SIN_CLASS_MGT" parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO SIN_CLASS_MGT (
+		        TEMPLE_CD
+		       ,CLASS_CD
+		       ,CLASS_NAME
+		       ,USE_YN
+		       ,CRT_USER
+		       ,CRT_DATE
+		       ,UPT_USER
+		       ,UPT_DATE
+		       ,REMOTE
+		) VALUES (
+		        #{V_TEMPLE_CD}
+		       ,#{CLASS_CD}
+		       ,#{CLASS_NAME}
+		       ,'T'
+		       ,#{V_USER_ID}
+		       ,SYSDATE
+		       ,#{V_USER_ID}
+		       ,SYSDATE
+		       ,#{V_REMOTE}
+		)
+	</insert>
+	
+	
+	<select id="SELECT_CLASS_CNT" parameterType="kr.co.o2i.util.CommonMap" resultType="Integer">
+		SELECT COUNT(BUD_NO) AS BUD_COUNT                     
+		  FROM SIN_CLASS_INFO               	              
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		   AND CLASS_CD  = #{CLASS_CD} 
+		   AND BUD_NO    = #{BUD_NO} 
+	</select>
+	
+	<insert id="INSERT_SindoClass" parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO SIN_CLASS_INFO (
+		        TEMPLE_CD
+		       ,BUD_NO
+		       ,MEMO
+		       ,CRT_USER
+		       ,CRT_DATE
+		       ,UPT_DATE
+		       ,UPT_USER
+		       ,REMOTE
+		       ,CLASS_CD
+		) VALUES (
+		        #{V_TEMPLE_CD}
+		       ,#{BUD_NO}
+		       ,#{MEMO ,jdbcType=VARCHAR}
+		       ,#{V_USER_ID}
+		       ,SYSDATE
+		       ,SYSDATE
+		       ,#{V_USER_ID}
+		       ,#{V_REMOTE}
+		       ,#{CLASS_CD}
+		)
+	</insert>
+		
+	
+</mapper>

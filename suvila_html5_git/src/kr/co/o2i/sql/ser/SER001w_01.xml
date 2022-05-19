@@ -1,0 +1,536 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SER001w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+
+
+	<select id="UserSelect" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT  
+			 USER_ID
+			,SUBSTR(JUMIN_NO,1,6)	AS JUMIN_NO1
+			,SUBSTR(JUMIN_NO,7,13)	AS JUMIN_NO2
+			,USER_ID				AS USER_ID_TEMP 		
+			,PASSWD
+			,TEMPLE_CD
+			,TEMPLE_CD				AS TEMPLE_CD_TEMP
+			,USER_NM
+			,NAME_HAN
+			,SACRED_KOR
+			,SACRED_HAN
+			,JUMIN_NO
+			,EMP_GBN
+			,AUTH_GROUP
+			,AUTH_GROUP as AUTH_GROUP_TEMP
+			,BIRTHDAY
+			,LUNAR_SOLAR
+			,ZIP_CD
+			,ADDR1
+			,ADDR2
+			,MOBILE_TELNO1
+			,MOBILE_TELNO2
+			,MOBILE_TELNO3
+			,TELNO1
+			,TELNO2
+			,TELNO3
+			,PICTURE_PAHT
+			,POTO_IMAGE
+			,ENTRCOMP_DATA
+			,SERVEARMY_GBN
+			,DEPT_NM
+			,POSITION_CODE
+			,USE_YN
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMARK
+			,REMOTE
+			,' ' AS SMS
+		    ,BLDG_NUM
+		    ,FN_ADDR_BLDG2(BLDG_NUM) ADDR3
+		FROM ASP_TEMPLE_USER
+	   WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+		 AND USER_NM    like #{user_nm}||'%'
+		 AND AUTH_GROUP like #{auth_group}||'%'
+	   ORDER BY USER_ID ASC 
+	           ,USER_NM ASC
+	</select>
+
+	<select id="fileUserSelect" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT TEMPLE_CD
+			  ,USER_ID
+			  ,PICTURE_PAHT
+			  ,POTO_IMAGE
+		 FROM ASP_TEMPLE_USER
+		WHERE TEMPLE_CD  = #V_TEMPLE_CD#
+		  AND USER_NM    LIKE #user_nm#||'%'
+		  AND AUTH_GROUP LIKE #auth_group#||'%'
+		ORDER BY USER_ID ASC 
+		        ,USER_NM ASC
+	</select>
+	
+	<insert id="UserInsert"  parameterType="kr.co.o2i.util.CommonMap" >
+		INSERT INTO ASP_TEMPLE_USER (
+			 TEMPLE_CD
+			,USER_ID
+			,PASSWD
+			,USER_NM
+			,NAME_HAN
+			,SACRED_KOR
+			,SACRED_HAN
+			,JUMIN_NO
+			,EMP_GBN
+			,AUTH_GROUP
+			,BIRTHDAY
+			,LUNAR_SOLAR
+			,ZIP_CD
+			,ADDR1
+			,ADDR2
+			,MOBILE_TELNO1
+			,MOBILE_TELNO2
+			,MOBILE_TELNO3
+			,TELNO1
+			,TELNO2
+			,TELNO3
+			,PICTURE_PAHT
+			,POTO_IMAGE
+			,ENTRCOMP_DATA
+			,SERVEARMY_GBN
+			,DEPT_NM
+			,POSITION_CODE
+			,USE_YN
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMARK
+			,REMOTE
+			,BLDG_NUM
+		) VALUES (
+			 #{V_TEMPLE_CD}
+			,#{USER_ID}
+			,#{PASSWD}
+			,#{USER_NM         ,jdbcType=VARCHAR}
+			,#{NAME_HAN        ,jdbcType=VARCHAR}
+			,#{SACRED_KOR      ,jdbcType=VARCHAR}
+			,#{SACRED_HAN      ,jdbcType=VARCHAR}
+			,#{JUMIN_NO1,jdbcType=VARCHAR}||#{JUMIN_NO2,jdbcType=VARCHAR}
+			,#{EMP_GBN         ,jdbcType=VARCHAR}
+			,#{AUTH_GROUP}
+			,#{BIRTHDAY        ,jdbcType=VARCHAR}
+			,#{LUNAR_SOLAR     ,jdbcType=VARCHAR}
+			,#{ZIP_CD          ,jdbcType=VARCHAR}
+			,#{ADDR1           ,jdbcType=VARCHAR}
+			,#{ADDR2           ,jdbcType=VARCHAR}
+			,#{MOBILE_TELNO1   ,jdbcType=VARCHAR}
+			,#{MOBILE_TELNO2   ,jdbcType=VARCHAR}
+			,#{MOBILE_TELNO3   ,jdbcType=VARCHAR}
+			,#{TELNO1          ,jdbcType=VARCHAR}
+			,#{TELNO2          ,jdbcType=VARCHAR}
+			,#{TELNO3          ,jdbcType=VARCHAR}
+			,#{PICTURE_PAHT    ,jdbcType=VARCHAR}
+			,#{POTO_IMAGE      ,jdbcType=VARCHAR}
+			,#{ENTRCOMP_DATA   ,jdbcType=VARCHAR}
+			,#{SERVEARMY_GBN   ,jdbcType=VARCHAR}
+			,#{DEPT_NM         ,jdbcType=VARCHAR}
+			,#{POSITION_CODE   ,jdbcType=VARCHAR}
+			,#{USE_YN          ,jdbcType=VARCHAR}
+			,#{C_USER_ID       ,jdbcType=VARCHAR}
+			,SYSDATE
+			,#{C_USER_ID       ,jdbcType=VARCHAR}
+			,SYSDATE
+			,#{REMARK          ,jdbcType=VARCHAR}
+			,#{V_REMOTE        ,jdbcType=VARCHAR}
+			,#{BLDG_NUM        ,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<insert id="User_INSERT_SYBUDMENU"  parameterType="kr.co.o2i.util.CommonMap" >
+		INSERT INTO ASP_PERSON_MENU(
+			 TEMPLE_CD
+			,PGM_ID
+			,USER_ID
+			,AUTH_GRADE
+		)
+		SELECT
+			TEMPLE_CD
+		    ,PGM_ID
+		    ,#{USER_ID}
+		    ,'S'
+		FROM ASP_AUTH_MENU
+		WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+		AND AUTH_GROUP   = #{AUTH_GROUP}
+	</insert>
+
+
+	<insert id="UserUpdate"  parameterType="kr.co.o2i.util.CommonMap" >
+		 UPDATE ASP_TEMPLE_USER 
+		    SET PASSWD        = #{PASSWD}
+		       ,USER_NM       = #{USER_NM}
+		       ,NAME_HAN      = #{NAME_HAN      ,jdbcType=VARCHAR}
+		       ,SACRED_KOR    = #{SACRED_KOR    ,jdbcType=VARCHAR}
+		       ,SACRED_HAN    = #{SACRED_HAN    ,jdbcType=VARCHAR}
+		       ,JUMIN_NO      = #{JUMIN_NO1     ,jdbcType=VARCHAR}||#{JUMIN_NO2 ,jdbcType=VARCHAR}
+		       ,EMP_GBN       = #{EMP_GBN       ,jdbcType=VARCHAR}
+		       ,AUTH_GROUP    = #{AUTH_GROUP}
+		       ,BIRTHDAY      = #{BIRTHDAY      ,jdbcType=VARCHAR}
+		       ,LUNAR_SOLAR   = #{LUNAR_SOLAR   ,jdbcType=VARCHAR}
+		       ,ZIP_CD        = #{ZIP_CD        ,jdbcType=VARCHAR}
+		       ,ADDR1         = #{ADDR1         ,jdbcType=VARCHAR}
+		       ,ADDR2         = #{ADDR2         ,jdbcType=VARCHAR}
+		       ,MOBILE_TELNO1 = #{MOBILE_TELNO1 ,jdbcType=VARCHAR}
+		       ,MOBILE_TELNO2 = #{MOBILE_TELNO2 ,jdbcType=VARCHAR}
+		       ,MOBILE_TELNO3 = #{MOBILE_TELNO3 ,jdbcType=VARCHAR}
+		       ,TELNO1        = #{TELNO1        ,jdbcType=VARCHAR}
+		       ,TELNO2        = #{TELNO2        ,jdbcType=VARCHAR}
+		       ,TELNO3        = #{TELNO3        ,jdbcType=VARCHAR}
+		       ,PICTURE_PAHT  = #{PICTURE_PAHT  ,jdbcType=VARCHAR}
+		       ,POTO_IMAGE    = #{POTO_IMAGE    ,jdbcType=VARCHAR}
+		       ,ENTRCOMP_DATA = #{ENTRCOMP_DATA ,jdbcType=VARCHAR}
+		       ,SERVEARMY_GBN = #{SERVEARMY_GBN ,jdbcType=VARCHAR}
+		       ,DEPT_NM       = #{DEPT_NM       ,jdbcType=VARCHAR}
+		       ,POSITION_CODE = #{POSITION_CODE ,jdbcType=VARCHAR}
+		       ,USE_YN        = #{USE_YN        ,jdbcType=VARCHAR}
+		       ,UPT_USER      = #{C_USER_ID     ,jdbcType=VARCHAR}
+		       ,UPT_DATE      = SYSDATE
+		       ,REMARK        = #{REMARK        ,jdbcType=VARCHAR}
+		       ,REMOTE        = #{V_REMOTE      ,jdbcType=VARCHAR}
+		       ,BLDG_NUM      = #{BLDG_NUM      ,jdbcType=VARCHAR}
+		 WHERE TEMPLE_CD      = #{TEMPLE_CD_TEMP}
+		   AND USER_ID        = #{USER_ID_TEMP}
+	</insert>
+
+	<delete id="UserDelete" parameterType="kr.co.o2i.util.CommonMap" >
+		DELETE FROM ASP_TEMPLE_USER
+         WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+           AND USER_ID   = #{USER_ID}
+	</delete>
+
+	<insert id="INSERT_SY_BUDMENU"  parameterType="java.util.Map" >
+		INSERT INTO ASP_PERSON_MENU(  
+			TEMPLE_CD
+			, PGM_ID
+			, USER_ID
+			, AUTH_GRADE
+		)
+		SELECT TEMPLE_CD
+			  ,PGM_ID
+			  ,#{USER_ID}
+			  ,#{AUTH_GRADE}
+		 FROM ASP_AUTH_MENU
+		WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+		  AND AUTH_GROUP = #{AUTH_GROUP}
+		  AND (TEMPLE_CD, PGM_ID) NOT IN (SELECT TEMPLE_CD
+		                                        ,PGM_ID
+										    FROM ASP_PERSON_MENU
+										   WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+										     AND USER_ID    = #{USER_ID}
+										     AND AUTH_GRADE = #{AUTH_GRADE} ) 
+	</insert>
+	
+	<update id="UPDATE_SY_BUDMENU"  parameterType="kr.co.o2i.util.CommonMap" >
+		UPDATE ASP_TEMPLE_USER
+		   SET A.AUTH_GRADE = #{AUTH_GRADE}
+		 WHERE A.TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND A.PGM_ID     = #{PGM_ID}
+		   AND A.USER_ID    = #{USER_ID}
+	</update>
+	
+	<delete id="DELETE_SY_BUDMENU" parameterType="java.util.Map" >
+		DELETE FROM ASP_PERSON_MENU
+         WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+           AND USER_ID   = #{USER_ID}
+	</delete>
+	
+	<delete id="DELETE_SY_BUDMENU_BAKUP" parameterType="java.util.Map" >
+		DELETE FROM ASP_PERSON_MENU
+         WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+           AND USER_ID    = #{USER_ID} 
+           AND (TEMPLE_CD, PGM_ID) IN ( SELECT EMPLE_CD
+                                              ,PGM_ID
+							              FROM ASP_AUTH_MENU
+							             WHERE TEMPLE_CD  = #{TEMPLE_CD}
+										   AND AUTH_GROUP = #{AUTH_GROUP}  ) 
+	</delete>
+	
+	
+	<select id="SELECT_ASP_TEMPLE_USER_FAMILY_MGT" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT
+			 TEMPLE_CD
+			,USER_ID
+			,USER_ID AS USER_ID_TEMP
+			,REPRESEN_REL
+			,REPRESEN_REL AS REPRESEN_REL_TEMP
+			,FMY_NO
+			,FMY_NO AS FMY_NO_TEMP
+			,NAME_KOR
+			,SACRED_KOR
+			,LUNAR_SOLAR
+			,NVL(BIRTHDAY , ' ') AS BIRTHDAY
+			,SEX_GBN
+			,SEXAGENARY
+			,LEAP_MONTH
+			,BIRTHTIME
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+		FROM ASP_TEMPLE_USER_FAMILY_MGT
+	   WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		 AND USER_ID   = #{V_USER_ID}
+	
+	</select>
+	
+	
+	<select id="SELECT_ASP_TEMPLE_USER_SCHOLAR" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT
+			 TEMPLE_CD
+			,USER_ID
+			,USER_ID AS USER_ID_TEMP
+			,SDATE
+			,SDATE AS SDATE_TEMP
+			,EDATE
+			,LAST_SCHOLA
+			,MAJOR
+			,GRADUATION_GBN
+			,REMARK
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+		 FROM ASP_TEMPLE_USER_SCHOLAR
+		WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		  AND USER_ID   = #{V_USER_ID} 
+	</select>
+	
+	
+	<select id="SELECT_ASP_TEMPLE_USER_EDU_MGT" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT
+			 TEMPLE_CD
+			,USER_ID
+			,USER_ID AS USER_ID_TEMP
+			,EDU_SDATE
+			,EDU_SDATE AS EDU_SDATE_TEMP
+			,SEQ_NO
+			,SEQ_NO AS SEQ_NO_TEMP
+			,EDU_EDATE
+			,EDU_NAME
+			,COMPLETION_GBN
+			,REMARK
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+	    FROM ASP_TEMPLE_USER_EDU_MGT
+	   WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+	     AND USER_ID   = #{V_USER_ID}
+	</select>
+
+
+	<insert id="INSERT_ASP_TEMPLE_USER_FAMILY_MGT"  parameterType="kr.co.o2i.util.CommonMap" >
+		INSERT INTO ASP_TEMPLE_USER_FAMILY_MGT (
+			TEMPLE_CD
+			,USER_ID
+			,REPRESEN_REL
+			,FMY_NO
+			,NAME_KOR
+			,SACRED_KOR
+			,LUNAR_SOLAR
+			,BIRTHDAY
+			,SEX_GBN
+			,SEXAGENARY
+			,LEAP_MONTH
+			,BIRTHTIME
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+		) VALUES (
+			 #{V_TEMPLE_CD}
+			,#{USER_ID}
+			,#{REPRESEN_REL}
+			,(
+				SELECT NVL(MAX(FMY_NO)+1,'1')
+				  FROM ASP_TEMPLE_USER_FAMILY_MGT
+				 WHERE TEMPLE_CD    = #{V_TEMPLE_CD}
+				   AND USER_ID 		= #{USER_ID}
+				   AND REPRESEN_REL = #{REPRESEN_REL}
+				   AND FMY_NO		> 0)
+			,#{NAME_KOR      ,jdbcType=VARCHAR}
+			,#{SACRED_KOR    ,jdbcType=VARCHAR}
+			,#{LUNAR_SOLAR   ,jdbcType=VARCHAR}
+			,#{BIRTHDAY      ,jdbcType=VARCHAR}
+			,#{SEX_GBN       ,jdbcType=VARCHAR}
+			,#{SEXAGENARY    ,jdbcType=VARCHAR}
+			,#{LEAP_MONTH    ,jdbcType=VARCHAR}
+			,#{BIRTHTIME    ,jdbcType=VARCHAR}
+			,#{C_USER_ID }
+			,SYSDATE
+			,#{C_USER_ID }
+			,SYSDATE
+			,#{V_REMOTE  ,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<update id="UPDATE_ASP_TEMPLE_USER_FAMILY_MGT"  parameterType="kr.co.o2i.util.CommonMap" >
+		UPDATE ASP_TEMPLE_USER_FAMILY_MGT 
+		   SET REPRESEN_REL = #{REPRESEN_REL}
+		      ,NAME_KOR     = #{NAME_KOR    ,jdbcType=VARCHAR}
+		      ,SACRED_KOR   = #{SACRED_KOR  ,jdbcType=VARCHAR}
+		      ,LUNAR_SOLAR  = #{LUNAR_SOLAR ,jdbcType=VARCHAR}
+		      ,BIRTHDAY     = #{BIRTHDAY    ,jdbcType=VARCHAR}
+		      ,SEX_GBN      = #{SEX_GBN     ,jdbcType=VARCHAR}
+		      ,SEXAGENARY   = #{SEXAGENARY  ,jdbcType=VARCHAR}
+		      ,LEAP_MONTH   = #{LEAP_MONTH  ,jdbcType=VARCHAR}
+		      ,BIRTHTIME    = #{BIRTHTIME   ,jdbcType=VARCHAR}
+		      ,UPT_USER     = #{C_USER_ID}
+		      ,UPT_DATE     = SYSDATE
+		      ,REMOTE       = #{V_REMOTE}
+	     WHERE TEMPLE_CD    = #{TEMPLE_CD}
+	       AND USER_ID      = #{USER_ID_TEMP}
+	       AND REPRESEN_REL = #{REPRESEN_REL_TEMP}
+	       AND FMY_NO       = #{FMY_NO_TEMP} 
+	</update>
+	
+	<delete id="DELETE_ASP_TEMPLE_USER_FAMILY_MGT"  parameterType="kr.co.o2i.util.CommonMap" >
+		DELETE FROM ASP_TEMPLE_USER_FAMILY_MGT
+         WHERE TEMPLE_CD    = #{TEMPLE_CD}
+           AND USER_ID      = #{USER_ID_TEMP}
+           AND REPRESEN_REL = #{REPRESEN_REL_TEMP}
+           AND FMY_NO       = #{FMY_NO_TEMP}
+	</delete>
+	
+	<insert id="INSERT_ASP_TEMPLE_USER_SCHOLAR"  parameterType="kr.co.o2i.util.CommonMap" >
+		INSERT INTO ASP_TEMPLE_USER_SCHOLAR (
+			TEMPLE_CD
+			,USER_ID
+			,SDATE
+			,EDATE
+			,LAST_SCHOLA
+			,MAJOR
+			,GRADUATION_GBN
+			,REMARK
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+		) VALUES (
+			 #{V_TEMPLE_CD}
+			,#{USER_ID}
+			,#{SDATE}
+			,#{EDATE}
+			,#{LAST_SCHOLA     ,jdbcType=VARCHAR}
+			,#{MAJOR           ,jdbcType=VARCHAR}
+			,#{GRADUATION_GBN  ,jdbcType=VARCHAR}
+			,#{REMARK          ,jdbcType=VARCHAR}
+			,#{C_USER_ID}
+			,SYSDATE
+			,#{C_USER_ID}
+			,SYSDATE
+			,#{V_REMOTE}
+		)
+	</insert>
+	
+	<update id="UPDATE_ASP_TEMPLE_USER_SCHOLAR"  parameterType="kr.co.o2i.util.CommonMap" >
+		 UPDATE ASP_TEMPLE_USER_SCHOLAR
+			SET SDATE          = #{SDATE}
+			   ,EDATE          = #{EDATE}
+			   ,LAST_SCHOLA    = #{LAST_SCHOLA    ,jdbcType=VARCHAR}
+			   ,MAJOR          = #{MAJOR          ,jdbcType=VARCHAR}
+			   ,GRADUATION_GBN = #{GRADUATION_GBN ,jdbcType=VARCHAR}
+			   ,REMARK         = #{REMARK         ,jdbcType=VARCHAR}
+			   ,UPT_USER       = #{C_USER_ID}
+			   ,UPT_DATE       = SYSDATE
+			   ,REMOTE         = #{V_REMOTE}
+		 WHERE TEMPLE_CD       = #{TEMPLE_CD}
+		   AND USER_ID         = #{USER_ID_TEMP}
+		   AND SDATE           = #{SDATE_TEMP} 
+	</update>
+	
+	<delete id="DELETE_ASP_TEMPLE_USER_SCHOLAR"  parameterType="kr.co.o2i.util.CommonMap" >
+		DELETE FROM ASP_TEMPLE_USER_SCHOLAR
+         WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+           AND USER_ID	 = #{USER_ID_TEMP}
+           AND SDATE     = #{SDATE_TEMP}
+	</delete>
+	
+	
+	<insert id="INSERT_ASP_TEMPLE_USER_EDU_MGT"  parameterType="kr.co.o2i.util.CommonMap" >
+		INSERT INTO ASP_TEMPLE_USER_EDU_MGT (
+			 TEMPLE_CD
+			,USER_ID
+			,EDU_SDATE
+			,SEQ_NO
+			,EDU_EDATE
+			,EDU_NAME
+			,COMPLETION_GBN
+			,REMARK
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+		) VALUES (
+			 #{V_TEMPLE_CD}
+			,#{USER_ID}
+			,#{EDU_SDATE}
+			,(SELECT NVL(MAX(SEQ_NO)+1,'1')
+				FROM ASP_TEMPLE_USER_EDU_MGT
+			   WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+				 AND USER_ID   = #{USER_ID}
+				 AND EDU_SDATE = #{EDU_SDATE}
+				 AND SEQ_NO		> 0            )
+			,#{EDU_EDATE}
+			,#{EDU_NAME       ,jdbcType=VARCHAR}
+			,#{COMPLETION_GBN ,jdbcType=VARCHAR}
+			,#{REMARK         ,jdbcType=VARCHAR}
+			,#{C_USER_ID}
+			,SYSDATE
+			,#{C_USER_ID}
+			,SYSDATE
+			,#{V_REMOTE}
+		)
+	</insert>
+	
+	<update id="UPDATE_ASP_TEMPLE_USER_EDU_MGT"  parameterType="kr.co.o2i.util.CommonMap" >
+		UPDATE ASP_TEMPLE_USER_EDU_MGT
+		   SET EDU_SDATE      = #{EDU_SDATE}
+		      ,EDU_EDATE      = #{EDU_EDATE}
+		      ,EDU_NAME       = #{EDU_NAME}
+		      ,COMPLETION_GBN = #{COMPLETION_GBN}
+		      ,REMARK         = #{REMARK}
+		      ,UPT_USER       = #{C_USER_ID}
+		      ,UPT_DATE       = SYSDATE
+		      ,REMOTE         = #{V_REMOTE}
+		 WHERE TEMPLE_CD      = #{TEMPLE_CD}
+		   AND USER_ID        = #{USER_ID_TEMP}
+		   AND EDU_SDATE      = #{EDU_SDATE_TEMP}
+		   AND SEQ_NO         = #{SEQ_NO_TEMP} 
+	</update>
+	
+	<delete id="DELETE_ASP_TEMPLE_USER_EDU_MGT"  parameterType="kr.co.o2i.util.CommonMap" >
+		DELETE FROM ASP_TEMPLE_USER_EDU_MGT
+         WHERE TEMPLE_CD = #{TEMPLE_CD}
+           AND USER_ID	 = #{USER_ID_TEMP}
+	       AND EDU_SDATE = #{EDU_SDATE_TEMP}
+		   AND SEQ_NO    = #{SEQ_NO_TEMP}
+	</delete>
+	
+	
+	<select  id="DUPLE_USER_ID"  parameterType="java.util.Map" resultType="Integer">
+		SELECT COUNT(*) 
+		  FROM ASP_TEMPLE_USER 
+		 WHERE USER_ID = #{USER_ID}
+	</select>
+	
+</mapper>

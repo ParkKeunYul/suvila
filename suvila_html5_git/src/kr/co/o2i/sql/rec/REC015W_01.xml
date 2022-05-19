@@ -1,0 +1,606 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC015w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="SEL_YN" column="SEL_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+
+
+	<select id="SELECT_YEAR" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT GIBU_DAY
+			  ,GIBU_DAY_CODE
+		  FROM ( SELECT GIBU_DAY
+		  			   ,GIBU_DAY AS GIBU_DAY_CODE
+		  			   ,RANK() OVER (ORDER BY GIBU_DAY DESC) as RANK	
+				  FROM (
+				  		<if test='V_TEMPLE_CD == "000127"'>
+				  			SELECT  '2010' AS GIBU_DAY FROM  DUAL 
+				  			 UNION ALL 
+				  			 SELECT  '2011' AS GIBU_DAY FROM  DUAL 
+				  			 UNION ALL 
+				  			 SELECT  '2012' AS GIBU_DAY FROM DUAL 
+				  			 UNION ALL 
+				  			 SELECT  '2013' AS GIBU_DAY  FROM  DUAL 
+				  			 UNION ALL 
+				  			 SELECT  '2014' AS GIBU_DAY  FROM  DUAL 
+				  			 UNION ALL 
+				  			 SELECT  '2015' AS GIBU_DAY  FROM  DUAL 
+				  			 UNION ALL 
+				  			 SELECT  '2016' AS GIBU_DAY  FROM  DUAL 
+				  			 UNION ALL 
+				  			 SELECT  '2017' AS GIBU_DAY  FROM  DUAL 
+				  			 UNION ALL
+				  		</if>				
+						SELECT DISTINCT GIBU_DAY
+					      FROM SIN_DONATION_BILL_YEAR
+					     WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+				  )
+		)
+		<if test='V_RANK == "T"'>
+			WHERE RANK &lt; 6 
+		</if>
+		ORDER BY GIBU_DAY DESC
+	</select>
+	
+	
+	<select id="SELECT_Detail" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+			  ,BUD_NO
+			  ,ACCEPT_SEQ
+			  ,SEQ
+			  ,REMARK
+			  ,GIBU_AMT
+			  ,RECEIPT_DATE
+			  ,CRT_USER
+			  ,CRT_DATE
+			  ,UPT_DATE
+			  ,UPT_USER
+			  ,REMOTE
+			  ,GIBU_NO
+			  ,GIBU_DAY
+		  FROM SIN_DONATION_BILL_DETAIL
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND BUD_NO    = #{V_BUD_NO}
+		 ORDER BY GIBU_DAY ASC 
+		 		, GIBU_NO ASC 
+		 		, ACCEPT_SEQ DESC
+		 		, SEQ ASC
+	</select>
+	
+	
+	<select id="SELECT_REC" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT SDBY.TEMPLE_CD
+			  ,SDBY.BUD_NO
+			  ,SDBY.ACCEPT_SEQ
+			  ,SDBY.SEQ
+			  ,SDBY.REMARK AS REC_NM
+			  ,SDBY.GIBU_AMT
+			  ,SDBY.RECEIPT_DATE
+			  ,SDBY.GIBU_DAY
+			  ,SIN.NAME_KOR
+			  ,( SELECT COUNT(*) FROM SIN_DONATION_BILL_DETAIL WHERE TEMPLE_CD = SDBY.TEMPLE_CD AND ACCEPT_SEQ = SDBY.ACCEPT_SEQ AND SEQ = SDBY.SEQ AND GIBU_DAY = SDBY.GIBU_DAY AND SDBY.APPROVAL_GBN = NVL(APPROVAL_GBN,1) ) AS GIBU_CNT
+			  ,SDBY.ACCEPT_GBN
+			  ,SDBY.ACCEPT_SEQ || SDBY.SEQ||SDBY.APPROVAL_GBN AS SKIP
+			  ,SDBY.APPROVAL_GBN
+			  ,(SELECT BUD_NO FROM SIN_DONATION_BILL_DETAIL   WHERE TEMPLE_CD = SDBY.TEMPLE_CD AND ACCEPT_SEQ = SDBY.ACCEPT_SEQ AND SEQ = SDBY.SEQ  AND GIBU_DAY = SDBY.GIBU_DAY AND SDBY.APPROVAL_GBN = NVL(APPROVAL_GBN,1) AND ROWNUM = 1  ) AS  ISSUE_BUD_NO
+		  FROM SIN_DONATION_BILL_YEAR SDBY
+		  	  ,SIN_CARD_MASTER		  SIN
+		  WHERE SDBY.TEMPLE_CD = SIN.TEMPLE_CD(+)
+			AND SDBY.BUD_NO		 = SIN.BUD_NO(+)
+			AND SDBY.TEMPLE_CD 	 = #{V_TEMPLE_CD}			
+			AND SDBY.GIBU_DAY  	 = #{V_YEAR}
+			AND SDBY.BUD_NO 	 LIKE SUBSTR(#{V_BUD_NO},1,DECODE(#{V_BUNGA},'false',10,8)) || '%'
+	      ORDER BY SDBY.TEMPLE_CD
+	      		  ,SDBY.ACCEPT_SEQ
+	      		  ,SDBY.SEQ
+	</select>
+	
+	<insert id="INSERT_General" parameterType="java.util.Map">
+		INSERT INTO SIN_DONATION_BILL (
+	        TEMPLE_CD
+	       ,BUD_NO
+	       ,GIBU_NO
+	       ,GIBU_DAY
+	       ,NAME_KOR
+	       ,JUMIN_NO
+	       ,SAUP_NO
+	       ,ZIP_CD
+	       ,ADDR1
+	       ,REMARK
+	       ,ADDR2
+	       ,GIBU_AMT
+	       ,REISUE_YN
+	       ,CRT_USER
+	       ,CRT_DATE
+	       ,UPT_DATE
+	       ,UPT_USER
+	       ,REMOTE
+	       ,PRINT_GBN
+	       ,BLDG_NUM
+	    ) VALUES(
+		    #{V_TEMPLE_CD}
+		   ,#{BUD_NO}
+		   ,#{V_GIBU_NO}
+		   <!--  ,#{GIBU_DAY}-->
+		   ,#{V_YEAR}
+		   ,#{NAME_KOR}
+		   ,#{JUMIN_NO  ,jdbcType=VARCHAR}
+		   ,#{SAUP_NO   ,jdbcType=VARCHAR}
+		   ,#{ZIP_CD}
+		   ,#{ADDR1}
+		   ,#{REMARK ,jdbcType=VARCHAR}
+		   ,#{ADDR2}
+		   ,#{GIBU_AMT}
+		   <!-- ,#{REISUE_YN} -->
+		   ,'F'
+		   ,#{V_USER_ID}
+		   ,SYSDATE
+		   ,SYSDATE
+		   ,#{V_USER_ID}
+		   ,#{V_REMOTE}
+		   ,'S'
+		   ,#{BLDG_NUM}
+	    )
+	</insert>
+	
+	<update id="UPDATE_General" parameterType="java.util.Map">
+		UPDATE SIN_CARD_MASTER
+		   SET JUMIN_NO  = NVL(#{JUMIN_NO},JUMIN_NO)
+		   	  ,UPT_USER  = #{V_USER_ID}
+		   	  ,REMOTE    = #{V_REMOTE} 
+		   	  ,UPT_DATE  = SYSDATE    		   	  
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND BUD_NO    = #{BUD_NO}
+	</update>
+	
+	
+	<insert id="INSERT_Detail" parameterType="java.util.Map">
+		INSERT INTO SIN_DONATION_BILL_DETAIL(
+		    TEMPLE_CD
+		   ,BUD_NO
+		   ,ACCEPT_SEQ
+		   ,SEQ
+		   ,REMARK
+		   ,GIBU_AMT
+		   ,RECEIPT_DATE
+		   ,CRT_USER
+		   ,CRT_DATE
+		   ,UPT_DATE
+		   ,UPT_USER
+		   ,REMOTE
+		   ,GIBU_NO
+		   ,GIBU_DAY
+		   ,ACCEPT_GBN
+		   ,EA
+		   ,PRICE
+		   ,GIBU_TYPE
+		   ,APPROVAL_GBN
+		 ) VALUES (
+		    #{V_TEMPLE_CD}
+		   ,#{BUD_NO}
+		   ,DECODE(#{BULJUNHAM}, 'F', #{ACCEPT_SEQ} ,  (SELECT #{RECEIPT_DATE} || LPAD(NVL(MAX(SUBSTR(ACCEPT_SEQ,9,18)) + 1, 1),10,'0') 
+													      FROM (
+														 		SELECT MAX(ACCEPT_SEQ) AS ACCEPT_SEQ
+														 		  FROM REC_MASTER 
+														 		 WHERE TEMPLE_CD   = #{V_TEMPLE_CD}
+														 		   AND ACCEPT_SEQ LIKE #{RECEIPT_DATE} || '%'
+														 		 UNION
+														 		 SELECT MAX(ACCEPT_SEQ) AS ACCEPT_SEQ
+														 		   FROM SIN_DONATION_BILL_DETAIL
+														 		  WHERE TEMPLE_CD   = #{V_TEMPLE_CD}
+														 		    AND ACCEPT_SEQ LIKE #{RECEIPT_DATE} || '%'
+													       )
+													      )
+		    ) 
+		   ,#{SEQ}
+		   ,#{REC_NM}
+		   ,#{GIBU_AMT}
+		   ,#{RECEIPT_DATE}
+		   ,#{V_USER_ID}
+		   ,SYSDATE
+		   ,SYSDATE
+		   ,#{V_USER_ID}
+		   ,#{V_REMOTE}
+		   ,#{V_GIBU_NO}
+		   ,#{GIBU_DAY}
+		   ,#{ACCEPT_GBN}
+		   ,#{EA     ,jdbcType=VARCHAR}
+		   ,#{PRICE  ,jdbcType=VARCHAR}
+		   ,#{GIBU_TYPE  ,jdbcType=VARCHAR}
+		   ,#{APPROVAL_GBN}
+		)
+	</insert>
+	
+	<select id="SELECT_TEMPLE_INFO" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT  MST.TEMPLE_CD 
+		      , MGT.NAME || ' ' || MST.TEMPLE_NM AS TEMPLE_NAME
+		      , MST.REG_NUMBER AS TEMPLE_REG_NO
+		      , MST.SOJE_ADDR1 || ' ' || MST.SOJE_ADDR2 || FN_ADDR_BLDG(SOJE_BLDG_NUM) AS TEMPLE_ADDR
+		      , MST.REP_NAME
+		      , MST.TELNO1||'-'||MST.TELNO2||'-'||MST.TELNO3 as TELNO
+		  	  , MGT.NAME as DEPU_NAME
+		      , DEPU_ADDR1 || ' ' || DEPU_ADDR2 || FN_ADDR_BLDG(DEPU_BLDG_NUM)  as DEPU_ADDR 
+		      , MST.SECT_CD as DEPU_CODE
+		  FROM ASP_TEMPLE_MASTER MST
+		      ,ASP_CODE_MGT MGT
+		 WHERE MST.TEMPLE_CD    = #{V_TEMPLE_CD}
+		   AND MGT.GROUP_CD(+)  = 'JONGDAN'
+		   AND MST.SECT_CD      = MGT.CODE(+)
+	</select>
+	
+	<select id="SELECT_TEMPLE_INFO_200904" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+			  ,'대한불교 조계종 ' || TEMPLE_NM AS TEMPLE_NAME
+			  ,REG_NUMBER AS TEMPLE_REG_NO
+			  ,SOJE_ADDR1 || ' ' || SOJE_ADDR2 || FN_ADDR_BLDG(SOJE_BLDG_NUM) AS TEMPLE_ADDR
+		 FROM ASP_TEMPLE_MASTER
+		WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+	</select>
+	
+	<select id="SELECT_DONATION_PRINT_EXCEL" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT ROW_NUMBER() OVER (ORDER BY A.GIBU_DAY ASC , A.GIBU_NO ASC) PRINT_SEQ
+		      ,A.GIBU_DAY||'-'||LPAD(A.GIBU_NO,6,'0') PRINT_NO
+		      ,TO_CHAR(A.CRT_DATE,'YYYY.MM.DD') PRINT_DATE
+		      ,A.NAME_KOR
+		      ,FN_FMT_JUMIN_NO(A.JUMIN_NO,'Y') BUD_REG_NO
+		      ,NVL(A.ADDR1,'')||' '||NVL(A.ADDR2,'') || NVL(FN_ADDR_BLDG(BLDG_NUM),'') ADDR
+		      ,#{V_YEAR}||'년 1월 ~ 12월' GIBU_DATE
+		      ,'기부금' AS GIBU_NAME
+		      ,SUM(B.GIBU_AMT) GIBU_AMT
+		      ,A.BUD_NO
+		  FROM SIN_DONATION_BILL A
+		      ,SIN_DONATION_BILL_DETAIL B
+		 WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND A.GIBU_DAY  = #{V_YEAR}
+		   AND B.TEMPLE_CD = A.TEMPLE_CD
+		   AND B.BUD_NO    = A.BUD_NO
+		   AND B.GIBU_DAY  = A.GIBU_DAY
+		   AND B.GIBU_NO   = A.GIBU_NO
+		   AND A.JUMIN_NO  IS NOT NULL
+		 GROUP BY A.GIBU_DAY
+		 	     ,A.GIBU_NO
+		 	     ,A.CRT_DATE
+		 	     ,A.NAME_KOR
+		         ,FN_FMT_JUMIN_NO(A.JUMIN_NO,'Y')
+		         ,NVL(A.ADDR1,'')||' '||NVL(A.ADDR2,'') || NVL(FN_ADDR_BLDG(BLDG_NUM),''), A.BUD_NO
+		 ORDER BY A.GIBU_DAY ASC
+		 	     ,A.GIBU_NO ASC
+	</select>
+	
+	<select id="SELECT_DONATION_PRINT_EXCEL2" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT ROW_NUMBER() OVER (ORDER BY A.GIBU_DAY ASC , A.GIBU_NO ASC) PRINT_SEQ
+		      ,A.GIBU_DAY||'-'||LPAD(A.GIBU_NO,6,'0') PRINT_NO
+		      ,TO_CHAR(A.CRT_DATE,'YYYY.MM.DD') PRINT_DATE
+		      ,A.NAME_KOR
+		      ,FN_FMT_SAUP_NO(A.SAUP_NO) BUD_REG_NO
+		      ,NVL(A.ADDR1,'')||' '||NVL(A.ADDR2,'') || NVL(FN_ADDR_BLDG(BLDG_NUM),'') ADDR
+		      ,#{V_YEAR}||'년 1월 ~ 12월' GIBU_DATE
+		      ,'기부금' AS GIBU_NAME
+		      ,SUM(B.GIBU_AMT) GIBU_AMT
+		      ,A.BUD_NO
+		  FROM SIN_DONATION_BILL A
+		      ,SIN_DONATION_BILL_DETAIL B
+		 WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND A.GIBU_DAY  = #{V_YEAR}
+		   AND B.TEMPLE_CD = A.TEMPLE_CD
+		   AND B.BUD_NO    = A.BUD_NO
+		   AND B.GIBU_DAY  = A.GIBU_DAY
+		   AND B.GIBU_NO   = A.GIBU_NO
+		   AND A.SAUP_NO  IS NOT NULL
+		 GROUP BY A.GIBU_DAY
+		 		 ,A.GIBU_NO
+		 		 ,A.CRT_DATE
+		 		 ,A.NAME_KOR
+		         ,FN_FMT_SAUP_NO(A.SAUP_NO)
+		         ,NVL(A.ADDR1,'')||' '||NVL(A.ADDR2,'') || NVL(FN_ADDR_BLDG(BLDG_NUM),''), A.BUD_NO
+		 ORDER BY A.GIBU_DAY ASC
+		 		 ,A.GIBU_NO ASC
+	</select>
+	
+	<select id="SELECT_DONATION_PRINT_EXCEL_DETAIL" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT ROW_NUMBER() OVER (ORDER BY A.GIBU_DAY ASC , A.GIBU_NO ASC, B.ACCEPT_SEQ ASC, B.SEQ ASC) PRINT_SEQ
+		      ,A.GIBU_DAY||'-'||LPAD(A.GIBU_NO,6,'0') PRINT_NO
+		      ,TO_CHAR(A.CRT_DATE,'YYYY.MM.DD') PRINT_DATE
+		      ,A.NAME_KOR
+		      ,DECODE(LENGTH(A.JUMIN_NO),13,FN_FMT_JUMIN_NO(A.JUMIN_NO,'Y'),FN_FMT_SAUP_NO(A.SAUP_NO)) BUD_REG_NO
+		      ,NVL(A.ADDR1,'')||' '||NVL(A.ADDR2,'') || NVL(FN_ADDR_BLDG(BLDG_NUM),'') ADDR
+		      ,FN_FMT_DATE(B.RECEIPT_DATE,'.') GIBU_DATE
+		      ,NVL(( SELECT DONATION_NM
+		               FROM ASP_TEMPLE_DONATION_PRINT_MGT
+		              WHERE TEMPLE_CD = B.TEMPLE_CD
+		                AND ACCEPT_GBN = B.ACCEPT_GBN
+		           ),'기부금') AS GIBU_NAME
+		      ,B.GIBU_AMT
+		      ,A.BUD_NO
+		      ,B.ACCEPT_SEQ
+		      ,B.SEQ
+		  FROM SIN_DONATION_BILL A
+		      ,SIN_DONATION_BILL_DETAIL B
+		 WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND A.GIBU_DAY  = #{V_YEAR}
+		   AND B.TEMPLE_CD = A.TEMPLE_CD
+		   AND B.BUD_NO    = A.BUD_NO
+		   AND B.GIBU_DAY  = A.GIBU_DAY
+		   AND B.GIBU_NO   = A.GIBU_NO
+		 ORDER BY A.GIBU_DAY ASC , A.GIBU_NO ASC, B.ACCEPT_SEQ ASC, B.SEQ ASC
+	</select>
+	
+	<select id="SELECT_DONATION_PRINT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+			  ,NO
+			  ,BUD_NAME
+			  ,DECODE(JUMIN_NO,'',SAUP_NO,JUMIN_NO) AS BUD_REG_NO
+			  ,BUD_ADDR
+			  ,TYPE
+			  ,CODE
+			  ,GBN
+			  ,PERIOD
+			  ,SUMMARY
+			  ,SUM(GIBU_AMT) AS AMOUNT
+			  ,EA
+			  ,PRICE
+			  ,GIBU_DAY||GIBU_NO as GIBU_INFO
+		  FROM ( SELECT 1 SORT_NO
+		  		       ,SDBD.TEMPLE_CD
+		  		       ,SDBD.BUD_NO
+		  		       ,NAME_KOR AS BUD_NAME
+		  		       ,ADDR1 || ' ' || ADDR2 || FN_ADDR_BLDG(BLDG_NUM) AS BUD_ADDR
+		  		       ,substr(JUMIN_NO,0,6) as JUMIN_NO
+		  		       ,DECODE(LENGTH(SAUP_NO),10,SUBSTR(SAUP_NO,1,3) || '-' || SUBSTR(SAUP_NO,4,2) || '-' || SUBSTR(SAUP_NO,6),'') AS SAUP_NO
+		  		       ,SDBD.ACCEPT_SEQ
+		  		       ,SDBD.SEQ
+		  		       ,SDBD.RECEIPT_DATE
+		  		       ,SDBD.GIBU_NO
+		  		       ,SDBD.GIBU_DAY
+		  		       ,SDBD.GIBU_AMT
+		  		       ,SDBD.GIBU_DAY || '-' || LPAD(SDBD.GIBU_NO,6,'0') AS NO
+		  		       ,FN_FMT_DATE(SDBD.RECEIPT_DATE,'.')  AS PERIOD
+		  		       ,FN_GIBU_LABEL(SDBD.TEMPLE_CD,'NAME') AS TYPE
+		  		       ,FN_GIBU_LABEL(SDBD.TEMPLE_CD,'CODE') AS CODE
+		  		       ,(CASE
+				      		WHEN SDBD.GIBU_TYPE = '2' THEN '현물'
+				      		WHEN SDBD.APPROVAL_GBN = 2 THEN '카드'
+				      		ELSE '금전'
+				     	 END ) GBN
+				       ,(CASE
+				      		WHEN SDBD.GIBU_TYPE = '2' THEN SDBD.REMARK
+				      		ELSE NVL( ( SELECT DONATION_NM
+				            		      FROM ASP_TEMPLE_DONATION_PRINT_MGT
+				            			 WHERE TEMPLE_CD = SDBD.TEMPLE_CD
+				            			  AND ACCEPT_GBN = SDBD.ACCEPT_GBN
+									   ),'기부금')
+				    		END ) AS SUMMARY
+				       ,SDBD.EA
+				       ,SDBD.PRICE
+				   FROM SIN_DONATION_BILL_DETAIL SDBD
+				   	   ,SIN_DONATION_BILL SDB
+				  WHERE SDBD.TEMPLE_CD = SDB.TEMPLE_CD
+					AND SDBD.BUD_NO    = SDB.BUD_NO
+					AND SDBD.GIBU_DAY  = SDB.GIBU_DAY
+					AND SDBD.GIBU_NO   = SDB.GIBU_NO
+					AND SDBD.TEMPLE_CD = #{V_TEMPLE_CD}
+					AND SDBD.BUD_NO    = #{V_BUD_NO}
+					AND SDBD.GIBU_NO   = #{V_GIBU_NO}
+					AND SDBD.GIBU_DAY  = #{V_YEAR}
+			      UNION ALL
+				 SELECT 2 SORT_NO
+				 	   ,SDBD.TEMPLE_CD
+				 	   ,SDBD.BUD_NO
+				 	   ,NAME_KOR AS BUD_NAME
+				 	   ,ADDR1 || ' ' || ADDR2 || FN_ADDR_BLDG(BLDG_NUM) AS BUD_ADDR
+				 	   ,substr(JUMIN_NO,0,6) as JUMIN_NO
+				 	   ,DECODE(LENGTH(SAUP_NO),10,SUBSTR(SAUP_NO,1,3) || '-' || SUBSTR(SAUP_NO,4,2) || '-' || SUBSTR(SAUP_NO,6),'') AS SAUP_NO
+				 	   ,NULL ACCEPT_SEQ
+				 	   ,NULL SEQ
+				 	   ,NULL RECEIPT_DATE
+				 	   ,NULL GIBU_NO
+				 	   ,NULL GIBU_DAY
+				 	   ,SUM(SDBD.GIBU_AMT) GIBU_AMT
+				 	   ,NULL AS NO
+				 	   ,'합계'  AS PERIOD
+				 	   ,NULL AS TYPE
+				 	   ,NULL AS CODE
+				 	   ,NULL AS GBN
+				 	   ,NULL AS SUMMARY
+				 	   ,NULL AS EA
+				 	   ,NULL AS PRICE
+				   FROM SIN_DONATION_BILL_DETAIL SDBD
+				       ,SIN_DONATION_BILL SDB
+				  WHERE SDBD.TEMPLE_CD = SDB.TEMPLE_CD
+					AND SDBD.BUD_NO    = SDB.BUD_NO
+					AND SDBD.GIBU_DAY  = SDB.GIBU_DAY
+					AND SDBD.GIBU_NO   = SDB.GIBU_NO
+					AND SDBD.TEMPLE_CD = #{V_TEMPLE_CD}
+					AND SDBD.BUD_NO    = #{V_BUD_NO}
+					AND SDBD.GIBU_NO   = #{V_GIBU_NO}
+					AND SDBD.GIBU_DAY  = #{V_YEAR}
+			  GROUP BY SDBD.TEMPLE_CD
+			  		  ,SDBD.BUD_NO
+			  		  ,NAME_KOR
+			  		  ,ADDR1 || ' ' || ADDR2 || FN_ADDR_BLDG(BLDG_NUM)
+			  		  ,JUMIN_NO
+			  		  ,DECODE(LENGTH(SAUP_NO),10,SUBSTR(SAUP_NO,1,3) || '-' || SUBSTR(SAUP_NO,4,2) || '-' || SUBSTR(SAUP_NO,6),'')
+		    )
+			GROUP BY SORT_NO
+				    ,TEMPLE_CD
+				    ,NO
+				    ,BUD_NAME
+				    ,DECODE(JUMIN_NO,'',SAUP_NO,JUMIN_NO)
+				    ,BUD_ADDR
+				    ,TYPE
+				    ,CODE
+				    ,GBN
+				    ,PERIOD
+				    ,SUMMARY
+				    ,EA
+				    ,PRICE
+				    ,GIBU_DAY||GIBU_NO
+			 ORDER BY SORT_NO
+			   	     ,PERIOD,TYPE
+	</select>
+	
+	<select id="SELECT_GIBU_TOTAL" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT T1.temple_cd
+		      ,sum((CASE WHEN T1.SAUP_NO is not null THEN 1 ELSE 0 END )) as CCNT 
+		      ,sum((CASE WHEN T1.SAUP_NO is  null THEN 1 ELSE 0 END )) as PCNT 
+		      ,sum((CASE WHEN T1.SAUP_NO is not null THEN T1.GIBU_AMT ELSE 0 END )) as CTOTAL
+		      ,sum((CASE WHEN T1.SAUP_NO is  null THEN T1.GIBU_AMT ELSE 0 END )) as PTOTAL
+		  FROM SIN_DONATION_BILL T1
+		 WHERE T1.temple_cd = #{V_TEMPLE_CD}
+		   AND T1.gibu_day  = #{V_YEAR}
+		   AND (SELECT count(temple_cd ) 
+		          FROM SIN_DONATION_BILL_DETAIL 
+		         WHERE T1.TEMPLE_CD = TEMPLE_CD 
+		           AND T1.GIBU_NO   = GIBU_NO
+		           AND T1.GIBU_DAY  = GIBU_DAY ) > 0
+		 GROUP by temple_cd
+	</select>
+	
+	
+	
+	<select id="SELECT_GIBU_NO" parameterType="kr.co.o2i.util.CommonMap"  resultType="String">
+		SELECT NVL (MAX (A.GIBU_NO) + 1, 1) AS GIBU_NO
+		  FROM SIN_DONATION_BILL A
+		 WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND A.GIBU_DAY  = #{V_YEAR}
+	</select>
+	
+	<select id="SELECT_IMAGE" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT '/asp/rec/REC015W_01.bf?action=selectImage&amp;img_gbn=' || #{V_IMG_GBN}  	AS ATTACH_FILE	
+		      ,ATTACH_FILE AS	TEMPLE_PICTURE											
+		  FROM ASP_TEMPLE_MASTER_FILE 														
+		 WHERE DEL_YN     					= 'F'													
+		  AND  ROWNUM     					= 1														
+		  AND  NVL(IMG_TYPE, '1')   = #{V_IMG_GBN}	
+		  AND  TEMPLE_CD  		    = #{V_TEMPLE_CD}				  
+		ORDER by seq desc 																				
+	</select>
+	
+	<select id="SELECT_IMAGE_DETAIL" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT ATTACH_FILE , to_char(length(ATTACH_FILE)) as LEN	
+		  FROM ASP_TEMPLE_MASTER_FILE 														
+		 WHERE DEL_YN     = 'F'																		
+		  AND  ROWNUM     = 1																			
+		  AND  NVL(IMG_TYPE, '1')   = #{V_IMG_GBN}	
+		  AND  TEMPLE_CD  		    = #{TEMPLE_CD}				  
+		ORDER by seq desc 																				
+	</select>
+	
+	<!--
+	<update id="UPDATE_General" parameterType="kr.co.o2i.util.CommonMap">
+		UPDATE SIN_CARD_MASTER
+		   SET JUMIN_NO  = NVL(#{JUMIN_NO},JUMIN_NO)
+		   	  ,UPT_USER  = #V_USER_ID} 
+		   	  ,UPT_DATE  = SYSDATE    
+		   	  ,REMOTE    = #{V_REMOTE}
+		WHGERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND BUD_NO    = #{BUD_NO}
+	</update>
+	
+	<insert id="INSERT_General"  parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO SIN_DONATION_BILL (
+		       TEMPLE_CD
+		      ,BUD_NO
+		      ,GIBU_NO
+		      ,GIBU_DAY
+		      ,NAME_KOR
+		      ,JUMIN_NO
+		      ,SAUP_NO
+		      ,ZIP_CD
+		      ,ADDR1
+		      ,REMARK
+		      ,ADDR2
+		      ,GIBU_AMT
+		      ,REISUE_YN
+		      ,CRT_USER
+		      ,CRT_DATE
+		      ,UPT_DATE
+		      ,UPT_USER
+		      ,REMOTE
+		      ,PRINT_GBN
+		      ,BLDG_NUM
+		 ) VALUES (
+		   	   #{V_TEMPLE_CD}
+		   	  ,#{BUD_NO}
+		   	  ,#{V_GIBU_NO}
+		   	  ,#{GIBU_DAY}
+		   	  ,#{NAME_KOR}
+		   	  ,#{JUMIN_NO ,jdbcType=VARCHAR}
+		   	  ,#{SAUP_NO  ,jdbcType=VARCHAR}
+		   	  ,#{ZIP_CD}
+		   	  ,#{ADDR1}
+		   	  ,#{REMARK ,jdbcType=VARCHAR}
+		   	  ,#{ADDR2}
+		   	  ,#{GIBU_AMT}
+		   	  ,#{REISUE_YN ,jdbcType=VARCHAR}
+		   	  ,#{V_USER_ID}
+		   	  ,SYSDATE
+		   	  ,SYSDATE
+		   	  ,#{V_USER_ID}
+		   	  ,#{V_REMOTE}
+		   	  ,'S'
+		   	  ,#{BLDG_NUM ,jdbcType=VARCHAR}
+		 )
+	</insert>
+	
+	
+	<insert id="INSERT_Detail"  parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO SIN_DONATION_BILL_DETAIL(
+		    TEMPLE_CD
+		   ,BUD_NO
+		   ,ACCEPT_SEQ
+		   ,SEQ
+		   ,REMARK
+		   ,GIBU_AMT
+		   ,RECEIPT_DATE
+		   ,CRT_USER
+		   ,CRT_DATE
+		   ,UPT_DATE
+		   ,UPT_USER
+		   ,REMOTE
+		   ,GIBU_NO
+		   ,GIBU_DAY
+		   ,ACCEPT_GBN
+		   ,EA
+		   ,PRICE
+		   ,GIBU_TYPE
+		   ,APPROVAL_GBN
+		 ) VALUES (
+		    #{V_TEMPLE_CD}
+		   ,#BUD_NO#
+		   ,DECODE(#{BULJUNHAM}, 'F', #{ACCEPT_SEQ} ,  (SELECT #{RECEIPT_DATE} || LPAD(NVL(MAX(SUBSTR(ACCEPT_SEQ,9,18)) + 1, 1),10,'0') 
+													      FROM(
+															 SELECT MAX(ACCEPT_SEQ) AS ACCEPT_SEQ
+															   FROM REC_MASTER 
+															  WHERE TEMPLE_CD   = #{V_TEMPLE_CD}
+															    AND ACCEPT_SEQ LIKE #{RECEIPT_DATE} || '%'
+															  UNION
+															  SELECT MAX(ACCEPT_SEQ) AS ACCEPT_SEQ
+															    FROM SIN_DONATION_BILL_DETAIL
+															   WHERE TEMPLE_CD   = #{V_TEMPLE_CD}
+															     AND ACCEPT_SEQ LIKE #{RECEIPT_DATE} || '%'
+													 	  ))
+		    ) 
+		   ,#{SEQ}
+		   ,#{REC_NM}
+		   ,#{GIBU_AMT}
+		   ,#{RECEIPT_DATE}
+		   ,#{V_USER_ID}
+		   ,SYSDATE
+		   ,SYSDATE
+		   ,#{V_USER_ID}
+		   ,#{V_REMOTE}
+		   ,#{V_GIBU_NO}
+		   ,#GIBU_DAY}
+		   ,#{ACCEPT_GBN}
+		   ,#{EA}
+		   ,#{PRICE}
+		   ,#{GIBU_TYPE}
+		   ,#{APPROVAL_GBN}
+		)
+	</insert>
+	  -->
+</mapper>

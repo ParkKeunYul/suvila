@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC003w_22DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="CONTENT"    column="CONTENT"      javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="ACCEPT_YN" column="ACCEPT_YN"   typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+	</resultMap>
+
+
+	<!-- # 49재 제사정보 조회 # -->
+	<select id="SELECT_49KIND" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	<![CDATA[
+	    SELECT '' AS TEMPLE_CD
+	    	  ,'' AS SEQ
+	    	  ,'' AS ACCEPT_SEQ
+	    	  ,COD.CODE AS JESA_GUBUN
+	    	  ,COD.NAME AS JESA_NM
+	    	  ,'F' AS LUNAR_SOLAR
+	    	  ,(CASE WHEN COD.ETC1 = 0 THEN ''
+		             WHEN COD.ETC1 = 8 THEN TO_CHAR(TO_DATE(#{V_DEATH_DAY ,jdbcType=VARCHAR},'YYYYMMDD') + 99,'YYYYMMDD')
+		        ELSE TO_CHAR(TO_DATE(#{V_DEATH_DAY ,jdbcType=VARCHAR},'YYYYMMDD') + COD.ETC1 * 7 - 1,'YYYYMMDD')
+		        END) AS EVENT_DATE
+		      ,'' AS EVENT_TIME
+		      ,0 AS NUMBER_COUNT
+		      ,'F' AS ACCEPT_YN
+		      ,'' AS REMARK
+		      ,'' AS DEL_YN
+		      ,'' AS CRT_USER
+		      ,'' AS UPT_USER
+		      ,'' AS CRT_DATE
+		      ,'' AS UPT_DATE
+		      ,'' AS REMOTE
+		  FROM REC_FORTY_NINE_JESA_MGT FNJ
+		  	  ,ASP_CODE_MGT COD
+		 WHERE COD.GROUP_CD = 'SAGUJESA'
+		   AND COD.CODE <> '-1'
+		   AND FNJ.JESA_GUBUN(+) = COD.CODE
+		 GROUP BY COD.CODE
+		         ,COD.NAME
+		         ,COD.ETC1
+		 ORDER BY JESA_GUBUN
+	]]>
+	</select>
+	
+	<insert id="INSERT_49DETAIL" parameterType="java.util.Map">
+		INSERT INTO REC_FORTY_NINE_DETAIL (
+		        TEMPLE_CD
+		       ,SEQ
+		       ,PAYMENT_PLAN_AMT
+		       ,PAYMENT_AMT
+		       ,DAMDANG_MONK_ID
+		       ,CRT_USER
+		       ,DEL_YN
+		       ,REMARK
+		       ,CRT_DATE
+		       ,UPT_DATE
+		       ,UPT_USER
+		       ,REMOTE
+		       ,ACCEPT_SEQ
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{PAYMENT_PLAN_AMT}
+		       ,#{PAYMENT_AMT}
+		       ,#{DAMDANG_MONK_ID  ,jdbcType=VARCHAR}
+		       ,#{CRT_USER}
+		       ,DECODE(#{DEL_YN ,jdbcType=VARCHAR},'','F',#{DEL_YN,jdbcType=VARCHAR})
+		       ,#{REMARK}
+		       ,SYSDATE
+		       ,SYSDATE
+		       ,#{UPT_USER}
+		       ,#{REMOTE}
+		       ,#{ACCEPT_SEQ}
+		)
+	</insert>
+	
+	
+	<insert id="INSERT_49SPIRIT" parameterType="java.util.Map">
+		INSERT INTO REC_FORTY_NINE_DEATH (
+		       TEMPLE_CD
+		       ,SEQ
+		       ,SORT_SEQ
+		       ,DECE_BUD_NO
+		       ,CRT_USER
+		       ,CRT_DATE
+		       ,UPT_DATE
+		       ,UPT_USER
+		       ,REMOTE
+		       ,ACCEPT_SEQ
+		       ,DECE_REL
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,(SELECT NVL(MAX(SORT_SEQ)+1,1)
+		           FROM REC_FORTY_NINE_DEATH
+		          WHERE TEMPLE_CD = #{TEMPLE_CD}
+		            AND ACCEPT_SEQ= #{ACCEPT_SEQ}
+		            AND SEQ       = #{SEQ})
+		       ,#{DECE_BUD_NO}
+		       ,#{CRT_USER}
+		       ,SYSDATE
+		       ,SYSDATE
+		       ,#{UPT_USER}
+		       ,#{REMOTE}
+		       ,#{ACCEPT_SEQ}
+		       ,#{DECE_REL ,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	
+	<insert id="INSERT_49BOKWI" parameterType="java.util.Map">
+		INSERT INTO REC_FORTY_NINE_BOKWEJA_MGT (
+		       USE_YN,
+		       SORT_SEQ,
+		       REMARK,
+		       CRT_USER,
+		       HYO_REL,
+		       REP_YN,
+		       BOKWI_KIBU_GBN,
+		       DECE_REL,
+		       CRT_DATE,
+		       BOKWEJA_NM,
+		       UPT_DATE,
+		       UPT_USER,
+		       REMOTE,
+		       TEMPLE_CD,
+		       SEQ,
+		       ACCEPT_SEQ
+		) VALUES (
+		       #{USE_YN ,jdbcType=VARCHAR}
+		       ,(SELECT NVL(MAX(SORT_SEQ)+1,1)
+		          FROM REC_FORTY_NINE_BOKWEJA_MGT
+		         WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		           AND SEQ        = #{SEQ}
+		           AND ACCEPT_SEQ = #{ACCEPT_SEQ})
+		       ,#{REMARK ,jdbcType=VARCHAR}
+		       ,#{CRT_USER}
+		       ,#{HYO_REL   ,jdbcType=VARCHAR}
+		       ,#{REP_YN}
+		       ,#{BOKWI_KIBU_GBN}
+		       ,#{DECE_REL  ,jdbcType=VARCHAR}
+		       ,SYSDATE
+		       ,#{BOKWEJA_NM}
+		       ,SYSDATE
+		       ,#{UPT_USER}
+		       ,#{REMOTE}
+		       ,#{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{ACCEPT_SEQ}
+		)
+	</insert>
+	
+	
+	<insert id="INSERT_49KIND" parameterType="java.util.Map">
+		INSERT INTO REC_FORTY_NINE_JESA_MGT (
+		        TEMPLE_CD
+		       ,SEQ
+		       ,JESA_GUBUN
+		       ,LUNAR_SOLAR
+		       ,EVENT_DATE
+		       ,EVENT_TIME
+		       ,CRT_USER
+		       ,NUMBER_COUNT
+		       ,REMARK
+		       ,ACCEPT_YN
+		       ,DEL_YN
+		       ,CRT_DATE
+		       ,UPT_DATE
+		       ,UPT_USER
+		       ,REMOTE
+		       ,ACCEPT_SEQ
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{JESA_GUBUN}
+		       ,#{LUNAR_SOLAR}
+		       ,#{EVENT_DATE}
+		       ,#{EVENT_TIME}
+		       ,#{CRT_USER}
+		       ,#{NUMBER_COUNT}
+		       ,#{REMARK  ,jdbcType=VARCHAR}
+		       ,#{ACCEPT_YN}
+		       ,DECODE(#{DEL_YN ,jdbcType=VARCHAR},'','F',#{DEL_YN ,jdbcType=VARCHAR})
+		       ,SYSDATE
+		       ,SYSDATE
+		       ,#{UPT_USER}
+		       ,#{REMOTE}
+		       ,#{ACCEPT_SEQ}
+		)
+	</insert>
+	
+	
+	
+</mapper>

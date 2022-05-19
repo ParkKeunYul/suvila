@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SER033w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+
+	<select id="SELECT_DONATION_PRINT_MGT" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT #{V_TEMPLE_CD} AS TEMPLE_CD
+			  ,ACM.CODE
+			  ,ACM.NAME
+			  ,DPM.DONATION_NM
+			  ,DPM.REMARK
+		  FROM ASP_TEMPLE_DONATION_PRINT_MGT DPM
+		  	  ,ASP_CODE_MGT ACM
+		 WHERE DPM.TEMPLE_CD(+) = #{V_TEMPLE_CD}
+		   AND ACM.GROUP_CD     = 'REC'
+		   AND ACM.CODE        != '-1'
+		   AND ACM.USE_YN       = 'Y'
+		   AND ACM.CODE         = DPM.ACCEPT_GBN(+)
+		ORDER BY ACM.SORT_SEQ
+	</select>
+	
+
+	<insert id="INSERT_DONATION_PRINT_MGT" parameterType="java.util.Map" >
+		INSERT INTO ASP_TEMPLE_DONATION_PRINT_MGT(
+			TEMPLE_CD
+		   ,ACCEPT_GBN
+		   ,DONATION_NM
+		   ,REMARK
+		   ,CRT_DATE
+		   ,CRT_USER
+		   ,UPT_DATE
+		   ,UPT_USER
+		   ,REMOTE
+		) VALUES (
+			#{TEMPLE_CD}
+		   ,#{CODE}
+		   ,TRIM(#{DONATION_NM})
+		   ,#{REMARK ,jdbcType=VARCHAR}
+		   ,SYSDATE
+		   ,#{V_USER_ID}
+		   ,SYSDATE
+		   ,#{V_USER_ID}
+		   ,#{V_REMOTE}
+		)
+	</insert>
+
+
+	<update id="UPDATE_DONATION_PRINT_MGT" parameterType="java.util.Map" >
+		UPDATE ASP_TEMPLE_DONATION_PRINT_MGT 
+		   SET DONATION_NM = TRIM(#{DONATION_NM ,jdbcType=VARCHAR})
+		   	  ,REMARK      = #{REMARK  ,jdbcType=VARCHAR}
+		   	  ,UPT_DATE    = SYSDATE
+		   	  ,UPT_USER    = #{V_USER_ID}
+		   	  ,REMOTE      = #{V_REMOTE}
+		 WHERE TEMPLE_CD   = #{TEMPLE_CD}
+		   AND ACCEPT_GBN  = #{CODE}
+	</update>
+	
+</mapper>

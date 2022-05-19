@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SIN008W_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="USE_YN" column="USE_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+		<result  property="CHECK_YN" column="CHECK_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+	</resultMap>
+
+
+
+	
+	<!-- #SMS 문자알림 관리 조회# -->
+	<select id="SELECT_SMS_ALARM_MGT" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT ALA.TEMPLE_CD
+			  ,COD.GROUP_CD
+			  ,COD.NAME
+			  ,COD.CODE
+			  ,ALA.ALARM_DAY
+			  ,ALA.ALARM_TIME
+			  ,ALA.USE_YN
+			  ,ALA.CRT_USER
+			  ,TO_CHAR(ALA.CRT_DATE, 'YYYYMMDD') AS CRT_DATE
+			  ,TO_CHAR(ALA.UPT_DATE, 'YYYYMMDD') AS UPT_DATE
+			  ,ALA.UPT_USER
+			  ,ALA.REMOTE
+			  ,COD.SORT_SEQ
+			  ,DECODE(ALA.CRT_DATE,NULL,'F','T') AS USING_YN
+		  FROM ASP_TEMPLE_EVENT_ALARM_MGT  ALA
+		  	  ,ASP_CODE_MGT                COD
+		 WHERE ALA.GROUP_CD     = COD.GROUP_CD
+		   AND ALA.CODE         = COD.CODE
+		   AND COD.GROUP_CD     = 'SMSREC'
+		   AND ALA.TEMPLE_CD(+) = #{V_TEMPLE_CD}
+		   AND COD.USE_YN     &lt;&gt; 'N'
+		   AND COD.CODE       not in ('-1','12','14')
+		ORDER BY SORT_SEQ
+	</select>
+	
+	<!--  #SMS 문자서식 관리 조회# -->
+	<select id="SELECT_SMS_ALARM_DOC" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT TEMPLE_CD
+			  ,GROUP_CD
+			  ,CODE
+			  ,SEQ_NO
+			  ,CONTENTS
+			  ,CHECK_YN
+			  ,REMARK
+			  ,CRT_USER
+			  ,UPT_USER
+			  ,TO_CHAR(CRT_DATE, 'YYYYMMDD') AS CRT_DATE
+			  ,TO_CHAR(UPT_DATE, 'YYYYMMDD') AS UPT_DATE
+			  ,REMOTE
+		  FROM ASP_TEMPLE_EVENT_ALARM_DOC 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND GROUP_CD  = #{V_GROUP_CD}
+		   AND CODE      = #{V_CODE}
+		ORDER BY SEQ_NO
+	</select>
+	
+	
+	<!-- #SMS 문자컬럼 관리 조회# -->
+	<select id="SELECT_SMS_ALARM_ITEM" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT #{V_GROUP_CD} AS GROUP_CD
+		      ,#{V_CODE} AS CODE
+		      ,'' AS COL_ID
+		      ,'선택' AS COL_NAME
+		      ,'' AS USE_YN
+		      ,'' AS CRT_USER
+		      ,'' AS UPT_USER
+		      ,TO_CHAR(SYSDATE, 'YYYYMMDD') AS CRT_DATE
+		      ,TO_CHAR(SYSDATE, 'YYYYMMDD') AS UPT_DATE
+		      ,'' AS REMOTE
+	      FROM DUAL
+	     UNION ALL
+	    SELECT GROUP_CD
+	          ,CODE
+	          ,COL_ID
+	          ,COL_NAME
+	          ,USE_YN
+	          ,CRT_USER
+	          ,UPT_USER
+	          ,TO_CHAR(CRT_DATE, 'YYYYMMDD') AS CRT_DATE
+	          ,TO_CHAR(UPT_DATE, 'YYYYMMDD') AS UPT_DATE
+	          ,REMOTE
+		  FROM ASP_TEMPLE_EVENT_ALARM_ITEM
+		 WHERE GROUP_CD  = #{V_GROUP_CD}
+		   AND USE_YN    = 'T'
+		   AND CODE     IN ('0',#{V_CODE})
+		ORDER BY COL_ID DESC
+	</select>
+	
+	<insert id="INSERT_SMS_ALARM_MGT" parameterType="java.util.Map">
+		INSERT INTO ASP_TEMPLE_EVENT_ALARM_MGT (
+		        TEMPLE_CD
+		       ,GROUP_CD
+		       ,CODE
+		       ,ALARM_DAY
+		       ,ALARM_TIME
+		       ,USE_YN
+		       ,CRT_USER
+		       ,CRT_DATE
+		       ,UPT_DATE
+		       ,UPT_USER
+		       ,REMOTE
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{GROUP_CD}
+		       ,#{CODE}
+		       ,#{ALARM_DAY}
+		       ,#{ALARM_TIME}
+		       ,#{USE_YN}
+		       ,#{V_USER_ID}
+		       ,SYSDATE
+		       ,SYSDATE
+		       ,#{V_USER_ID}
+		       ,#{REMOTE}
+		)
+	</insert>
+	
+	<update id="UPDATE_SMS_ALARM_MGT"  parameterType="java.util.Map">
+		UPDATE ASP_TEMPLE_EVENT_ALARM_MGT
+		   SET ALARM_DAY  = #{ALARM_DAY}
+		   	  ,ALARM_TIME = #{ALARM_TIME}
+		   	  ,USE_YN     = #{USE_YN}
+		   	  ,UPT_DATE   = SYSDATE
+		   	  ,UPT_USER   = #{V_USER_ID}
+		   	  ,REMOTE     = #{REMOTE}
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		   AND GROUP_CD   = #{GROUP_CD}
+		   AND CODE       = #{CODE}
+	</update>
+	
+	
+	<insert id="INSERT_SMS_ALARM_DOC" parameterType="java.util.Map">
+		INSERT INTO ASP_TEMPLE_EVENT_ALARM_DOC (
+		        TEMPLE_CD
+		       ,GROUP_CD
+		       ,CODE
+		       ,SEQ_NO
+		       ,CONTENTS
+		       ,REMARK
+		       ,CRT_USER
+		       ,UPT_USER
+		       ,CRT_DATE
+		       ,UPT_DATE
+		       ,REMOTE
+		       ,CHECK_YN
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{GROUP_CD}
+		       ,#{CODE}
+		       ,(SELECT NVL(MAX(SEQ_NO)+1,1)
+		           FROM ASP_TEMPLE_EVENT_ALARM_DOC
+			      WHERE TEMPLE_CD = #{TEMPLE_CD}
+				    AND GROUP_CD  = #{GROUP_CD}
+				    AND CODE      = #{CODE})
+			  ,#{CONTENTS  ,jdbcType=VARCHAR}
+			  ,#{REMARK  ,jdbcType=VARCHAR}
+			  ,#{V_USER_ID}
+			  ,#{V_USER_ID}
+			  ,SYSDATE
+			  ,SYSDATE
+			  ,#{REMOTE}
+			  ,DECODE(#{CHECK_YN ,jdbcType=VARCHAR},'','F',#{CHECK_YN ,jdbcType=VARCHAR})
+		)
+	</insert>
+	
+	<update id="UPDATE_SMS_ALARM_DOC"  parameterType="java.util.Map">
+		UPDATE ASP_TEMPLE_EVENT_ALARM_DOC
+		   SET CONTENTS  = #{CONTENTS  ,jdbcType=VARCHAR}
+		   	  ,REMARK    = #{REMARK  ,jdbcType=VARCHAR}
+		   	  ,CHECK_YN  = DECODE(#{CHECK_YN},'','F',#{CHECK_YN})
+		   	  ,UPT_USER  = #{V_USER_ID}
+		   	  ,UPT_DATE  = SYSDATE
+		   	  ,REMOTE    = #{REMOTE}
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND GROUP_CD  = #{GROUP_CD}
+		   AND CODE      = #{CODE}
+		   AND SEQ_NO    = #{SEQ_NO}
+	</update>
+	
+	
+	<delete id="DELETE_SMS_ALARM_DOC"  parameterType="java.util.Map" >
+		DELETE FROM ASP_TEMPLE_EVENT_ALARM_DOC
+		WHERE TEMPLE_CD = #{TEMPLE_CD}
+		  AND GROUP_CD  = #{GROUP_CD}
+		  AND CODE      = #{CODE}
+		  AND SEQ_NO    = #{SEQ_NO}
+	</delete>
+	
+	
+	<select id="selectExist" parameterType="java.util.Map" resultType="INTEGER">
+		SELECT COUNT(*) AS COUNT                                 
+		  FROM ASP_TEMPLE_EVENT_ALARM_MGT                        
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}    
+		   AND GROUP_CD  = #{GROUP_CD}    
+		   AND CODE      = #{CODE}    
+	</select>
+	
+	
+</mapper>

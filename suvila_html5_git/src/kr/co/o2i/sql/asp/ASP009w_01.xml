@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ASP009w_01DAO">
+
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+	</resultMap>
+	
+	
+	<select id="SELECT_ACC" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT AMM.TEMPLE_CD, 
+		       AMM.ACT_DATE, 
+		       AMM.ACT_NO, 
+		       AMM.ACCT_GBN,
+			   AA.ACCT_NM, 
+		       AMM.IE_GBN, 
+		       AMM.KWAN, 
+		       AAC.KWAN_NAME,
+		       AMM.HANG, 
+		       AAC.HANG_NAME,
+		       AMM.MOK, 
+		       AAC.MOK_NAME,
+			   DECODE(AMM.IE_GBN,'I',AMM.AMOUNT,0) AS I_AMOUNT,
+			   DECODE(AMM.IE_GBN,'O',AMM.AMOUNT,0) AS O_AMOUNT,
+			   AMOUNT,
+			   NVL(SUM(DECODE(AMM.IE_GBN,'I',AMM.AMOUNT, AMM.AMOUNT*-1)) OVER (ORDER BY AMM.ACT_DATE, AMM.ACT_NO RANGE UNBOUNDED PRECEDING),0) +
+			   (
+					SELECT 
+						NVL(SUM(DECODE(IE_GBN,'I',AMOUNT, AMOUNT*-1)),0)
+					FROM ACC_MONEY_MGT 
+					WHERE TEMPLE_CD    = AMM.TEMPLE_CD
+					AND ACT_DATE  &gt; = SUBSTR(#{V_DATE},1,4) || '0101'
+					AND ACT_DATE  &lt; #{V_DATE}					
+		          )
+			   AS TOTAL,
+		 	   AMM.REMARK, 
+			   ATU.USER_NM,
+				AMM.USER_ID,
+			   AMM.ACT_DATE || AMM.ACT_NO AS PAGE_SKIP,
+			   'T' AS CHECK_P
+		  FROM ACC_MONEY_MGT  			AMM, 
+		  	   ACC_ACCOUNTS 			AAC,
+			   ASP_TEMPLE_MASTER 		ATM,
+			   ASP_TEMPLE_USER			ATU,
+				 (	SELECT 
+						   DISTINCT
+						   TEMPLE_CD,
+						   ACCT_GBN, 
+						   ACCT_NM
+					FROM ACC_ACCOUNTS
+					WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+					AND KWAN = 1
+					AND HANG = 0
+					AND MOK  = 0
+				  ) AA
+		 WHERE AMM.TEMPLE_CD 		  = AAC.TEMPLE_CD
+		   AND AMM.IE_GBN    		  = AAC.IE_GBN
+		   AND AMM.ACCT_GBN  		  = AAC.ACCT_GBN
+		   AND AMM.KWAN      		  = AAC.KWAN
+		   AND AMM.HANG      		  = AAC.HANG
+		   AND AMM.MOK       		  = AAC.MOK
+		   AND AMM.TEMPLE_CD          = ATM.TEMPLE_CD
+		   AND AMM.TEMPLE_CD   		  = AA.TEMPLE_CD
+		   AND AMM.ACCT_GBN			  = AA.ACCT_GBN
+		   AND AMM.TEMPLE_CD		  = ATU.TEMPLE_CD(+)
+		   AND AMM.USER_ID			  = ATU.USER_ID(+)
+		   AND AMM.TEMPLE_CD 		  = #{V_TEMPLE_CD}
+		   AND AMM.ACT_DATE  	  &gt;= #{V_DATE}
+		   AND AMM.ACT_DATE  	  &lt;= #{V_DATE}		   
+		ORDER BY AMM.ACT_DATE, AMM.ACT_NO
+	</select>
+	
+	<delete id="DELETE_ACC"  parameterType="kr.co.o2i.util.CommonMap">
+		DELETE FROM ACC_MONEY_MGT
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND ACT_DATE  = #{V_DATE}
+	</delete>
+	
+	
+	
+</mapper>

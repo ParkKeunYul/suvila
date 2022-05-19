@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC013w_05DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="SEL_YN" column="SEL_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+	
+	
+	<select id="SELECT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	    SELECT TEMPLE_CD
+	    	  ,(SELECT NAME FROM ASP_CODE_MGT WHERE GROUP_CD = 'REC' AND CODE = '9') as NAME1
+	    	  ,SUB_DATE
+	    	  ,AMOUNT1
+		  FROM ( SELECT RD.TEMPLE_CD
+		  			   ,RD.SUB_DATE
+		  			   ,SUM(RD.AMOUNT) AS AMOUNT1
+				   FROM ( SELECT RYD.TEMPLE_CD
+				   			    ,RM.PROPOSAL_BUD_NO
+				   			    ,RPH.CRT_USER
+				   			    ,SUBSTR(RPH.SUB_DATE,1,TO_NUMBER(#{V_DATE_GBN})) AS SUB_DATE
+				   			    ,RPH.AMOUNT
+						   FROM REC_MANAGE_DETAIL RYD
+						   	   ,REC_PAYMENT_HIS RPH
+						   	   ,REC_MASTER RM 
+						  WHERE RYD.TEMPLE_CD = RPH.TEMPLE_CD
+							AND RYD.ACCEPT_SEQ  = RPH.ACCEPT_SEQ
+							AND RYD.SEQ 		= RPH.SEQ
+							AND RYD.TEMPLE_CD 	= RM.TEMPLE_CD
+							AND RYD.ACCEPT_SEQ 	= RM.ACCEPT_SEQ	
+							AND RYD.DEL_YN 		= 'F'
+							AND RYD.TEMPLE_CD 	= #{V_TEMPLE_CD}
+							AND SUBSTR(RPH.SUB_DATE,1,TO_NUMBER(#{V_DATE_GBN}))     >= #{V_SDATE}
+							AND SUBSTR(RPH.SUB_DATE,1,TO_NUMBER(#{V_DATE_GBN}))  &lt;= #{V_EDATE}
+							<if test="V_BUD_NO != '' and V_BUD_NO != null  ">
+								AND RM.PROPOSAL_BUD_NO  LIKE  #{V_BUD_NO} || '%'
+							</if> 
+							<if test="V_MANAGE_CODE != '' and V_MANAGE_CODE != null  ">
+								AND RYD.MANAGE_CODE =  #{V_MANAGE_CODE}
+							</if>
+							<if test="VV_USER != '' and VV_USER != null  ">
+								AND RPH.CRT_USER = #{VV_USER}
+							</if>
+						  )RD
+					GROUP BY TEMPLE_CD 
+							,SUB_DATE
+				  )
+			ORDER BY SUB_DATE
+	</select>
+	
+	
+	
+</mapper>

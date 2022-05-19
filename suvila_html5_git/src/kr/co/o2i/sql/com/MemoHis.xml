@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="MemoHisDAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+	
+
+	<select id="SELECT_MEMO" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		 SELECT TEMPLE_CD
+		       ,BUD_NO
+		       ,SEQ_NO
+		       ,TITLE
+		       ,CONTENTS
+		       ,CRT_USER
+		       ,TO_CHAR(CRT_DATE,'YYYYMMDD') AS CRT_DATE
+		       ,UPT_USER
+		       ,TO_CHAR(UPT_DATE,'YYYYMMDD') AS UPT_DATE
+		       ,REMOTE
+		  FROM (SELECT *
+				  FROM SIN_FAMILY_MEMO
+				 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+				   AND BUD_NO    LIKE SUBSTR(#{V_BUD_NO},1,10) || '%')
+		<if test='V_SEARCH_GBN == "1"'>
+			WHERE TITLE    LIKE '%' || #{V_SEARCH_PARAM} || '%'
+		</if>
+		<if test='V_SEARCH_GBN == "2"'>
+			WHERE CONTENTS LIKE '%' || #{V_SEARCH_PARAM} || '%'
+		</if>
+		<if test='V_SEARCH_GBN == "3"'>
+			WHERE TITLE    LIKE '%' || #{V_SEARCH_PARAM} || '%'
+			   OR CONTENTS LIKE '%' || #{V_SEARCH_PARAM} || '%'
+		</if>
+		ORDER BY CRT_DATE DESC , SEQ_NO desc
+	</select>
+
+	<insert id="INSERT_MEMO" parameterType="java.util.Map">
+		INSERT INTO SIN_FAMILY_MEMO (
+		        TEMPLE_CD
+		       ,BUD_NO
+		       ,SEQ_NO
+		       ,TITLE
+		       ,CONTENTS
+		       ,CRT_USER
+		       ,CRT_DATE
+		       ,UPT_USER
+		       ,UPT_DATE
+		       ,REMOTE
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{BUD_NO}
+		       ,(SELECT NVL(MAX(SEQ_NO)+1,1)
+		          FROM SIN_FAMILY_MEMO
+		         WHERE TEMPLE_CD = #{TEMPLE_CD})
+		       ,#{TITLE}
+		       ,#{CONTENTS}
+		       ,#{CRT_USER}
+		       ,SYSDATE
+		       ,#{UPT_USER}
+		       ,SYSDATE
+		       ,#{REMOTE}
+		)
+	</insert>
+	
+	<update id="UPDATE_MEMO" parameterType="java.util.Map">
+		UPDATE SIN_FAMILY_MEMO 
+		   SET TITLE     = #{TITLE}
+		      ,CONTENTS  = #{CONTENTS}
+		      ,UPT_USER  = #{UPT_USER}
+		      ,UPT_DATE  = SYSDATE
+		      ,REMOTE    = #{REMOTE}
+ 		WHERE TEMPLE_CD  = #{TEMPLE_CD}
+   		  AND BUD_NO     = #{BUD_NO}
+   		  AND SEQ_NO     = #{SEQ_NO}
+	</update>
+		
+		
+	<update id="DELETE_MEMO" parameterType="java.util.Map">
+		DELETE FROM SIN_FAMILY_MEMO
+ 	     WHERE TEMPLE_CD = #{TEMPLE_CD}
+   		   AND BUD_NO    = #{BUD_NO}
+   		   AND SEQ_NO    = #{SEQ_NO}
+	</update>
+	
+</mapper>

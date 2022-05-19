@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC004w_03DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+	
+	<select id="SELECT_WEPAEKIND" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT 
+		       #{V_TEMPLE_CD} AS TEMPLE_CD,
+		       0 AS EVENT_CD,
+			   0 AS EVENT_CD_ORG,
+		       '' AS EVENT_DATE,
+		       DECODE(#{V_OPTION},'ALL','전체','선택') AS EVENT_NAME,
+		       0 AS AMOUNT,
+		       'F' AS SET_YN
+		  FROM DUAL
+		UNION ALL
+		SELECT 
+		       MAI.TEMPLE_CD,
+		       TO_NUMBER(SUB.EVENT_DATE || MAI.EVENT_CD) AS EVENT_CD,
+			   MAI.EVENT_CD AS EVENT_CD_ORG,
+		       SUB.EVENT_DATE,
+		       MAI.EVENT_NAME || ' (' || FN_GET_DATE_FORMAT(SUB.EVENT_DATE) ||')' AS EVENT_NAME,
+		       SUB.AMOUNT,
+		       MAI.SET_YN
+		  FROM REC_WEPAE_CHONHON_MGT MAI, REC_WEPAE_CHONHON_EVENT_MGT SUB
+		 WHERE MAI.TEMPLE_CD = SUB.TEMPLE_CD
+		   AND MAI.EVENT_CD  = SUB.EVENT_CD		   
+		   AND MAI.TEMPLE_CD = #{V_TEMPLE_CD}
+		ORDER BY EVENT_CD_ORG, EVENT_DATE DESC
+	</select>
+	
+	<select id="SELECT_DETAIL" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT
+		       TEMPLE_CD, 
+		       FILTER_KEY,
+		       ACCEPT_SEQ, 
+		       SEQ,
+		       ACCEPT_DATE,
+		       ACCEPT_GBN,
+		       ACCEPT_NAME,
+		       EVENT_DATE, 
+		       EVENT_CD,
+		       EVENT_NAME,
+		       PROPOSAL_BUD_NO,
+		       PROPOSAL_BUD_NM,
+		       PAYMENT_PLAN_AMT, 
+		       PAYMENT_AMT, 
+		       (PAYMENT_PLAN_AMT-PAYMENT_AMT) MISU_AMT, <!-- 미수금액 -->
+		       WEPAECNT, 
+		       EVENT_TIME, 
+		       MEMO, 
+		       REMARK, 
+		       CRT_USER, 
+		       UPT_USER,
+		       CRT_DATE,
+		       UPT_DATE,
+		       REMOTE,
+		       SMS_YN,
+		       MOBILE_TELNO,
+		       CLOSE_YN,
+		       ADDR,
+		       SMS_GROUP_TRANS,
+		       PROPOSAL_DEL_YN
+		  FROM( SELECT
+		               DET.TEMPLE_CD, 
+		               DET.ACCEPT_SEQ || DET.SEQ AS FILTER_KEY,
+		               DET.ACCEPT_SEQ, 
+		               DET.SEQ,
+		               MST.ACCEPT_DATE,
+		               SUB.ACCEPT_GBN,
+		               GBN.NAME AS ACCEPT_NAME,
+		               DET.EVENT_DATE, 
+		               DET.EVENT_CD,
+		               MGT.EVENT_NAME,
+		               MST.PROPOSAL_BUD_NO,
+		               SMS.NAME_KOR AS PROPOSAL_BUD_NM,
+		               DET.PAYMENT_PLAN_AMT, 
+		               (SELECT NVL(SUM(HIS.AMOUNT),0)
+			                FROM REC_PAYMENT_HIS HIS
+			               WHERE SUB.TEMPLE_CD  = HIS.TEMPLE_CD
+			                 AND SUB.ACCEPT_SEQ = HIS.ACCEPT_SEQ
+			                 AND SUB.SEQ        = HIS.SEQ
+			              ) AS PAYMENT_AMT, 
+		               DET.WEPAECNT, 
+		               DET.EVENT_TIME, 
+		               MST.MEMO, 
+		               DET.MEMO AS REMARK, 
+		               DET.CRT_USER, 
+		               DET.UPT_USER,
+		               TO_CHAR(DET.CRT_DATE, 'YYYYMMDD') AS CRT_DATE,
+		               TO_CHAR(DET.UPT_DATE, 'YYYYMMDD') AS UPT_DATE,
+		               DET.REMOTE,
+		               DECODE(MST.SMS_YN,'T',DECODE(SMS.MOBILE_TELNO1||SMS.MOBILE_TELNO2||SMS.MOBILE_TELNO3,NULL,'N','Y'),'N') SMS_YN,
+		               <!-- SMS.MOBILE_TELNO1 || DECODE(SMS.MOBILE_TELNO1,NULL,'','-') || SMS.MOBILE_TELNO2 || DECODE(SMS.MOBILE_TELNO2,NULL,'','-') || SMS.MOBILE_TELNO3 AS MOBILE_TELNO, -->
+		               DET.CLOSE_YN,
+		               SMS.ADDR1||' '|| SMS.ADDR2 AS ADDR,
+		               SMS.MOBILE_TELNO1 || DECODE(SMS.MOBILE_TELNO1,NULL,'','-') || SMS.MOBILE_TELNO2 || DECODE(SMS.MOBILE_TELNO2,NULL,'','-') || SMS.MOBILE_TELNO3 AS MOBILE_TELNO,		              
+		               SMS.SMS_GROUP_TRANS,
+		               SMS.DEL_YN as PROPOSAL_DEL_YN
+		          FROM REC_MASTER MST,
+		               REC_SUB SUB,
+		               SIN_CARD_MASTER SMS,
+		               REC_WEPAE_CHONHON_DETAIL DET,
+		               ASP_CODE_MGT GBN,
+		               (SELECT 
+		                       MAI.TEMPLE_CD,
+		                       MAI.EVENT_CD,
+		                       SUB.EVENT_DATE,
+		                       MAI.EVENT_NAME || ' (' || SUBSTR(SUB.EVENT_DATE,1,4) || '/' || SUBSTR(SUB.EVENT_DATE,5,2) || '/' ||SUBSTR(SUB.EVENT_DATE,7,2) ||')' AS EVENT_NAME,
+		                       SUB.AMOUNT,
+		                       MAI.SET_YN
+		                  FROM REC_WEPAE_CHONHON_MGT MAI, REC_WEPAE_CHONHON_EVENT_MGT SUB
+		                 WHERE MAI.TEMPLE_CD = SUB.TEMPLE_CD
+		                   AND MAI.EVENT_CD  = SUB.EVENT_CD
+		                   AND MAI.TEMPLE_CD = #{V_TEMPLE_CD}) MGT
+		         WHERE MST.TEMPLE_CD = SMS.TEMPLE_CD(+)
+		           AND MST.PROPOSAL_BUD_NO = SMS.BUD_NO(+)
+		           AND MST.TEMPLE_CD  = SUB.TEMPLE_CD
+		           AND MST.ACCEPT_SEQ = SUB.ACCEPT_SEQ
+		           AND DET.TEMPLE_CD  = MST.TEMPLE_CD
+		           AND DET.ACCEPT_SEQ = MST.ACCEPT_SEQ
+		           AND DET.TEMPLE_CD  = MGT.TEMPLE_CD
+		           AND DET.EVENT_CD   = MGT.EVENT_CD
+		           AND DET.EVENT_DATE = MGT.EVENT_DATE
+		           AND GBN.GROUP_CD(+)= 'REC'
+		           AND SUB.ACCEPT_GBN = GBN.CODE(+)
+		           AND SUB.DEL_YN     = 'F'
+		           AND DET.TEMPLE_CD  = #{V_TEMPLE_CD}
+		           <if test="V_CLOSE_YN != '' and V_CLOSE_YN != null  ">
+		           		AND DET.CLOSE_YN = #{V_CLOSE_YN}
+		           </if>
+		           <if test="V_PROPOSAL_BUD_NO != '' and V_PROPOSAL_BUD_NO != null  ">
+		           		AND MST.PROPOSAL_BUD_NO LIKE SUBSTR(#{V_PROPOSAL_BUD_NO},0,10) || '%'
+		           </if>
+		           <choose>
+		           	<when test="V_DATE_GBN == 1">
+		           		AND MST.ACCEPT_DATE BETWEEN #{V_SDATE} AND #{V_EDATE}
+		           	</when>
+		           	<when test="V_DATE_GBN == 2">
+		           		AND DET.EVENT_DATE BETWEEN #{V_SDATE} AND #{V_EDATE}
+		           	</when>
+		           	<otherwise></otherwise>
+		           </choose>
+		           <if test="V_EVENT_CD != 0 and V_EVENT_CD != '' and V_EVENT_CD != null">
+		           		AND DET.EVENT_CD = #{V_EVENT_CD}
+		           </if>
+		           <if test="VV_USER_ID != '' and VV_USER_ID != null  ">
+		           		AND MST.CRT_USER = #{VV_USER_ID}
+		           </if>
+		           <if test="V_CLASS_CD != 0 and V_CLASS_CD != '' and V_CLASS_CD != null">
+		           		AND MST.PROPOSAL_BUD_NO IN (SELECT BUD_NO 
+		           		 							  FROM SIN_CLASS_INFO 
+		           		 							 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		           		 							   AND CLASS_CD  = #{V_CLASS_CD})
+		           </if>
+		           <choose>
+		           	<when test="V_PAY_STATE == 1">
+		           		) WHERE (PAYMENT_PLAN_AMT-PAYMENT_AMT) &lt;= 0
+		           	</when>
+		           	<when test="V_PAY_STATE == 2">
+		           		) WHERE (PAYMENT_PLAN_AMT-PAYMENT_AMT) > 0
+		           	</when>
+		           	<otherwise>
+		           		)
+		           	</otherwise>
+		           </choose>
+		ORDER BY ACCEPT_SEQ
+	</select>
+	
+	
+	<select id="SELECT_SPIRIT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		  SELECT
+		       CHN.TEMPLE_CD, 
+		       CHN.ACCEPT_SEQ, 
+		       CHN.EVENT_DATE,
+		       CHN.EVENT_CD,  
+		       CHN.SEQ,
+		       CHN.WEPAECNT, 
+		       CHN.WEPAE_SEQ, 
+		       CHN.JOIN_SEQ, 
+		       CHN.EVENT_SEQ,
+		       BOK.HYO_REL, 
+		       CHN.DECE_BUD_NO,
+		       DNM.NAME_KOR AS DECE_BUD_NM,
+		       BOK.DECE_REL,
+		       DEA.BON AS DECE_BONE,
+		       BON.NAME AS DECE_BONE_NM,
+		       DEA.LUNAR_SOLAR,
+		       LUN.NAME AS LUNAR_SOLAR_NM,
+		       CHN.BOKWIJA_NO,
+		       BNM.NAME_KOR AS BOKWIJA_NM,
+		       BOK.BOKWI_KIBU_GBN,
+		       BOK.NAME AS BOKWI_KIBU_GBN_NM,
+		       DEA.DEATH_DAY,
+		       DEA.DEATH_TIME,
+		       CHN.CRT_USER, 
+		       CHN.UPT_USER, 
+		       TO_CHAR(CHN.CRT_DATE, 'YYYYMMDD') AS CRT_DATE,
+		       TO_CHAR(CHN.UPT_DATE, 'YYYYMMDD') AS UPT_DATE,
+		       CHN.REMOTE 
+		  FROM REC_WEPAE_CHONHON_JOIN_MGT CHN
+		      ,SIN_DEATH_INFO DEA
+		      ,SIN_DEATH_BOKWI_INFO BOK
+		      ,SIN_CARD_MASTER DNM
+		      ,SIN_CARD_MASTER BNM
+		      ,ASP_CODE_MGT BON
+		      ,ASP_CODE_MGT BOK
+		      ,ASP_CODE_MGT LUN
+		 WHERE CHN.TEMPLE_CD   = DEA.TEMPLE_CD
+		   AND CHN.DECE_BUD_NO = DEA.BUD_NO
+		   AND CHN.TEMPLE_CD   = BOK.TEMPLE_CD
+		   AND CHN.DECE_BUD_NO = BOK.DECE_BUD_NO
+		   AND CHN.BOKWIJA_NO  = BOK.BUD_NO
+		   AND CHN.TEMPLE_CD   = DNM.TEMPLE_CD
+		   AND CHN.DECE_BUD_NO = DNM.BUD_NO
+		   AND CHN.TEMPLE_CD   = BNM.TEMPLE_CD
+		   AND CHN.BOKWIJA_NO  = BNM.BUD_NO
+		   AND BON.GROUP_CD(+) = 'BON'
+		   AND DEA.BON         = BON.CODE(+)
+		   AND BOK.GROUP_CD(+) = 'BOKWIGBN'
+		   AND BOK.BOKWI_KIBU_GBN = BOK.CODE(+)
+		   AND LUN.GROUP_CD(+) = 'LUNAR_SOLAR'
+		   AND DEA.LUNAR_SOLAR = LUN.CODE(+)
+		   AND CHN.TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND CHN.ACCEPT_SEQ = #{V_ACCEPT_SEQ}
+		   AND CHN.EVENT_CD   = #{V_EVENT_CD}
+		   AND CHN.EVENT_DATE = #{V_EVENT_DATE}
+		   AND CHN.WEPAECNT   = #{V_WEPAECNT}
+		ORDER BY CHN.WEPAE_SEQ, CHN.JOIN_SEQ
+	</select>
+	
+	<select id="SELECT_EVENTSEQ" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT
+		       DET.TEMPLE_CD, 
+		       DET.ACCEPT_SEQ || DET.SEQ AS FILTER_KEY,
+		       DET.ACCEPT_SEQ, 
+		       DET.SEQ,
+		       MST.ACCEPT_DATE,
+		       SUB.ACCEPT_GBN,
+		       GBN.NAME AS ACCEPT_NAME,
+		       DET.EVENT_DATE, 
+		       DET.EVENT_CD,
+		       MGT.EVENT_NAME,
+		       MST.PROPOSAL_BUD_NO,
+		       SMS.NAME_KOR AS PROPOSAL_BUD_NM,
+		       DET.WEPAECNT, 
+		       DET.EVENT_TIME, 
+		       MST.MEMO AS MEMO, 
+		       DET.MEMO AS REMARK, 
+		       JOI.WEPAE_SEQ,
+		       JOI.EVENT_SEQ,
+		       JOI.EVENT_SEQ AS OLD_EVENT_SEQ,
+		       JOI.BOKWIJA_NO,
+		       BOK.NAME_KOR AS BOKWIJA_NM,
+		       JOI.DECE_BUD_NO,
+		       DEC.NAME_KOR AS DECE_BUD_NM,
+		       DET.CRT_USER, 
+		       DET.UPT_USER,
+		       TO_CHAR(DET.CRT_DATE, 'YYYYMMDD') AS CRT_DATE,
+		       TO_CHAR(DET.UPT_DATE, 'YYYYMMDD') AS UPT_DATE,
+		       DET.REMOTE,
+		       DET.CLOSE_YN
+		  FROM REC_MASTER MST, REC_SUB SUB, SIN_CARD_MASTER SMS, REC_WEPAE_CHONHON_DETAIL DET,REC_WEPAE_CHONHON_JOIN_MGT JOI, ASP_CODE_MGT GBN,
+		       SIN_CARD_MASTER BOK, SIN_CARD_MASTER DEC, 
+		       (SELECT 
+		               MAI.TEMPLE_CD,
+		               MAI.EVENT_CD,
+		               SUB.EVENT_DATE,
+		               MAI.EVENT_NAME || ' (' || SUBSTR(SUB.EVENT_DATE,1,4) || '/' || SUBSTR(SUB.EVENT_DATE,5,2) || '/' ||SUBSTR(SUB.EVENT_DATE,7,2) ||')' AS EVENT_NAME,
+		               SUB.AMOUNT,
+		               MAI.SET_YN
+		          FROM REC_WEPAE_CHONHON_MGT MAI, REC_WEPAE_CHONHON_EVENT_MGT SUB
+		         WHERE MAI.TEMPLE_CD = SUB.TEMPLE_CD
+		           AND MAI.EVENT_CD  = SUB.EVENT_CD
+		           AND MAI.TEMPLE_CD = #{V_TEMPLE_CD}) MGT
+		 WHERE MST.TEMPLE_CD = SMS.TEMPLE_CD(+)
+		   AND MST.PROPOSAL_BUD_NO = SMS.BUD_NO(+)
+		   AND MST.TEMPLE_CD  = SUB.TEMPLE_CD
+		   AND MST.ACCEPT_SEQ = SUB.ACCEPT_SEQ
+		   AND DET.TEMPLE_CD  = MST.TEMPLE_CD
+		   AND DET.ACCEPT_SEQ = MST.ACCEPT_SEQ
+		   AND DET.TEMPLE_CD  = MGT.TEMPLE_CD
+		   AND DET.EVENT_CD   = MGT.EVENT_CD
+		   AND DET.EVENT_DATE = MGT.EVENT_DATE
+		   AND DET.TEMPLE_CD  = JOI.TEMPLE_CD
+		   AND DET.ACCEPT_SEQ = JOI.ACCEPT_SEQ
+		   AND DET.TEMPLE_CD  = JOI.TEMPLE_CD
+		   AND DET.EVENT_CD   = JOI.EVENT_CD
+		   AND DET.EVENT_DATE = JOI.EVENT_DATE
+		   AND JOI.TEMPLE_CD  = BOK.TEMPLE_CD(+)
+		   AND JOI.BOKWIJA_NO = BOK.BUD_NO(+)
+		   AND JOI.TEMPLE_CD  = DEC.TEMPLE_CD(+)
+		   AND JOI.DECE_BUD_NO = DEC.BUD_NO(+)
+		   AND JOI.JOIN_SEQ   = '1'
+		   AND GBN.GROUP_CD(+)= 'REC'
+		   AND SUB.ACCEPT_GBN = GBN.CODE(+)
+		   AND SUB.DEL_YN     = 'F'
+		   AND DET.TEMPLE_CD  = #{V_TEMPLE_CD}
+		   <if test="V_CLOSE_YN != '' and V_CLOSE_YN != null  ">
+           		AND DET.CLOSE_YN = #{V_CLOSE_YN}
+           </if>
+           <if test="V_PROPOSAL_BUD_NO != '' and V_PROPOSAL_BUD_NO != null  ">
+           		AND MST.PROPOSAL_BUD_NO LIKE SUBSTR(#{V_PROPOSAL_BUD_NO},0,10) || '%'
+           </if>
+           <choose>
+           	<when test="V_DATE_GBN == 1">
+           		AND MST.ACCEPT_DATE BETWEEN #{V_SDATE} AND #{V_EDATE}
+           	</when>
+           	<when test="V_DATE_GBN == 2">
+           		AND DET.EVENT_DATE BETWEEN #{V_SDATE} AND #{V_EDATE}
+           	</when>
+           	<otherwise></otherwise>
+           </choose>
+		   <if test="V_EVENT_CD != '0' and V_EVENT_CD != '' and V_EVENT_CD != null">
+		   		AND DET.EVENT_CD   = #{V_EVENT_CD}
+		   </if>
+		   <if test="VV_USER_ID != '' and VV_USER_ID != null  ">
+		   		AND MST.CRT_USER = #{VV_USER_ID} 
+		   </if>
+		   <if test="V_EVENT_ESEQ != '' and V_EVENT_ESEQ != null  ">
+		   		AND JOI.EVENT_SEQ BETWEEN NVL(#{V_EVENT_FSEQ},1) AND #{V_EVENT_ESEQ}
+		   </if>
+		   <if test="V_CLASS_CD != '0' and V_CLASS_CD != '' and V_CLASS_CD != null">
+				AND MST.PROPOSAL_BUD_NO IN (SELECT BUD_NO 
+										      FROM SIN_CLASS_INFO 
+										     WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+										       AND CLASS_CD  = #{V_CLASS_CD} )
+		   </if>			
+		   ORDER BY JOI.EVENT_SEQ
+	</select>
+	
+	<update id="UPDATE_EVENTSEQ"  parameterType="java.util.Map">
+		UPDATE REC_WEPAE_CHONHON_JOIN_MGT
+		   SET EVENT_SEQ  = #{EVENT_SEQ},
+		       UPT_DATE   = SYSDATE,
+		       UPT_USER   = #{UPT_USER},
+		       REMOTE     = #{REMOTE}
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		   AND ACCEPT_SEQ = #{ACCEPT_SEQ}
+		   AND EVENT_DATE = #{EVENT_DATE}
+		   AND EVENT_CD   = #{EVENT_CD}
+		   AND SEQ        = #{SEQ}
+		   AND WEPAECNT   = #{WEPAECNT}
+		   AND WEPAE_SEQ  = #{WEPAE_SEQ}
+		   AND EVENT_SEQ  = #{OLD_EVENT_SEQ}
+	</update>
+</mapper>

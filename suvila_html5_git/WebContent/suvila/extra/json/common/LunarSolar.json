@@ -1,0 +1,10 @@
+{
+"success":true,
+"data":{
+    "list":[
+         {"value":"T"     ,"display":"음력"},
+         {"value":"F"     ,"display":"양력"}
+    ]
+},
+"msg":"정상조회됨"    
+}

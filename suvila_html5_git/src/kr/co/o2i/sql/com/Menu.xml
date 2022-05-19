@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<!-- <mapper namespace="kr.co.o2i.dao.com.MenuDAO"> -->
+<mapper namespace="MenuDAO">
+
+	<resultMap id="menuMap" type="java.util.Map"> 
+		<result property="name" column="MENU_NM" /> 
+		<result property="text" column="MENU_NM" />
+		<result property="code" column="CODE" />
+		<result property="url"  column="URL" />
+		<result property="leaf" column="LEAF" />
+		<result property="handler" column="HANDLER" />
+	</resultMap>
+
+	
+	<!--  1차 메뉴 -->
+	<select id="selectmenuDao" parameterType="kr.co.o2i.util.CommonMap" resultType="java.util.Map">
+		SELECT
+			ASM.TEMPLE_CD,
+			AM.SERVICE_GBN,
+			AM.MENU_SEQ,
+			AM.MENU_LVL,
+			AM.MENU_NM,
+			AM.MENU_NM AS TEXT,
+			AM.PATH,
+			'' AS AUTH_GRADE,
+			'' AS ETC1, 
+			AM.MENU_GBN,
+			AM.CODE AS URL
+		FROM  ASP_MENU AM,
+			 (
+				SELECT
+					  ATM.TEMPLE_CD,
+					  AM.SERVICE_GBN
+				FROM ASP_MENU			AM,
+					 ASP_TEMPLE_MENU	ATM,
+					 ASP_PERSON_MENU	APM
+				WHERE AM.PGM_ID			= ATM.PGM_ID
+				AND   ATM.TEMPLE_CD		= APM.TEMPLE_CD
+				AND   ATM.PGM_ID		= APM.PGM_ID
+				AND	  AM.USE_YN			= 'Y'
+				AND	  ATM.TEMPLE_CD		= '${V_TEMPLE_CD}' 
+				AND   APM.USER_ID		= '${V_USER_ID}' 
+				group by ATM.TEMPLE_CD,  AM.SERVICE_GBN
+			 ) ASM,
+			   ASP_CODE_MGT ACM
+		WHERE AM.SERVICE_GBN			= ASM.SERVICE_GBN
+		<!-- AND AM.USE_YN					= 'Y' -->
+		AND AM.RE_USE_YN					= 'Y'
+		AND	AM.MENU_GBN					= 'M'
+		AND	AM.MENU_LVL					= '1'
+		AND AM.SERVICE_GBN 				= ACM.CODE
+		AND ACM.GROUP_CD				= 'SYS'	
+		<!-- AND AM.SERVICE_GBN 				in ('1', '7') -->
+		
+		<!-- AND AM.SERVICE_GBN in ('1','7') -->	
+		ORDER BY ACM.SORT_SEQ
+	</select>
+	
+	<!--  왼쪽 트리 메뉴 조회  -->
+	<select id="TreeMenuDao" parameterType="kr.co.o2i.util.CommonMap" resultMap="menuMap">
+		 SELECT  D.TEMPLE_CD
+	           , A.SERVICE_GBN
+	           , A.MENU_SEQ AS MENU_SEQ
+	           , A.MENU_LVL
+	           , A.MENU_NM	         
+	           , A.CODE as
+	           , A.MENU_GBN
+	           , A.CODE as URL
+	           , DECODE(A.MENU_GBN,'M','C','D') IMGD
+	           , B.AUTH_GRADE	           
+	            ,( CASE
+	            	 WHEN A.MENU_GBN = 'P' THEN 'true'
+	            	 ELSE 'false'
+	               END ) LEAF
+	            ,'onMenuSelect' as HANDLER
+	      FROM   ASP_MENU         A,
+				 ASP_TEMPLE_MENU  D,
+	             ASP_PERSON_MENU  B,
+	             ASP_CODE_MGT     C
+	     WHERE   A.PGM_ID 	   = D.PGM_ID
+		   AND   D.TEMPLE_CD   = B.TEMPLE_CD
+	       AND   D.PGM_ID      = B.PGM_ID
+	       AND   A.SERVICE_GBN = C.CODE
+	       AND   C.GROUP_CD    = 'SYS'
+	       AND   B.TEMPLE_CD   = '${V_TEMPLE_CD}'  
+	       AND   B.USER_ID     = '${V_USER_ID}' 
+	       AND   A.SERVICE_GBN = '${service_gbn}' 
+	       <!-- AND   A.USE_YN      = 'Y' -->
+	       AND   A.RE_USE_YN      = 'Y' 
+	       AND   A.MENU_LVL   != 1
+		ORDER BY MENU_SEQ
+	</select>
+	
+</mapper>

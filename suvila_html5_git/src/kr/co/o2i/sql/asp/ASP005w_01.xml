@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ASP005w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+
+	
+	<select id="SELECT_SY_MENU" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT   '000000'  
+		       , '000000'   AS TEMPLE_CD_TEMP
+		       , SERVICE_GBN
+		       , SERVICE_GBN AS SERVICE_GBN_TEMP
+		       , PGM_ID     
+		       , PGM_ID      AS PGM_ID_TEMP
+		       , MENU_SEQ   
+		       , MENU_LVL   
+		       , MENU_NM    
+			   , MENU_GBN	     
+		       , PATH       
+		       , REMARK     
+		      <!--  , USE_YN -->
+		       , RE_USE_YN as USE_YN 
+		       , CODE    
+		       , 'C'    IMGC
+		       , 'D'    IMGD
+		       , 'P'    IMGO
+		  FROM   ASP_MENU
+		 WHERE   SERVICE_GBN = #{V_SERVICE_GBN_L}
+		ORDER BY MENU_SEQ 
+	</select>
+	
+
+	<select id="SEL_SEAR_TEMPLE_MENU" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT   ATM.TEMPLE_CD  
+		       , ATM.TEMPLE_CD   AS TEMPLE_CD_TEMP
+		       , AM.SERVICE_GBN
+		       , AM.SERVICE_GBN AS SERVICE_GBN_TEMP
+		       , AM.PGM_ID     
+		       , AM.PGM_ID      AS PGM_ID_TEMP
+		       , AM.MENU_SEQ   
+		       , AM.MENU_LVL   
+		       , AM.MENU_NM    
+			   , AM.MENU_GBN	     
+		       , AM.PATH       
+		       , AM.REMARK     
+		       , AM.USE_YN     
+		       , 'C'    IMGC
+		       , 'D'    IMGD
+		       , 'P'    IMGO
+		  FROM   ASP_MENU 		 AM,
+		  		 ASP_TEMPLE_MENU ATM
+		 WHERE   AM.PGM_ID = ATM.PGM_ID
+		   AND   ATM.TEMPLE_CD   = #{V_SEAR_TEMPLECD}
+		   AND   SERVICE_GBN     = #{V_SERVICE_GBN_L}
+		ORDER BY MENU_SEQ
+	</select>
+
+
+	<!-- # 기준 사찰 메뉴 정보 입력 # -->
+	<insert id="INSERT_STANDARD_MENU" parameterType="java.util.Map" >
+		INSERT INTO   ASP_MENU (
+		      SERVICE_GBN
+		      ,PGM_ID
+		      ,MENU_SEQ
+		      ,MENU_LVL
+		      ,MENU_NM
+		      ,MENU_GBN
+		      ,CODE
+		      ,REMARK
+		      <!-- ,USE_YN -->
+		      ,RE_USE_YN
+		) VALUES (
+		       #{SERVICE_GBN  ,jdbcType=VARCHAR}
+		      ,#{PGM_ID       ,jdbcType=VARCHAR}
+		      ,#{MENU_SEQ     ,jdbcType=VARCHAR}
+		      ,#{MENU_LVL     ,jdbcType=VARCHAR}
+		      ,#{MENU_NM      ,jdbcType=VARCHAR}
+		      ,#{MENU_GBN     ,jdbcType=VARCHAR}
+		      ,#{CODE         ,jdbcType=VARCHAR}
+		      ,#{REMARK       ,jdbcType=VARCHAR}
+		      ,#{USE_YN       ,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	
+	<!-- # 기준 사찰 메뉴 정보 수정 # -->
+	<update id="UPDATE_STANDARD_MENU"  parameterType="java.util.Map" >
+		UPDATE ASP_MENU 
+		   SET MENU_SEQ    = #{MENU_SEQ    ,jdbcType=VARCHAR}
+		   	  ,MENU_LVL    = #{MENU_LVL    ,jdbcType=VARCHAR} 
+		      ,MENU_NM     = #{MENU_NM     ,jdbcType=VARCHAR}
+		      ,MENU_GBN    = #{MENU_GBN    ,jdbcType=VARCHAR}
+		      ,CODE        = #{CODE        ,jdbcType=VARCHAR}
+		      ,REMARK      = #{REMARK      ,jdbcType=VARCHAR}
+		      <!-- ,USE_YN      = #{USE_YN      ,jdbcType=VARCHAR} -->
+		      ,RE_USE_YN   = #{USE_YN      ,jdbcType=VARCHAR}
+		 WHERE SERVICE_GBN = #{SERVICE_GBN ,jdbcType=VARCHAR}
+		   AND PGM_ID      = #{PGM_ID_TEMP ,jdbcType=VARCHAR}
+	</update>
+
+	<!-- #각 사찰별 사용자 메뉴 전부 삭제# -->
+	<delete id="DELETE_PERSON_TEMPLE_All_MENU"   parameterType="java.util.Map">
+		DELETE FROM ASP_PERSON_MENU
+		 WHERE PGM_ID  = #{PGM_ID} 
+	</delete>
+	
+	
+	<!-- # 각 사찰별 메뉴 권한 정보 전부 삭제# -->
+	<delete id="DELETE_AUTH_TEMPLE_All_MENU"   parameterType="java.util.Map">
+		DELETE FROM ASP_AUTH_MENU
+		 WHERE PGM_ID  = #{PGM_ID} 
+	</delete>
+	
+	<!-- # 각 사찰별 메뉴 정보 전부 삭제# -->
+	<delete id="DELETE_SEAR_TEMPLE_All_MENU"   parameterType="java.util.Map">
+		DELETE FROM ASP_TEMPLE_MENU
+		 WHERE PGM_ID  = #{PGM_ID} 
+	</delete>
+
+	<!-- # 기준 사찰 메뉴 정보 삭제 # -->
+	<delete id="DELETE_STANDARD_MENU"   parameterType="java.util.Map">
+		DELETE FROM ASP_MENU
+ 		 WHERE SERVICE_GBN = #{SERVICE_GBN}
+   		   AND PGM_ID      = #{PGM_ID}
+	</delete>
+
+	<!-- #개인별 메뉴 삭제# -->
+	<delete id="DELETE_ASP_PERSON_MENU" parameterType="java.util.Map">
+		DELETE FROM ASP_PERSON_MENU
+ 	     WHERE TEMPLE_CD 	= 	#{TEMPLE_CD} 
+   		   AND PGM_ID     = 	#{PGM_ID}
+	</delete>
+	
+	<!-- #권한별 메뉴 삭제# -->
+	<delete id="DELETE_ASP_AUTH_MENU" parameterType="java.util.Map">
+		DELETE FROM ASP_AUTH_MENU
+ 	     WHERE TEMPLE_CD 	= 	#{TEMPLE_CD} 
+   		   AND PGM_ID     = 	#{PGM_ID}
+	</delete>
+	
+	<delete id="DELETE_SEAR_TEMPLE_MENU" parameterType="java.util.Map">
+		DELETE FROM ASP_TEMPLE_MENU
+ 	     WHERE TEMPLE_CD 	= 	#{TEMPLE_CD} 
+   		   AND PGM_ID     = 	#{PGM_ID}
+	</delete>
+	
+	<!-- # 각 사찰별 메뉴 정보 입력 # -->
+	<insert id="INSERT_SEAR_TEMPLE_MENU"  parameterType="java.util.Map">
+		INSERT INTO   ASP_TEMPLE_MENU (
+			    TEMPLE_CD, 
+				PGM_ID, 
+				CRT_USER, 
+				CRT_DATE, 
+				UPT_DATE, 
+				UPT_USER, 
+				REMOTE
+		) VALUES (
+				#{TEMPLE_CD},
+				#{PGM_ID},
+				#{V_USER_ID},
+				SYSDATE,
+				SYSDATE,
+				#{V_USER_ID},
+				#{V_REMOTE}
+		)
+	</insert>
+
+</mapper>

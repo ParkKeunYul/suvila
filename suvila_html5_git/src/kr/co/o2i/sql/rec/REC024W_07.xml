@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC024w_07DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="USE_YN" column="USE_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+	
+	<select id="SELECT_REC_ALWAYS_PRAY_MGT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+			  ,PRAY_CODE
+			  ,PRAY_NM
+			  ,AMOUNT
+			  ,ACCT_GBN
+			  ,IE_GBN
+			  ,KWAN
+			  ,HANG
+			  ,MOK
+			  ,FN_ACC_NAME(TEMPLE_CD, ACCT_GBN, IE_GBN, KWAN, HANG, MOK , 'MOK')AS ACCNAME
+			  ,USE_YN
+			  ,REMARK
+		  FROM REC_ALWAYS_PRAY_MGT
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		 ORDER BY to_number(PRAY_CODE)
+	</select>
+	
+	<insert id="INSERT_REC_ALWAYS_PRAY_MGT" parameterType="java.util.Map" >
+		INSERT INTO REC_ALWAYS_PRAY_MGT (
+			 TEMPLE_CD
+			,PRAY_CODE
+			,PRAY_NM
+			,ACCT_GBN
+			,IE_GBN
+			,KWAN
+			,HANG
+			,USE_YN
+			,MOK
+			,REMARK
+			,CRT_USER
+			,CRT_DATE
+			,UPT_DATE
+			,UPT_USER
+			,REMOTE
+			,AMOUNT
+		) VALUES (
+			 #{V_TEMPLE_CD}
+			,(SELECT NVL(MAX(TO_NUMBER(PRAY_CODE)),0)+1 
+				FROM REC_ALWAYS_PRAY_MGT 
+			   WHERE TEMPLE_CD = #{V_TEMPLE_CD} )
+			,#{PRAY_NM}
+			,#{ACCT_GBN ,jdbcType=VARCHAR}
+			,#{IE_GBN   ,jdbcType=VARCHAR}
+			,#{KWAN     ,jdbcType=VARCHAR}
+			,#{HANG     ,jdbcType=VARCHAR}
+			,#{USE_YN}
+			,#{MOK ,jdbcType=VARCHAR}
+			,#{REMARK ,jdbcType=VARCHAR}
+			,#{V_USER_ID}
+			,SYSDATE
+			,SYSDATE
+			,#{V_USER_ID}
+			,#{V_REMOTE}
+			,#{AMOUNT}
+		)
+	</insert>
+	
+	<update id="UPDATE_REC_ALWAYS_PRAY_MGT" parameterType="java.util.Map">
+		UPDATE REC_ALWAYS_PRAY_MGT 
+		   SET PRAY_NM 	 = #{PRAY_NM}
+		      ,ACCT_GBN	 = #{ACCT_GBN}
+		      ,IE_GBN	 = #{IE_GBN ,jdbcType=VARCHAR}
+		      ,KWAN		 = #{KWAN ,jdbcType=VARCHAR}
+		      ,HANG		 = #{HANG ,jdbcType=VARCHAR}		      
+		      ,MOK 		 = #{MOK ,jdbcType=VARCHAR}
+		      ,REMARK	 = #{REMARK ,jdbcType=VARCHAR}
+		      ,USE_YN	 = #{USE_YN}
+		      ,UPT_DATE	 = SYSDATE
+		      ,UPT_USER	 = #{V_USER_ID}
+		      ,REMOTE	 = #{V_REMOTE}
+		      ,AMOUNT	 = #{AMOUNT}
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND PRAY_CODE = #{PRAY_CODE}
+	</update>
+	
+	<select id="SELECT_REC_ALWAYS_PRAY_PRICE_MGT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+			  ,PRAY_CODE
+			  ,AMOUNT
+			  ,START_YYYYMM
+			  ,END_YYYYMM
+			  ,END_YYYYMM AS ORG_END_YYYYMM
+			  ,REMARK
+		  FROM REC_ALWAYS_PRAY_PRICE_MGT
+	     WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND PRAY_CODE = #{V_PRAY_CODE}
+	</select>
+	
+	<insert id="INSERT_REC_ALWAYS_PRAY_PRICE_MGT" parameterType="java.util.Map" >
+		INSERT INTO REC_ALWAYS_PRAY_PRICE_MGT (
+			 TEMPLE_CD
+			,START_YYYYMM
+			,END_YYYYMM
+			,PRAY_CODE
+			,AMOUNT
+			,REMARK
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+		) VALUES (
+			 #{V_TEMPLE_CD}
+			,#{START_YYYYMM}
+			,#{END_YYYYMM ,jdbcType=VARCHAR}
+			,#{PRAY_CODE}
+			,#{AMOUNT}
+			,#{REMARK,jdbcType=VARCHAR}
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_REMOTE}
+		)
+	</insert>
+	
+	<update id="UPDATE_REC_ALWAYS_PRAY_PRICE_MGT" parameterType="java.util.Map">
+		UPDATE REC_ALWAYS_PRAY_PRICE_MGT 
+		   SET END_YYYYMM   = #{END_YYYYMM}
+		   	  ,AMOUNT       = #{AMOUNT}
+		   	  ,REMARK       = #{REMARK,jdbcType=VARCHAR}
+		   	  ,UPT_USER     = #{V_USER_ID}
+		   	  ,UPT_DATE     = SYSDATE
+		   	  ,REMOTE       = #{V_REMOTE}
+		 WHERE TEMPLE_CD    = #{V_TEMPLE_CD}
+		   AND PRAY_CODE    = #{PRAY_CODE}
+		   AND START_YYYYMM = #{START_YYYYMM}
+	</update>
+	
+	
+</mapper>

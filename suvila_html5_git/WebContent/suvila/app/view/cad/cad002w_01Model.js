@@ -1,0 +1,55 @@
+Ext.define('ExFrm.view.cad.cad002w_01Model', {
+    extend:'Ext.app.ViewModel', 
+    alias: 'viewmodel.cad002w_01',  
+    stores:{     	
+    	ds_classMgt:{
+        	fields:['field1'],
+            proxy:{
+                type:'ajax',
+                url:'/cad/CAD002W_01/select.suvila',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list',
+                }
+            }
+            ,autoLoad:false
+        },
+        ds_group:{
+        	fields:['field1'],
+            proxy:{
+                type:'ajax',
+                url:'/cad/CAD001W_01/selectGroupAll.suvila',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list',
+                }
+            }
+            ,autoLoad:false
+        },
+        ds_nameCard:{
+        	fields:['field1'],
+            proxy:{
+                type:'ajax',
+                url:'/cad/CAD002W_01/selectInfo.suvila',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list',
+                }
+            }
+            ,autoLoad:false
+        },
+        ds_CopyClassSindo:{
+        	fields:['field1'],
+            proxy:{
+                type:'ajax',
+                url:'/cad/CAD002W_01/selectInfo.suvila?V_CLASS_CD=9999999',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list',
+                }
+            }
+            ,autoLoad:false
+        },
+        
+    }// sotres
+});

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="kr.co.o2i.dao.asp.ASP014w_01DAO">
+	
+	<select id="SELECT_LOGIN_LOG" resultType="java.util.Map" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT 
+			<!-- TO_CHAR(LOGIN_DATE ,'YYYYMMDDHH24MISS') LOGIN_DATE, -->
+			TO_CHAR(LOGIN_DATE ,'YYYY-MM-DD HH24:MI:SS') LOGIN_DATE,
+			USER_ID,
+			CLIENT_IP,
+			SERVER_IP,
+			SUCCESS_YN,
+			ERROR_MESSAGE,
+			TEMPLE_CD,
+			TEMPLE_NM,
+			USER_NM
+	FROM ASP_TEMPLE_USER_LOGIN_LOG
+	WHERE 1=1
+     AND TO_CHAR(LOGIN_DATE,'YYYYMMDDHH24MISS')  &gt;= SUBSTR(#{param.em_sDate},1,8)||'000000' 
+     AND TO_CHAR(LOGIN_DATE,'YYYYMMDDHH24MISS')  &lt;= SUBSTR(#{param.em_eDate},1,8)||'235959'
+    <if test='param.success_Yn != null and param.success_Yn != "" '>
+    	AND SUCCESS_YN = #{param.success_Yn}
+    </if>
+    
+    <if test='param.search_Txt != null and param.search_Txt != "" '>
+    	AND ${param.search_Gbn} LIKE '%'||#{param.search_Txt}||'%'
+    	<!--
+    	<if test='param.search_Gbn == "USER_NM" '>
+    		AND USER_NM LIKE '%'||#search_Txt#||'%'
+    	</if>
+    	<if test='param.search_Gbn == "TEMPLE_CD" '>
+    		AND TEMPLE_CD LIKE '%' || #search_Txt# || '%'
+    	</if>
+    	<if test='param.search_Gbn == "TEMPLE_NM" '>
+    		AND TEMPLE_NM LIKE '%' || #search_Txt# || '%'
+    	</if>
+    	<if test='param.search_Gbn == "CLIENT_IP" '>
+    		AND CLIENT_IP LIKE '%' || #search_Txt# || '%'
+    	</if>
+    	<if test='param.search_Gbn == "SERVER_IP" '>
+    		AND SERVER_IP LIKE '%' || #search_Txt# || '%'
+    	</if>
+    	-->
+    </if>
+ 		ORDER BY LOGIN_DATE DESC
+	</select>
+	
+	
+</mapper>

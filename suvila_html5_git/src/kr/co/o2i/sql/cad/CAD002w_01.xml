@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="CAD002w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+
+	<resultMap id="cad002w_01a" type="java.util.Map"> 
+		<result  property="USE_YN" column="USE_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+	</resultMap>
+
+	<select id="SELECT_NAME_CARD_GROUP_MGT" resultMap="cad002w_01a" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT CLASS_CD
+		      ,CLASS_NAME
+		      ,USE_YN
+		      ,REMARK
+		      ,'S' as SQL_MODE
+		 FROM ASP_NAME_CARD_GROUP_MGT
+		WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		  AND USER_ID   = #{V_USER_ID}
+	</select>
+
+
+	<!-- ,#{NAME_KOR      ,jdbcType=VARCHAR} -->
+
+	<insert id="INSERT_NAME_CARD_GROUP_MGT" parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO ASP_NAME_CARD_GROUP_MGT (
+		        TEMPLE_CD
+		       ,USER_ID
+		       ,CLASS_CD
+		       ,CLASS_NAME
+		       ,USE_YN
+		       ,REMARK
+		       ,CRT_DATE
+		       ,CRT_USER
+		       ,UPT_USER
+		       ,UPT_DATE
+		       ,REMOTE
+		) VALUES (
+			   #{V_TEMPLE_CD}
+			  ,#{V_USER_ID}
+			  ,(SELECT NVL(MAX(CLASS_CD),0)+1 
+				  FROM ASP_NAME_CARD_GROUP_MGT
+				 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+				   AND USER_ID   = #{V_USER_ID}   )
+			  ,#{CLASS_NAME}
+			  ,DECODE( #{USE_YN} , #{TRUE_PARAM} , 'T', 'F' )
+			  ,#{REMARK,jdbcType=VARCHAR}
+			  ,SYSDATE
+			  ,#{V_USER_ID}
+			  ,#{V_USER_ID}
+			  ,SYSDATE
+			  ,#{V_REMOTE}
+		)
+	</insert>
+	
+	<update id="UPDATE_NAME_CARD_GROUP_MGT" parameterType="kr.co.o2i.util.CommonMap">
+		UPDATE ASP_NAME_CARD_GROUP_MGT 
+		   SET CLASS_NAME = #{CLASS_NAME}		     
+		      ,USE_YN     = DECODE( #{USE_YN} , #{TRUE_PARAM} , 'T', 'F' ) 		      		      
+		      ,REMARK     = #{REMARK ,jdbcType=VARCHAR}
+		      ,UPT_USER   = #{V_USER_ID}
+		      ,UPT_DATE   = SYSDATE
+		      ,REMOTE     = #{V_REMOTE}
+	    WHERE TEMPLE_CD   = #{V_TEMPLE_CD}
+	      AND USER_ID     = #{V_USER_ID}
+	      AND CLASS_CD    = #{CLASS_CD}
+	</update>
+	
+	<delete id="DELETE_NAME_CARD_GROUP_MGT_INFO" parameterType="kr.co.o2i.util.CommonMap">
+		DELETE FROM ASP_NAME_CARD_INFO
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND USER_ID   = #{V_USER_ID}
+		   AND CLASS_CD  = #{CLASS_CD}
+	</delete>
+	
+	<delete id="DELETE_NAME_CARD_GROUP_MGT" parameterType="kr.co.o2i.util.CommonMap">
+		DELETE FROM ASP_NAME_CARD_GROUP_MGT
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND USER_ID   = #{V_USER_ID}
+		   AND CLASS_CD  = #{CLASS_CD}
+	</delete>
+	
+	<select id="SELECT_NAME_CARD_INFO" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT A.TEMPLE_CD
+		      ,A.USER_ID
+		      ,A.SORT_SEQ
+		      ,A.NAME_KOR
+		      ,A.SACRED_KOR
+		      ,A.ZIP_CD
+		      ,A.ADDR1
+		      ,A.ADDR2
+		      ,A.TELNO1
+		      ,A.TELNO2
+		      ,A.TELNO3
+		      ,A.TELNO1 || '-' || A.TELNO2 || '-' || A.TELNO3 as TELNO
+		      ,A.MOBILE_TELNO1
+		      ,A.MOBILE_TELNO2
+		      ,A.MOBILE_TELNO3
+		      ,A.MOBILE_TELNO1 || '-' || A.MOBILE_TELNO2 || '-' || A.MOBILE_TELNO3 as MOBILE_TELNO
+		      ,A.COMPANY_NAME
+		      ,A.COMPANY_POS
+		      ,A.COMPANY_TEL1
+		      ,A.COMPANY_TEL2
+		      ,A.COMPANY_TEL3
+		      ,A.FAXNO1
+		      ,A.FAXNO2
+		      ,A.FAXNO3
+		      ,A.EMAIL
+		      ,A.SACHAL_NM
+		      ,A.MEMO
+		      ,B.CLASS_CD
+		  FROM ASP_NAME_CARD_MASTER A
+		      ,ASP_NAME_CARD_INFO B
+		 WHERE A.TEMPLE_CD = B.TEMPLE_CD
+		   AND A.USER_ID   = B.USER_ID
+		   AND A.SORT_SEQ  = B.SORT_SEQ
+		   AND A.TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND A.USER_ID   = #{V_USER_ID}
+		   AND A.DEL_YN    = 'F'
+		   AND B.CLASS_CD  = #{V_CLASS_CD}
+		 ORDER BY A.SORT_SEQ
+	</select>
+	
+	<select id="SELECT_NAME_CARD_CNT" resultType="Integer" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT COUNT(1) AS BUD_COUNT
+	      FROM ASP_NAME_CARD_INFO
+	     WHERE TEMPLE_CD  = #{V_TEMPLE_CD}   
+	       AND USER_ID    = #{USER_ID}
+	       AND CLASS_CD   = #{CLASS_CD}   
+	       AND SORT_SEQ   = #{SORT_SEQ} 
+	</select>
+	
+	
+	<insert id="INSERT_NAME_CARD_INFO" parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO ASP_NAME_CARD_INFO (
+		        TEMPLE_CD
+		       ,USER_ID
+		       ,CLASS_CD
+		       ,SORT_SEQ
+		       ,CRT_USER
+		       ,CRT_DATE
+		       ,UPT_DATE
+		       ,UPT_USER
+		       ,REMOTE
+		) VALUES (
+		        #{V_TEMPLE_CD}
+		       ,#{USER_ID}
+		       ,#{CLASS_CD}
+		       ,#{SORT_SEQ}
+		       ,#{V_USER_ID}
+		       ,SYSDATE
+		       ,SYSDATE
+		       ,#{V_USER_ID}
+		       ,#{V_REMOTE}
+		)
+	</insert>
+	
+	<delete id="DELETE_NAME_CARD_INFO" parameterType="kr.co.o2i.util.CommonMap">
+		DELETE FROM ASP_NAME_CARD_INFO
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND USER_ID   = #{V_USER_ID}
+		   AND CLASS_CD  = #{CLASS_CD}
+		   AND SORT_SEQ  = #{SORT_SEQ}
+	</delete>
+
+</mapper>

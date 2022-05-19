@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SER026w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+
+	<select id="SELECT_BON" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT GROUP_CD
+		      ,CODE
+		      ,NAME
+		      ,USE_YN
+		      ,REMARK
+		      ,NAME || REMARK AS COMPARE
+		      ,SORT_SEQ
+		      ,ETC1
+		      ,ETC2
+		      ,ETC3
+		      ,CRT_USER
+		      ,TO_CHAR(CRT_DATE,'YYYYMMDD') AS CRT_DATE
+		      ,UPT_USER
+		      ,TO_CHAR(UPT_DATE,'YYYYMMDD') AS UPT_DATE
+		      ,REMOTE
+		  FROM ASP_CODE_MGT
+		 WHERE GROUP_CD = 'BON'
+		 <![CDATA[
+		   AND CODE    <> '-1'
+		 ]]>
+		 <if test='V_BON != nul and   V_BON != "" '>
+		 	AND NAME     = #{V_BON} 
+		 </if>
+		 <if test='V_SUNG != nul and  V_SUNG != "" '>
+		 	AND REMARK   = #{V_SUNG}
+		 </if>
+	</select>
+	
+	<select id="DUPLE_BON" parameterType="java.util.Map" resultType="Integer">
+		SELECT count(REMARK) as CNT
+		  FROM ASP_CODE_MGT
+		 WHERE GROUP_CD = 'BON'		   
+		   AND NAME     = #{NAME}
+		   AND REMARK   = #{REMARK}
+		   <![CDATA[
+		   AND CODE    <> '-1'
+		   ]]>
+	</select>
+	
+	
+	<insert id="INSERT_BON" parameterType="java.util.Map" >
+		INSERT INTO ASP_CODE_MGT (
+		        GROUP_CD
+		       ,CODE
+		       ,NAME
+		       ,USE_YN
+		       ,REMARK
+		       ,SORT_SEQ
+		       ,ETC1
+		       ,ETC2
+		       ,ETC3
+		       ,CRT_USER
+		       ,CRT_DATE
+		       ,UPT_USER
+		       ,UPT_DATE
+		       ,REMOTE
+		) VALUES (
+		        'BON'
+		       ,(SELECT NVL(MAX(TO_NUMBER(CODE))+1,1)
+		           FROM ASP_CODE_MGT
+		           WHERE GROUP_CD = 'BON')
+		       ,#{NAME}
+		       ,'Y'
+		       ,#{REMARK}
+		       ,(SELECT NVL(MAX(TO_NUMBER(SORT_SEQ))+1,1)
+		           FROM ASP_CODE_MGT
+		           WHERE GROUP_CD = 'BON')
+		       ,#{ETC1  ,jdbcType=VARCHAR}
+		       ,#{ETC2  ,jdbcType=VARCHAR}
+		       ,#{ETC3  ,jdbcType=VARCHAR}
+		       ,#{CRT_USER}
+		       ,SYSDATE
+		       ,#{CRT_USER}
+		       ,SYSDATE
+		       ,#{V_REMOTE}
+		)
+	</insert>
+
+	
+</mapper>

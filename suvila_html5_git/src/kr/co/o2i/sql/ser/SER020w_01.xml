@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SER020w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+
+	<select id="SELECT_ASP_ANNOUNCE" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT ROWNUM NO
+			  ,A.TEMPLE_CD
+			  ,A.SEQ_NO
+			  ,A.TITLE
+			  ,A.CONTENTS
+			  ,A.USE_YN
+			  ,A.REMARK
+			  ,TO_CHAR(A.CRT_DATE, 'YYYY-MM-DD') CRT_DATE
+			  ,(SELECT USER_NM FROM ASP_TEMPLE_USER WHERE TEMPLE_CD = A.TEMPLE_CD AND USER_ID = A.CRT_USER ) CRT_USER
+			  ,(SELECT USER_NM FROM ASP_TEMPLE_USER WHERE TEMPLE_CD = A.TEMPLE_CD AND USER_ID = A.UPT_USER ) UPT_USER
+			  ,TO_CHAR(A.UPT_DATE, 'YYYY-MM-DD') UPT_DATE
+			  ,NVL(A.TYPE, 'N')  TYPE
+		 FROM ASP_ANNOUNCE A
+		WHERE A.TEMPLE_CD = #{V_TEMPLE_CD}
+		  AND TO_CHAR(A.CRT_DATE, 'YYYYMMDD') BETWEEN #{SDATE} and #{EDATE}
+		<if test='V_SEARCH_WORD != null and  V_SEARCH_WORD != ""'>
+			<if test='V_SEARCH_GBN == "TITLE"  '>
+				AND A.TITLE LIKE '%'||#{V_SEARCH_WORD}||'%'
+			</if>
+			<if test='V_SEARCH_GBN == "CRT_USER"  '>
+				AND (SELECT USER_NM 
+				       FROM ASP_TEMPLE_USER 
+				      WHERE TEMPLE_CD = A.TEMPLE_CD 
+				        AND USER_ID = A.CRT_USER     ) LIKE '%'||#{V_SEARCH_WORD}||'%'
+			</if>
+			<if test='V_SEARCH_GBN == "CONTENTS"  '>
+				AND A.CONTENTS LIKE '%'||#{V_SEARCH_WORD}||'%' \n
+			</if>
+		</if>
+		ORDER BY A.TEMPLE_CD
+		       , A.SEQ_NO  DESC
+	</select>
+
+	
+	<insert id="INSERT_ASP_ANNOUNCE" parameterType="kr.co.o2i.util.CommonMap" >
+		INSERT INTO ASP_ANNOUNCE (
+			 TEMPLE_CD
+			,SEQ_NO
+			,TITLE
+			,CONTENTS
+			,USE_YN
+			,REMARK
+			,CRT_DATE
+			,CRT_USER
+			,UPT_USER
+			,UPT_DATE
+			,TYPE
+		) VALUES (
+			 #{TEMPLE_CD}
+			,(SELECT NVL(MAX(SEQ_NO)+1,1) 
+			    FROM ASP_ANNOUNCE 
+			   WHERE TEMPLE_CD = #{TEMPLE_CD} )
+			,#{TITLE}
+			,#{CONTENTS}
+			,#{USE_YN}
+			,#{REMARK   ,jdbcType=VARCHAR}
+			,SYSDATE
+			,#{CRT_USER}
+			,#{CRT_USER}
+			,SYSDATE
+			,#{TYPE}
+		)
+	</insert>
+	
+	<update id="UPDATE_ASP_ANNOUNCE" parameterType="java.util.Map" >
+		UPDATE ASP_ANNOUNCE 
+		   SET TITLE  	  = #{TITLE}
+		      ,CONTENTS   = #{CONTENTS}
+		      ,USE_YN 	  = #{USE_YN}
+		      ,REMARK     = #{REMARK}
+		      ,UPT_USER   = #{UPT_USER}
+		      ,UPT_DATE	  = SYSDATE
+		      ,TYPE       = #{TYPE}
+ 		WHERE TEMPLE_CD   = #{TEMPLE_CD}
+   		  AND SEQ_NO  	  = #{SEQ_NO} 
+	</update>
+	
+	<delete  id="DELETE_ASP_ANNOUNCE" parameterType="kr.co.o2i.util.CommonMap" >
+		DELETE FROM ASP_ANNOUNCE
+ 	  	 WHERE TEMPLE_CD = #{TEMPLE_CD}
+   	 	   AND SEQ_NO 	 = #{SEQ_NO}
+	</delete>
+	
+	<delete  id="DELETE_ASP_ANNOUNCE_FILES" parameterType="kr.co.o2i.util.CommonMap" >
+		DELETE FROM ASP_ANNOUNCE_FILE
+	     WHERE TEMPLE_CD = #{TEMPLE_CD}
+	       AND SEQ_NO	 = #{SEQ_NO}
+	</delete>
+	
+	<select id="SELECT_ASP_ANNOUNCE_FILE" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT TEMPLE_CD
+		      ,SEQ_NO
+		      ,FILE_SEQ_NO
+		      ,FILE_NAME
+		      ,'aaa' AS ATTACH_FILE
+			  ,FILE_SIZE
+			  ,CRT_USER
+			  ,CRT_DATE
+			  ,UPT_USER
+			  ,UPT_DATE
+			  ,REMOTE
+		  FROM ASP_ANNOUNCE_FILE
+		 WHERE TEMPLE_CD 	= #{V_TEMPLE_CD}
+		   AND SEQ_NO 		= #{V_SEQ_NO}
+	</select>
+	
+	
+	<delete  id="DELETE_ASP_ANNOUNCE_FILE" parameterType="kr.co.o2i.util.CommonMap" >
+		DELETE FROM ASP_ANNOUNCE_FILE
+	     WHERE TEMPLE_CD = #{TEMPLE_CD}
+	       AND SEQ_NO	 = #{SEQ_NO}
+	       AND FILE_SEQ_NO 	= #FILE_SEQ_NO# ;
+	</delete>
+	
+	<select id="SELECT_ASP_ANNOUNCE_FILE_BLOB" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT FILE_BLOB
+		  FROM ASP_ANNOUNCE_FILE
+		 WHERE TEMPLE_CD	 = #{V_TEMPLE_CD}
+		   AND SEQ_NO 	     = #{V_SEQ_NO}
+		   AND FILE_SEQ_NO   = #{FILE_SEQ_NO}
+	</select>
+	
+</mapper>

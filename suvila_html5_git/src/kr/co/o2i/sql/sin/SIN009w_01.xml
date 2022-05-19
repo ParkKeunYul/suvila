@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SIN009w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="USE_YN" column="USE_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+
+	<select  id="SELECT_V_SMS_LOG"  parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT A.TR_COMP
+			  ,A.TR_MSG_GB
+			  ,SUBSTR(A.TR_SENDDATE,1,8) AS TR_SENDDATE
+			  ,A.TR_ID
+			  ,A.TR_ETC4
+			  ,A.TR_PHONE
+			  ,A.TR_MSG
+			  ,B.BUD_NO
+			  ,B.NAME_KOR
+			  ,B.TEMPLE_CD
+			  ,C.NAME
+			  <choose>
+			  	<when test="V_TEMPLE_CD != '000064'">
+			  		,( CASE 
+			  			 WHEN TO_DATE(SUBSTR(A.TR_SENDDATE,1,8) , 'YYYYMMDD') >= TO_DATE('20141101', 'YYYYMMDD') 
+			  			 THEN ( CASE 
+			  			 			WHEN A.TR_RSLTSTAT_REMARK = '전달 대기중' THEN '발송 준비' 
+			  			 			WHEN A.TR_RSLTSTAT_REMARK is not null  THEN '발송완료' 
+			  			 			ELSE '' END ) 
+			  			  ELSE( CASE 
+			  			  			WHEN A.TR_RSLTSTAT_REMARK = '전송 성공'   THEN '발송 완료' 
+			  			  			WHEN A.TR_RSLTSTAT_REMARK = '전달 대기중'  THEN '발송 준비' 
+			  			  			WHEN A.TR_RSLTSTAT_REMARK is not null   THEN  A.TR_RSLTSTAT_REMARK 
+			  			  		 ELSE '' END ) 
+			  		    END ) AS TR_SENDSTAT
+			  	</when>
+			  	<otherwise>
+			  		,A.TR_RSLTSTAT_REMARK TR_SENDSTAT
+			  	</otherwise>
+			  </choose>
+		
+		FROM	  
+		  <choose>
+		  	<when test="tb_Radio == 1">
+		  		SMSKT.V_SMS_LOG2 A
+		  	</when>
+		  	<otherwise>
+		  		SMSKT.V_SMS_WAIT A
+		  	</otherwise>
+		  </choose>
+				,SIN_CARD_MASTER B
+				,ASP_CODE_MGT C
+		WHERE A.TR_ETC3       = C.GROUP_CD(+)
+		  AND A.TR_ETC1       = B.TEMPLE_CD(+)
+		  AND A.TR_ETC2       = B.BUD_NO(+)
+		  AND A.TR_ETC4       = C.CODE(+)
+		  AND A.TR_ETC4      != '15'
+		  AND A.TR_ETC1       = #{V_TEMPLE_CD}
+		  AND A.TR_SENDDATE  &gt;= SUBSTR(#{em_sDate},1,8)||'000000' 
+		  AND A.TR_SENDDATE  &lt;= SUBSTR(#{em_eDate},1,8)||'235959'
+		  <if test='V_SEARCH_WORD != "" and V_SEARCH_WORD != null  '>
+		  	<if test='V_SEARCH_GBN == "BUD_NO" '>
+		  		AND B.BUD_NO LIKE '%'||#{V_SEARCH_WORD}||'%'
+		  	</if>
+		  	<if test='V_SEARCH_GBN == "NAME_KOR" '>
+		  		AND B.NAME_KOR LIKE '%'||#{V_SEARCH_WORD}||'%'
+		  	</if>
+		  	<if test='V_SEARCH_GBN == "SACRED_KOR" '>
+		  		AND B.SACRED_KOR LIKE '%' || #{V_SEARCH_WORD} || '%'
+		  	</if>
+		  	<if test='V_SEARCH_GBN == "MOBILE_TELNO" '>
+		  		AND A.TR_PHONE LIKE '%'||REPLACE(#{V_SEARCH_WORD},'-','')||'%'
+		  	</if>
+		  	<if test='V_SEARCH_GBN == "TELNO" '>
+		  		AND B.TELNO1 || B.TELNO2 || B.TELNO3 LIKE '%'||REPLACE(#{V_SEARCH_WORD},'-','')||'%'
+		  	</if>
+		  </if>
+		  
+		  <if test='lc_org_NmAll != "" and lc_org_NmAll != null and lc_org_NmAll != "0" '>
+		  	AND  A.TR_ETC4 = #{lc_org_NmAll}
+		  </if>
+		ORDER BY A.TR_ETC4 
+			    ,A.TR_SENDDATE
+			    ,B.BUD_NO
+	</select>
+</mapper>

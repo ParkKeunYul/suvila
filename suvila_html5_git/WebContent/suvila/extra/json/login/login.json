@@ -1,0 +1,15 @@
+{
+    "success":true,
+    "msg":"",
+    "data":{
+        "info":{
+            "userId":"A0001",
+            "password":"1234", 
+            "userName":"홍길동",
+            "addr":"경기도 파주시 금촌로 50 후곡마을 ",
+            "tel":"010-9999-9999",
+            "brcd":"0001",
+            "brcdName":"영업부"
+        }
+    }
+}

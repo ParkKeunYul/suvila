@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC009w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+	
+	
+	<select id="SELECT_Moyeonmun" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		  SELECT TEMPLE_CD
+		  		,MOYEONMUN_CODE
+		  		,MOYEONMUM_JONGRYU_CODE
+		  		,MOYEONMUN_NM
+		  		,MOYEONMUN_TITLE
+		  		,MEMO
+		  		,CRT_USER
+		  		,CRT_DATE
+		  		,UPT_USER
+		  		,UPT_DATE
+		  		,REMOTE
+		    FROM REC_MOYEONMUN_GUBUN_MGT
+			WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+			  AND MOYEONMUM_JONGRYU_CODE  = '-1'
+			ORDER BY MOYEONMUN_CODE ASC
+	</select>
+	
+	
+</mapper>

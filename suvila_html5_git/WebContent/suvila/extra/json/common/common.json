@@ -1,0 +1,31 @@
+{
+"success":true,
+"data":{
+    "list":[
+         {"groupCd":"001","groupDisplay":"Stipulation1","code":"NAME_KOR","name":"신도명"},
+         {"groupCd":"001","groupDisplay":"Stipulation1","code":"BUD_NO","name":"신도번호"},
+         {"groupCd":"001","groupDisplay":"Stipulation1","code":"CARD_NO","name":"카드번호"},
+         {"groupCd":"001","groupDisplay":"Stipulation1","code":"SACRED_KOR","name":"법명"},
+         {"groupCd":"001","groupDisplay":"Stipulation1","code":"MOBILE_TELNO","name":"휴대번호"},
+         {"groupCd":"001","groupDisplay":"Stipulation1","code":"TELNO","name":"전화번호"},
+         {"groupCd":"001","groupDisplay":"Stipulation1","code":"YOUNGGA","name":"영가명"},
+         
+         
+         {"groupCd":"002","groupDisplay":"Stipulation2","code":"NAME_KOR","name":"신도명"},
+         {"groupCd":"002","groupDisplay":"Stipulation2","code":"BUD_NO","name":"신도번호"},
+         {"groupCd":"002","groupDisplay":"Stipulation2","code":"CARD_NO","name":"카드번호"},
+         {"groupCd":"002","groupDisplay":"Stipulation2","code":"SACRED_KOR","name":"법명"},
+         {"groupCd":"002","groupDisplay":"Stipulation2","code":"MOBILE_TELNO","name":"휴대번호"},
+         {"groupCd":"002","groupDisplay":"Stipulation2","code":"TELNO","name":"전화번호"},
+         
+
+	 {"groupCd":"003","groupDisplay":"Stipulation3","code":"NAME_KOR","name":"신도명"},
+         {"groupCd":"003","groupDisplay":"Stipulation3","code":"BUD_NO","name":"신도번호"},
+         {"groupCd":"003","groupDisplay":"Stipulation3","code":"SACRED_KOR","name":"법명"},
+         {"groupCd":"003","groupDisplay":"Stipulation3","code":"MOBILE_TELNO","name":"휴대번호"},
+         {"groupCd":"003","groupDisplay":"Stipulation3","code":"TELNO","name":"전화번호"}
+    ],
+    "listTotalSize":"66"
+},
+"msg":"정상조회됨"    
+}

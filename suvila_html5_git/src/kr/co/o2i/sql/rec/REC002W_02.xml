@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC002w_02DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+	
+	
+	<!--  #기도/법회종류 조회#   -->
+	<select id="SELECT_GDKIND" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		    SELECT
+		      ROWNUM as SORT,
+		      TEMPLE_CD,    	<!-- 사찰코드 -->
+		      PROD_CODE, 		<!-- 기도/법회코드 -->
+		      PRAY_GBN, 		<!-- 기도/법회종류 (1=기도, 2=법회) -->
+		      PRAY_GBN_NM, 		<!-- 기도/법회종류명 -->
+		      PRAY_NM,      	<!-- 기도/법회명 -->
+		      FDATE,        	<!-- 기도시작일 -->
+		      PERIOD,       	<!-- 기간 -->
+		      RDATE,        	<!-- 기도종료일 -->
+		      PROD_AMT, 		<!-- 기도/법회금액 -->
+		      USE_YN,       	<!-- 사용유무 -->
+		      REMARK,       	<!-- 비고 -->
+		      CRT_USER,     	<!-- 등록자 -->
+		      UPT_USER,     	<!-- 수정자 -->
+		      CRT_DATE,    		<!-- 등록일 -->
+		      UPT_DATE,    		<!-- 수정일 -->
+		      REMOTE,       	<!-- IP -->
+		      SEL_YN,      		<!-- 선택 -->
+		      SORT_SEQ
+		FROM (SELECT
+		       MGT.TEMPLE_CD,    			<!-- 사찰코드 -->
+		       MGT.PRAY_CODE AS PROD_CODE, 	<!-- 기도/법회코드 -->
+		       MGT.PRAY_GBN, 				<!-- 기도/법회종류 (1=기도, 2=법회) -->
+		       COD.NAME AS PRAY_GBN_NM, 	<!-- 기도/법회종류명 -->
+		       MGT.PRAY_NM,      			<!-- 기도/법회명 -->
+		       MGT.FDATE,        			<!-- 기도시작일 -->
+		       MGT.PERIOD,       			<!-- 기간 -->
+		       MGT.RDATE,        			<!-- 기도종료일 -->
+		       MGT.AMT AS PROD_AMT, 		<!-- 기도/법회금액 -->
+		       MGT.USE_YN,       			<!-- 사용유무 -->
+		       MGT.REMARK,       			<!-- 비고 -->
+		       MGT.CRT_USER,     			<!-- 등록자 -->
+		       MGT.UPT_USER,     			<!-- 수정자 -->
+		       TO_CHAR(MGT.CRT_DATE,'YYYYMMDD') AS CRT_DATE,    <!-- 등록일 -->
+		       TO_CHAR(MGT.UPT_DATE,'YYYYMMDD') AS UPT_DATE,    <!-- 수정일 -->
+		       MGT.REMOTE,       <!-- IP -->
+		       '' AS SEL_YN      <!-- 선택 -->
+		       ,( CASE 
+		       		WHEN NVL(MGT.SORT_SEQ, 9999) = 9999 THEN  9999
+		       		ELSE MGT.SORT_SEQ
+		       	 END ) SORT_SEQ
+		  FROM REC_PRAY_MGT MGT, ASP_CODE_MGT COD
+		 WHERE MGT.FDATE      != '-1'
+		   AND MGT.USE_YN     != 'T'
+		   AND COD.GROUP_CD(+) = 'PRAYGBN'
+		   AND MGT.PRAY_GBN    = COD.CODE(+)
+		   AND TEMPLE_CD       = #{V_TEMPLE_CD}
+		ORDER BY SORT_SEQ ASC, PRAY_GBN, FDATE DESC)
+	</select>
+	
+	<select id="SELECT_BSKIND" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT #{V_TEMPLE_CD} AS TEMPLE_CD,    
+		       0 AS BULSA_CD,    
+		       '전체' AS BULSA_NM, 
+		       '' AS ACPT_FDATE,  
+		       '' AS ACPT_EDATE,  
+			   '' AS ACPT_CLOSE,  
+		       '' AS USE_YN,      
+		       '' AS REMARK,      
+		       '' AS CRT_USER,    
+		       '' AS UPT_USER,    
+		       TO_CHAR(SYSDATE,'YYYYMMDD') AS CRT_DATE,	
+		       TO_CHAR(SYSDATE,'YYYYMMDD') AS UPT_DATE,	
+		       '' AS REMOTE     
+		  FROM DUAL
+		UNION
+		SELECT MGT.TEMPLE_CD,    
+		       MGT.BULSA_CD,     
+		       MGT.BULSA_NM,     
+		       MGT.ACPT_FDATE,   
+		       MGT.ACPT_EDATE,   
+			   MGT.ACPT_CLOSE,   
+		       MGT.USE_YN,       
+		       MGT.REMARK,       
+		       MGT.CRT_USER,     
+		       MGT.UPT_USER,     
+		       TO_CHAR(MGT.CRT_DATE,'YYYYMMDD') AS CRT_DATE,	
+		       TO_CHAR(MGT.UPT_DATE,'YYYYMMDD') AS UPT_DATE,	
+		       MGT.REMOTE       
+		  FROM REC_BULSA_MGT MGT,
+		       (SELECT TEMPLE_CD,
+		               BULSA_CD
+		          FROM REC_BULSA_MGT
+		         WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		           AND ACPT_FDATE &lt;&gt; '-1'
+		           AND ACPT_CLOSE = 'F'
+		        GROUP BY TEMPLE_CD, BULSA_CD) SGT
+		 WHERE MGT.TEMPLE_CD = SGT.TEMPLE_CD
+		   AND MGT.BULSA_CD  = SGT.BULSA_CD  
+		   AND MGT.USE_YN    = 'T'
+		   AND MGT.ACPT_FDATE  = '-1'
+		   AND MGT.TEMPLE_CD   = #{V_TEMPLE_CD}
+	</select>
+	
+	<insert id="INSERT_GDREC" parameterType="java.util.Map">
+		INSERT INTO REC_PRAY_DETAIL (
+		        TEMPLE_CD
+		       ,SEQ
+		       ,CRT_USER
+		       ,PAYMENT_PLAN_AMT
+		       ,CRT_DATE
+		       ,PAYMENT_AMT
+		       ,REMARK
+		       ,UPT_DATE
+		       ,UPT_USER
+		       ,DEL_YN
+		       ,REMOTE
+		       ,ACCEPT_SEQ
+		       ,PRAY_GBN
+		       ,PRAY_CODE
+		       ,FDATE
+		       ,PER_BUD_NO
+		       ,ORGINATE
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{CRT_USER}
+		       ,#{PAYMENT_PLAN_AMT}
+		       ,SYSDATE
+		       ,#{PAYMENT_AMT}
+		       ,#{REMARK ,jdbcType=VARCHAR}
+		       ,SYSDATE
+		       ,#{UPT_USER}
+		       ,DECODE(#{DEL_YN ,jdbcType=VARCHAR},'','F',#{DEL_YN})
+		       ,#{REMOTE}
+		       ,#{ACCEPT_SEQ}
+		       ,#{PRAY_GBN}
+		       ,#{PROD_CODE}
+		       ,#{FDATE}
+		       ,#{PER_BUD_NO ,jdbcType=VARCHAR}
+		       ,#{ORGINATE ,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	
+	
+	<insert id="INSERT_BSREC" parameterType="java.util.Map">
+		INSERT INTO REC_BULSA_DETAIL (
+		        TEMPLE_CD
+		       ,SEQ
+		       ,CRT_USER
+		       ,CRT_DATE
+		       ,PAYMENT_PLAN_AMT
+		       ,PAYMENT_AMT
+		       ,UPT_DATE
+		       ,REMARK
+		       ,DEL_YN
+		       ,UPT_USER
+		       ,REMOTE
+		       ,ACCEPT_SEQ
+		       ,ACPT_FDATE
+		       ,BULSA_CD
+		       ,BULSA_SEQ
+		       ,BUD_NO
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{CRT_USER}
+		       ,SYSDATE
+		       ,#{PAYMENT_PLAN_AMT}
+		       ,#{PAYMENT_AMT}
+		       ,SYSDATE
+		       ,#{REMARK ,jdbcType=VARCHAR}
+		       ,DECODE(#{DEL_YN ,jdbcType=VARCHAR},'','F',#{DEL_YN})
+		       ,#{UPT_USER}
+		       ,#{REMOTE}
+		       ,#{ACCEPT_SEQ}
+		       ,#{ACPT_FDATE}
+		       ,#{PROD_CODE}
+		       ,#{BULSA_SEQ}
+		       ,#{BUD_NO}
+		)
+	</insert>
+	
+	
+	
+	<!-- #인등 및 연등종류 조회#-->
+	<select id="SELECT_IDKIND" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		  SELECT
+			   TEMPLE_CD,     			 					<!-- 사찰코드 -->
+		       ACCEPT_GBN,    			 					<!-- 등구분(1=인등, 2=연등)-->
+		       LIGHT_CODE AS PROD_CODE,  					<!-- 등코드-->
+		       LIGHT_NM,     			 					<!-- 등명-->
+		       AMOUNT AS PROD_AMT,       					<!-- 금액-->
+			   NVL(FAMILY_YN,'F') AS FAMILY_YN,     		<!-- 가족구분-->
+			   NVL(DEATH_YN,'F')  AS DEATH_YN,      		<!-- 영가구분-->
+		       CRT_USER,     								<!-- 등록자-->
+		       UPT_USER,     								<!-- 수정자-->
+		       TO_CHAR(CRT_DATE,'YYYYMMDD') AS CRT_DATE,	<!-- 등록일-->
+		       TO_CHAR(UPT_DATE,'YYYYMMDD') AS UPT_DATE,	<!-- 수정일-->
+		       REMOTE,       								<!-- IP-->
+			   '' AS SEL_YN,  								<!-- 선택-->
+			   PERIOD,
+			   ( CASE 
+		       		WHEN NVL(SORT_SEQ, 0) = 0 THEN ROWNUM
+		       		ELSE SORT_SEQ
+		       	 END ) SORT_SEQ
+		  FROM REC_DEUNG_CLASS_MGT
+		 WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND ACCEPT_GBN = #{V_ACCEPT_GBN}
+		   AND USE_YN     = 'T'
+		 ORDER BY SORT_SEQ ASC  
+	</select>
+	
+	
+	
+	
+	<!-- #불사종류 상세 조회#-->
+	<select id="SELECT_BSKIND_DETAIL" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT 
+		    FMG.TEMPLE_CD, 
+		    FMG.ACPT_FDATE, 
+		    FMG.BULSA_CD AS PROD_CODE,
+		    FMG.ACPT_EDATE, 
+		    SMG.BULSA_NM, 
+		    DET.BULSA_SEQ, 
+		    DET.BULSA_DETAIL,
+		    DET.AMOUNT AS PROD_AMT,
+		    FMG.ACPT_CLOSE, 
+		    FMG.USE_YN, 
+		    FMG.REMARK,
+		    FMG.CRT_USER,  
+		    FMG.UPT_USER,  
+		    TO_CHAR(FMG.CRT_DATE,'YYYYMMDD') AS CRT_DATE, 
+		    TO_CHAR(FMG.UPT_DATE,'YYYYMMDD') AS UPT_DATE,
+		    FMG.REMOTE,     
+		    '' AS SEL_YN    
+		  FROM REC_BULSA_MGT FMG,(SELECT 
+		                                 TEMPLE_CD, 
+		                                 ACPT_FDATE, 
+		                                 BULSA_CD, 
+		                                 ACPT_EDATE, 
+		                                 BULSA_NM, 
+		                                 ACPT_CLOSE, 
+		                                 USE_YN, 
+		                                 REMARK  
+		                            FROM REC_BULSA_MGT SMG
+		                           WHERE TEMPLE_CD = ${V_TEMPLE_CD}
+		                             AND ACPT_FDATE = '-1') SMG,
+		       REC_BULSA_DETAIL_MGT DET
+		 WHERE FMG.TEMPLE_CD = SMG.TEMPLE_CD
+		   AND FMG.BULSA_CD  = SMG.BULSA_CD
+		   AND FMG.ACPT_FDATE != '-1'
+		   AND FMG.ACPT_CLOSE != 'T'
+		   AND FMG.USE_YN     != 'F'
+		   AND FMG.TEMPLE_CD   = DET.TEMPLE_CD
+		   AND FMG.BULSA_CD    = DET.BULSA_CD
+		   AND DET.USE_YN     != 'F'
+		   AND FMG.TEMPLE_CD   = #{V_TEMPLE_CD}
+		   <if test="V_BULSA_CD != '' and V_BULSA_CD != null and V_BULSA_CD != '0' ">
+		   	AND FMG.BULSA_CD    LIKE DECODE(#{V_BULSA_CD,jdbcType=VARCHAR},'0','%', #{V_BULSA_CD,jdbcType=VARCHAR})
+		   </if>
+		   
+		   
+	</select>
+	
+	
+	<!-- #전각 조회#-->
+	<select id="SELECT_JUNGAKKIND" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		  SELECT
+		       BUI.TEMPLE_CD,
+		       BUI.ACCEPT_GBN,
+		       JUN.JUNGAK_GBN,
+		       TO_CHAR(BUI.JUNGAK_CD) AS JUNGAK_CD,
+		       JUN.JUNGAK_NM,
+		       BUI.HOZ_LINE,
+		       BUI.VER_LINE,
+		       BUI.USE_YN,
+		       BUI.CRT_USER,
+		       BUI.CRT_DATE,
+		       BUI.UPT_DATE,
+		       BUI.UPT_USER,
+		       BUI.REMOTE,
+		       (CASE 
+		       		WHEN NVL(JUN.SORT_SEQ, 0) = 9999 THEN ROWNUM
+		       		ELSE JUN.SORT_SEQ
+		       	 END ) SORT_SEQ
+		  FROM REC_BUILDING_MGT BUI, ASP_JUNGAK_MGT JUN, ASP_CODE_MGT COD,
+		       (SELECT DISTINCT 
+		               TEMPLE_CD,
+		               ACCEPT_GBN,
+		               JUNGAK_CD 
+		          FROM REC_DEUNG_MGT
+		         WHERE TEMPLE_CD  = ${param.V_TEMPLE_CD}
+		           AND ACCEPT_GBN = ${param.V_ACCEPT_GBN}
+		        ORDER BY JUNGAK_CD) MGT
+		 WHERE BUI.TEMPLE_CD  = JUN.TEMPLE_CD
+		   AND BUI.ACCEPT_GBN = JUN.ACCEPT_GBN
+		   AND BUI.JUNGAK_CD  = JUN.JUNGAK_CD
+		   AND BUI.TEMPLE_CD  = MGT.TEMPLE_CD
+		   AND BUI.ACCEPT_GBN = MGT.ACCEPT_GBN
+		   AND BUI.JUNGAK_CD  = MGT.JUNGAK_CD
+		   AND COD.GROUP_CD   = 'LIGHTGBN'
+		   AND JUN.JUNGAK_GBN = COD.CODE
+		   AND JUN.USE_YN     = 'T'
+		   AND BUI.TEMPLE_CD  = ${V_TEMPLE_CD}
+		   AND BUI.ACCEPT_GBN = ${V_ACCEPT_GBN}
+		   AND JUN.JUNGAK_GBN = #{V_JUNGAK_GBN}
+		ORDER by SORT_SEQ asc
+	</select>
+	
+	
+	
+	
+	
+</mapper>

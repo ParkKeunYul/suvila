@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC001w_05DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+	<select id="SELECT_ALL" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		 SELECT TEMPLE_CD
+			  ,(SELECT NAME FROM ASP_CODE_MGT WHERE GROUP_CD = 'REC' AND CODE = '2') as NAME1
+			  ,(SELECT NAME FROM ASP_CODE_MGT WHERE GROUP_CD = 'REC' AND CODE = '4') as NAME2
+			  ,SUB_DATE
+			  ,AMOUNT1
+			  ,AMOUNT2
+		 FROM (
+		 		<if test='V_TYPE == 1 or V_TYPE == 2 '>
+					SELECT RD.TEMPLE_CD
+						  ,RD.SUB_DATE
+						  ,SUM(RD.AMOUNT) AS AMOUNT1
+						  ,0 AS AMOUNT2
+					 FROM (
+							SELECT RID.TEMPLE_CD
+								  ,RM.PROPOSAL_BUD_NO
+								  ,RPH.CRT_USER
+								  ,SUBSTR(RPH.SUB_DATE,1,TO_NUMBER(#{V_DATE_GBN})) AS SUB_DATE
+								  ,RPH.AMOUNT
+							 FROM REC_INDEUNG_DETAIL RID
+							     ,REC_PAYMENT_HIS RPH
+							     ,REC_MASTER RM 
+							WHERE RID.TEMPLE_CD    = RPH.TEMPLE_CD
+							   AND RID.ACCEPT_SEQ  = RPH.ACCEPT_SEQ
+							   AND RID.SEQ         = RPH.SEQ
+							   AND RID.TEMPLE_CD   = RM.TEMPLE_CD
+							   AND RID.ACCEPT_SEQ  = RM.ACCEPT_SEQ	
+							   AND RID.DEL_YN      = 'F'
+							   AND RID.TEMPLE_CD   = #{V_TEMPLE_CD}
+							   AND SUBSTR(RPH.SUB_DATE,1,TO_NUMBER(#{V_DATE_GBN}))    >= #{V_SDATE}
+							   AND SUBSTR(RPH.SUB_DATE,1,TO_NUMBER(#{V_DATE_GBN})) &lt;= #{V_EDATE}
+							   <if test='V_BUD_NO != null and  V_BUD_NO != "" '>
+									AND RM.PROPOSAL_BUD_NO LIKE  #{V_BUD_NO} || '%'
+							   </if>
+							   <if test='V_DETAIL_GBN2 != null and  V_DETAIL_GBN2 != "" and V_DETAIL_GBN2 != 0 '>
+									AND RID.JUNGAK_CD =  #{V_DETAIL_GBN2}
+							   </if> 							
+							   <if test='V_DETAIL_GBN != null and  V_DETAIL_GBN != "" and V_DETAIL_GBN != 0 '>
+							   		AND RID.INDEUNG_GBN =  #{V_DETAIL_GBN}
+							   </if>
+							   <if test='V_USER != null and  V_USER != "" '>
+									AND RPH.CRT_USER = #{V_USER}
+							  </if>
+						 )RD
+						GROUP BY TEMPLE_CD 
+						    , SUB_DATE
+				</if>
+				<if test='V_TYPE == 1 '>
+					UNION ALL
+				</if>
+				<if test='V_TYPE == 1 or V_TYPE == 4 '>
+					SELECT TEMPLE_CD						  
+						  ,SUB_DATE
+						  ,0 AS AMOUNT1
+						  ,AMOUNT2
+					  FROM (
+							SELECT RD.TEMPLE_CD
+							      ,RD.SUB_DATE	
+							      ,SUM(RD.AMOUNT) AS AMOUNT2						      
+							 FROM (
+									SELECT RYD.TEMPLE_CD
+										  ,RM.PROPOSAL_BUD_NO
+										  ,RPH.CRT_USER
+										  ,SUBSTR(RPH.SUB_DATE,1,TO_NUMBER(#{V_DATE_GBN})) AS SUB_DATE
+										  ,RPH.AMOUNT
+								      FROM REC_YEONDEUNG_DETAIL RYD
+								      	  ,REC_PAYMENT_HIS RPH
+								      	  ,REC_MASTER RM 
+									 WHERE RYD.TEMPLE_CD     = RPH.TEMPLE_CD
+									    AND RYD.ACCEPT_SEQ   = RPH.ACCEPT_SEQ
+									    AND RYD.SEQ 		 = RPH.SEQ
+									    AND RYD.TEMPLE_CD    = RM.TEMPLE_CD
+									    AND RYD.ACCEPT_SEQ   = RM.ACCEPT_SEQ	
+									    AND RYD.DEL_YN 		 = 'F'
+									    AND RYD.TEMPLE_CD 	 = #{V_TEMPLE_CD}
+									    AND SUBSTR(RPH.SUB_DATE,1,TO_NUMBER(#{V_DATE_GBN}))    >= #{V_SDATE}
+									    AND SUBSTR(RPH.SUB_DATE,1,TO_NUMBER(#{V_DATE_GBN})) &lt;= #{V_EDATE}
+									    <if test='V_BUD_NO != null and  V_BUD_NO != "" '>
+											AND RM.PROPOSAL_BUD_NO LIKE  #{V_BUD_NO} || '%'
+									   </if> 
+									   <if test='V_DETAIL_GBN2 != null and  V_DETAIL_GBN2 != "" and V_DETAIL_GBN2 != 0 '>
+											AND RYD.JUNGAK_CD     =  #{V_DETAIL_GBN2}
+									   </if> 							
+									   <if test='V_DETAIL_GBN != null and  V_DETAIL_GBN != "" and V_DETAIL_GBN != 0 '>
+									   		AND RYD.YEONDEUNG_GBN =  #{V_DETAIL_GBN}
+									   </if>
+									   <if test='V_USER != null and  V_USER != "" '>
+											AND RPH.CRT_USER = #{V_USER}
+									  </if>
+							 )RD
+							GROUP BY TEMPLE_CD
+									, SUB_DATE
+						)
+						ORDER BY SUB_DATE
+				</if>
+		)		
+		ORDER BY SUB_DATE
+	</select>
+	
+	
+</mapper>

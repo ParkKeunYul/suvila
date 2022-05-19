@@ -1,0 +1,19 @@
+{
+   "success":true,
+   "data":{
+       "list":[
+        {"custNo":"A","custName":"�엫嫄깆젙","birth":"20160101","point":1200.345,"addr":"寃쎄린�룄 �닔�썝�떆 �옣�븞援� �솕�궛濡� 1踰덇만", "bool1":true, "check1":"3" },
+        {"custNo":"B","custName":"�엫嫄깆젙","birth":"20160422","point":300.34,"addr":"媛뺤썝�룄 異섏쿇�떆 �닔蹂�怨듭썝湲� 54" , "bool1":false, "check1":["1","2"]},
+        {"custNo":"B","custName":"�쑀愿��닚","birth":"20141219","point":15.0,"addr":"�쟾�씪遺곷룄 �씡�궛�떆 湲덈쭏硫� �솴湲덈줈 916" , "bool1":true, "check1":"1"},
+        {"custNo":"C","custName":"�쑀愿��닚","birth":"20151121","point":30.678,"addr":"�슱�궛愿묒뿭�떆 �슱二쇨뎔 踰붿꽌�쓭 �엯�븫湲� 14" , "bool1":false, "check1":"1"},
+        {"custNo":"C","custName":"�젙以묐�","birth":"20141231","point":40.456,"addr":"異⑹껌遺곷룄 異⑹＜�떆 以묒썝��濡� 1" , "bool1":false, "check1":"1"},
+        {"custNo":"C","custName":"�씠�꽦怨�","birth":"20160302","point":500.000001,"addr":"異⑹껌�궓�룄 泥쒖븞�떆 �룞�궓援� 紐⑹쿇�쓭 �떊怨�2湲�", "bool1":false, "check1":"1" },
+        {"custNo":"D","custName":"�븞以묎렐","birth":"20160402","point":5000.876,"addr":"�씤泥쒓킅�뿭�떆 �궓�룞援� �꽌�뙋濡� 50踰덇만" , "bool1":true, "check1":"1"},
+        {"custNo":"D","custName":"�솉湲몃룞","birth":"20140101","point":0.0001,"addr":"�꽌�슱�떆 醫낅줈援� �꽭醫낅�濡� 175 " , "bool1":true, "check1":"1" },
+        {"custNo":"B","custName":"�씠�닚�떊","birth":"20150101","point":100.234,"addr":"遺��궛愿묒뿭�떆 �닔�쁺援� 媛먰룷濡� 8踰덇만", "bool1":false, "check1":"2"  },
+    	{"custNo":"J","custName":"源�援�","birth":"20160318","point":5000.3,"addr":"�젣二쇳듅蹂꾩옄移섎룄 �꽌洹��룷�떆 �궓�꽦濡� 115踰덇만 ", "bool1":false, "check1":"1" }
+       ],
+       "listTotalSize":100
+   },
+   "msg":""
+}

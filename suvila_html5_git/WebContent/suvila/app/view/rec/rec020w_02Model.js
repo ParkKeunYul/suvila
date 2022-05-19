@@ -1,0 +1,193 @@
+Ext.define('ExFrm.view.rec.rec020w_02Model', {
+    extend:'Ext.app.ViewModel', 
+    alias: 'viewmodel.rec020w_02', 
+    stores:{ 
+    	ds_TSKindDetail :{
+        	fields:['field1'],
+        	proxy:{
+                type:'ajax',
+                url:'/rec/REC020W_02/detailKindInfo.suvila',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'                    
+                }
+            },
+            autoLoad:false
+        },
+        ds_TSKindInfo :{
+        	fields:['field1'],
+        	proxy:{
+                type:'ajax',
+                url:'/rec/REC020W_02/kindInfo.suvila',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'                    
+                }
+            },
+            autoLoad:false
+        },
+        ds_sexGbn :{
+        	fields:['field1'],
+        	proxy:{
+                type:'ajax',
+                url:'/asp/CodeSearch/ComCodeSelect.suvila?group_cd=SEXGBN',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'                    
+                }
+            },
+            autoLoad:false
+        },
+        ds_religion :{
+        	fields:['field1'],
+        	proxy:{
+                type:'ajax',
+                url:'/asp/CodeSearch/ComCodeSelect.suvila?group_cd=RELIGION',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'                    
+                }
+            },
+            autoLoad:false
+        },
+        ds_nation :{
+        	fields:['field1'],
+        	proxy:{
+                type:'ajax',
+                url:'/asp/CodeSearch/ComCodeSelect.suvila?group_cd=NATION',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'                    
+                }
+            },
+            autoLoad:false
+        },
+        ds_telno1 :{
+        	fields:['field1'],
+        	proxy:{
+                type:'ajax',
+                url:'/asp/CodeSearch/ComCodeSelect.suvila?group_cd=TELNUMBER',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'                    
+                }
+            },
+            autoLoad:false  
+        },
+        ds_mobile_telno1 :{
+        	fields:['field1'],
+        	proxy:{
+                type:'ajax',
+                url:'/asp/CodeSearch/ComCodeSelect.suvila?group_cd=MOBILE',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'                    
+                }
+            },
+            autoLoad:false  
+        },
+        ds_job :{
+        	fields:['field1'],
+        	proxy:{
+                type:'ajax',
+                url:'/asp/CodeSearch/ComCodeSelect.suvila?group_cd=JOB',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'                    
+                }
+            },
+            autoLoad:false  
+        },
+        ds_email :{
+        	fields:['field1'],
+        	proxy:{
+                type:'ajax',
+                url:'/asp/CodeSearch/ComCodeSelect.suvila?group_cd=EMAIL',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'                    
+                }
+            },
+            autoLoad:false  
+        },
+        ds_joinPath :{
+        	fields:['field1'],
+        	proxy:{
+                type:'ajax',
+                url:'/asp/CodeSearch/ComCodeSelect.suvila?group_cd=TS_JOINPATH',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'                    
+                }
+            },
+            autoLoad:false
+        },
+        ds_familySelInfo :{
+        	fields:['field1'],
+        	proxy:{
+                type:'ajax',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'                    
+                }
+            },
+            autoLoad:false
+        },
+        ds_TSRec :{
+        	fields:['field1'],
+        	proxy:{
+                type:'ajax',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'                    
+                }
+            },
+            autoLoad:false
+        },
+        ds_acceptRecAmt :{
+        	fields:['field1'],
+        	proxy:{
+                type:'ajax',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'                    
+                }
+            },
+            autoLoad:false
+        },
+        ds_pgCardInfo :{
+        	fields:['field1'],
+        	proxy:{
+                type:'ajax',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'                    
+                }
+            },
+            autoLoad:false
+        },
+        ds_sms :{
+        	fields:['field1'],
+        	proxy:{
+                type:'ajax',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'                    
+                }
+            },
+            autoLoad:false
+        },
+        ds_pgCardUseYn :{
+        	fields:['field1'],
+        	proxy:{
+                type:'ajax',
+                url:'/pgc/PGC001W_01/UsePgCard.suvila?PGCODE=01',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'                    
+                }
+            },
+            autoLoad:false
+        },
+    }
+});

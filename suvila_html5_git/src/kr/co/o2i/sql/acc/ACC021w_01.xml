@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ACC021w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+<!--
+	<resultMap id="acc006w_01a" type="java.util.Map"> 
+		<result  property="CHECK_P" column="CHECK_P"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+	</resultMap>
+-->
+	<select id="SELECT_APPROVAL" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT MAX(DECODE(RNUM,1,APPROVAL_TITLE)) APPROVAL_1
+		      ,MAX(DECODE(RNUM,2,APPROVAL_TITLE)) APPROVAL_2
+		      ,MAX(DECODE(RNUM,3,APPROVAL_TITLE)) APPROVAL_3
+		      ,MAX(DECODE(RNUM,4,APPROVAL_TITLE)) APPROVAL_4
+		      ,MAX(DECODE(RNUM,5,APPROVAL_TITLE)) APPROVAL_5
+		 FROM (SELECT ROWNUM RNUM
+		             ,TEMPLE_CD
+		             ,SORT_SEQ
+		             ,APPROVAL_TITLE 
+		         FROM ASP_TEMPLE_APPROVAL_MGT
+		        WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		        ORDER BY SORT_SEQ
+		       )
+	</select>
+	
+	
+	<select id="SELECT_LIST" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		 SELECT TEMPLE_CD
+		       ,FN_TEMPLE_NAME(TEMPLE_CD,'FULL_NAME') TEMPLE_NM
+		       ,SUBSTR(MONTH_TEXT,1,4)||'년 '||SUBSTR(MONTH_TEXT,5,2)||'월 수입 지출 현계표('||FN_ACC_GBN_NAME(TEMPLE_CD,ACCT_GBN)||')' TITLE
+		       ,ACCT_GBN
+		       ,FN_ACC_GBN_NAME(TEMPLE_CD,ACCT_GBN) ACCT_NM
+		       ,SUM(BUDGET_I) BUDGET_I
+		       ,SUM(MONTH_I) MONTH_I
+		       ,SUM(YEAR_I) YEAR_I
+		       ,DECODE(SUM(BUDGET_I),0,0,ROUND(100.0*SUM(YEAR_I)/SUM(BUDGET_I),2)) RATE_I
+		       ,SUM(BUDGET_O) BUDGET_O
+		       ,SUM(MONTH_O) MONTH_O
+		       ,SUM(YEAR_O) YEAR_O
+		       ,DECODE(SUM(BUDGET_O),0,0,ROUND(100.0*SUM(YEAR_O)/SUM(BUDGET_O),2)) RATE_O
+		       ,SUM(YEAR_I) - SUM(YEAR_O) YEAR_BALANCE
+		       
+		       	
+		  FROM (
+		        SELECT TEMPLE_CD
+		              ,#{V_MONTH} MONTH_TEXT
+		              ,ACCT_GBN
+		              ,NVL(SUM(DECODE(IE_GBN,'I',AMOUNT1)),0) BUDGET_I
+		              ,NVL(SUM(DECODE(IE_GBN,'O',AMOUNT1)),0) BUDGET_O
+		              ,0 MONTH_I
+		              ,0 MONTH_O
+		              ,0 YEAR_I
+		              ,0 YEAR_O
+		          FROM ACC_BUDGET
+		         WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		           AND YEAR = SUBSTR(#{V_MONTH},1,4)
+		           <if test='V_ACCT_GBN != 0  and V_ACCT_GBN != "0" '>
+		           		AND ACCT_GBN = #{V_ACCT_GBN} 
+		           </if>
+		           AND MOK != 0
+		         GROUP BY TEMPLE_CD,ACCT_GBN
+		        UNION ALL
+		        SELECT TEMPLE_CD
+		              ,#{V_MONTH} MONTH_TEXT
+		              ,ACCT_GBN
+		              ,0 BUDGET_I
+		              ,0 BUDGET_O
+		              ,NVL(SUM(DECODE(SUBSTR(ACT_DATE,1,6),#{V_MONTH},DECODE(IE_GBN,'I',AMOUNT))),0) MONTH_I
+		              ,NVL(SUM(DECODE(SUBSTR(ACT_DATE,1,6),#{V_MONTH},DECODE(IE_GBN,'O',AMOUNT))),0) MONTH_O
+		              ,NVL(SUM(DECODE(IE_GBN,'I',AMOUNT)),0) YEAR_I
+		              ,NVL(SUM(DECODE(IE_GBN,'O',AMOUNT)),0) YEAR_O
+		          FROM
+		          <choose>
+		          	<when test='V_TYPE != "bogo"'>
+		          		ACC_MONEY_MGT
+		          	</when>
+		          	<otherwise>
+		          		ACC_CHONGMU_MONEY_MGT
+		          	</otherwise>
+		        </choose>  
+		         WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		         <if test='V_ACCT_GBN != 0  and V_ACCT_GBN != "0" '>
+		         		AND ACCT_GBN = #{V_ACCT_GBN}
+		         </if>
+		           AND ACT_DATE BETWEEN SUBSTR(#{V_MONTH},1,4)||'0101' AND #{V_MONTH}||'31' 
+		         GROUP BY TEMPLE_CD
+		                 ,ACCT_GBN
+		        )
+		 GROUP BY TEMPLE_CD
+		         ,MONTH_TEXT
+		         ,ACCT_GBN
+		 ORDER BY TEMPLE_CD
+		         ,MONTH_TEXT
+		         ,ACCT_GBN
+	</select>
+	
+	
+	
+</mapper>

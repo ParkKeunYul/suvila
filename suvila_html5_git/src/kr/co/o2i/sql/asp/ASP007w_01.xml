@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="kr.co.o2i.dao.asp.ASP007w_01DAO">
+	
+	
+	<select id="SELECT_USER" resultType="java.util.Map" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT
+			  ATU.USER_NM || '  (' || ACM.NAME || ')' AS NAME,
+			  ATU.USER_ID,
+			  ATU.PASSWD
+		FROM  ASP_TEMPLE_USER ATU,
+			  ASP_CODE_MGT	 ACM,
+		      ASP_TEMPLE_MASTER   ATM
+		WHERE ATU.TEMPLE_CD  = #{param.O_TEMPLE_CD}
+		AND   ATU.USE_YN 	 = 'T'
+		AND	  ATU.AUTH_GROUP = ACM.CODE
+		AND   ACM.GROUP_CD	 = 'AUTH'
+		AND   ATU.TEMPLE_CD = ATM.TEMPLE_CD
+		AND   ATM.USE_YN = 'T'
+	</select>
+	
+</mapper>

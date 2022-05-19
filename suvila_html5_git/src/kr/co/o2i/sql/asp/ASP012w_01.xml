@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ASP012w_01DAO">
+
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+	</resultMap>
+	
+	
+	<select id="SELECT_ACC_ACCOUNTS_MAPPER" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT
+			#{V_TEMPLE} AS TEMPLE_CD,
+			ACM.GROUP_CD,
+		    ACM.CODE,
+		    ACM.NAME,
+		    ACM.SORT_SEQ,
+		    AAM.ACCT_GBN,
+		    AAM.IE_GBN,
+		    AAM.KWAN,
+		    AAM.HANG,
+		    AAM.MOK,
+		    AAM.HANG_NAME
+		FROM
+		(
+		    SELECT
+		        AAM.ACCEPT_GBN,
+		        AAM.ACCT_GBN,
+		        AAM.IE_GBN,
+		        AAM.KWAN,
+		        AAM.HANG,
+		        AAM.MOK,
+		        AA.HANG_NAME
+		    FROM ACC_ACCOUNTS_MAPPER AAM,
+		        ACC_ACCOUNTS AA
+		    WHERE 1=1
+		    AND AAM.TEMPLE_CD = AA.TEMPLE_CD
+		    AND AAM.ACCT_GBN = AA.ACCT_GBN
+		    AND AAM.IE_GBN = AA.IE_GBN
+		    AND AAM.KWAN = AA.KWAN
+		    AND AAM.HANG = AA.HANG
+		    AND AAM.MOK = AA.MOK
+		    AND AAM.TEMPLE_CD = #{V_TEMPLE}
+		) AAM,
+			ASP_CODE_MGT ACM
+		WHERE 1=1
+		AND ACM.CODE = AAM.ACCEPT_GBN(+)
+		AND ACM.GROUP_CD = 'REC'
+		AND ACM.CODE != '-1'
+		AND ACM.USE_YN = 'Y'
+		ORDER BY ACM.SORT_SEQ
+	</select>
+	
+	
+	
+	<update id="UPDATE_ACC_ACCOUNTS_MAPPER" parameterType="java.util.Map" >
+		UPDATE ACC_ACCOUNTS_MAPPER 
+		   SET KWAN		        = #{KWAN}
+		      ,HANG		        = #{HANG}
+			  ,MOK		        = '0'
+			  ,IE_GBN	        = #{IE_GBN}
+			  ,UPT_USER	        = #{V_USER_ID}
+			  ,UPT_DATE	        = SYSDATE
+			  ,REMOTE	        = #{V_REMOTE}
+		WHERE TEMPLE_CD         = #{TEMPLE_CD}
+		  AND ACCEPT_GBN        = #{CODE}
+		  AND ACCEPT_GBN_DETAIL = '1'
+	</update>
+	
+	<insert id="INSERT_ACC_ACCOUNTS_MAPPER" parameterType="java.util.Map" >
+		INSERT INTO ACC_ACCOUNTS_MAPPER(
+			 TEMPLE_CD
+			,ACCEPT_GBN
+			,ACCEPT_GBN_DETAIL
+			,KWAN
+			,HANG
+			,MOK
+			,ACCT_GBN
+			,IE_GBN
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+		)VALUES(
+			 #{TEMPLE_CD}
+			,#{CODE}
+			,'1'
+			,#{KWAN}
+			,#{HANG}
+			,#{MOK}
+			,#{ACCT_GBN}
+			,#{IE_GBN}
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_REMOTE}
+		)
+		
+	</insert>
+	
+	<select  id="getExistAccAccountsMapper" parameterType="java.util.Map" resultType="Integer" >
+		SELECT COUNT(*)				
+		  FROM ACC_ACCOUNTS_MAPPER	
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD}			
+		   AND ACCEPT_GBN = #{CODE}			
+	</select>
+	
+</mapper>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC024w_02DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="SEL_YN" column="SEL_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+	
+	<select id="SELECT_ACCEPT_SEQ" parameterType="kr.co.o2i.util.CommonMap"  resultType="String">
+		SELECT TO_CHAR(SYSDATE,'YYYYMMDD') || LPAD(NVL(MAX(SUBSTR(ACCEPT_SEQ,9,18)) + 1, 1),10,'0') AS ACCEPT_SEQ   	
+		  FROM(      																										
+		    SELECT  MAX(ACCEPT_SEQ) AS ACCEPT_SEQ 																	
+		      FROM REC_MASTER      																					
+		     WHERE TEMPLE_CD   = #{V_TEMPLE_CD}             														
+		   	   AND ACCEPT_SEQ LIKE TO_CHAR(SYSDATE,'YYYYMMDD') || '%'   												
+		     UNION 																									
+		   	SELECT MAX(ACCEPT_SEQ) AS ACCEPT_SEQ 																	
+		      FROM SIN_DONATION_BILL_DETAIL 																			
+		   	 WHERE TEMPLE_CD   = #{V_TEMPLE_CD}             														
+		   	   AND ACCEPT_SEQ LIKE TO_CHAR(SYSDATE,'YYYYMMDD') || '%'
+		)   												
+	</select>
+	
+	
+	<select id="SELECT_REC_ALWAYS_PRAY_MGT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		  SELECT PRAY_CODE
+		        ,PRAY_NM
+		        ,AMOUNT
+		        ,'F' AS SEL_YN
+		        ,0 ZERO
+		   FROM REC_ALWAYS_PRAY_MGT
+		  WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		    AND USE_YN    = 'T'
+		  ORDER BY PRAY_CODE
+	</select>
+	
+	
+	<insert id="INSERT_REC_ALWAYS_PRAY_DETAIL" parameterType="java.util.Map">
+		INSERT INTO REC_ALWAYS_PRAY_DETAIL (
+			TEMPLE_CD
+			,ACCEPT_SEQ
+			,SEQ
+			,PRAY_CODE
+			,START_YYYYMM
+			,PAYMENT_PLAN_AMT
+			,PAYMENT_AMT
+			,END_YN
+			,DEL_YN
+			,REMARK
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+			,BASE_AMT
+		) VALUES (
+			 #{TEMPLE_CD}
+			,#{ACCEPT_SEQ}
+			,#{SEQ}
+			,#{PRAY_CODE}
+			,replace(#{START_YYYYMM} , '/' , '')
+			,#{PAYMENT_PLAN_AMT}
+			,#{PAYMENT_AMT}
+			,#{END_YN}
+			,#{DEL_YN}
+			,#{REMARK  ,jdbcType=VARCHAR}
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{REMOTE}
+			,#{BASE_AMT}
+		)
+	</insert>
+	
+	
+</mapper>

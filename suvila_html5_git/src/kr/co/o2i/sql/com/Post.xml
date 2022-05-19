@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.o2i.dao.com.PostDAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+	<!-- 신도조회 -->
+	<select id="selectPostDao"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	   SELECT ZIP_CODE ZIPCODE
+		      ,SIDO|| ' ' || GUGUN|| ' '||(CASE WHEN UPMYUN IS NOT NULL THEN UPMYUN||' ' ELSE '' END ) || STREET_NAME || ' ' || BUILDING_NO_MASTER || DECODE (BUILDING_NO_SUB, 0, '', '-' || BUILDING_NO_SUB) as ADDR1 
+		      ,'('||NVL(dong, UPMYUN) || CASE  WHEN SI_GUN_GU_BUILD_NAME IS NOT NULL THEN ','|| SI_GUN_GU_BUILD_NAME END||')'  AS ADDR3
+		      ,SIDO|| ' ' || GUGUN|| ' '||(CASE WHEN UPMYUN IS NOT NULL THEN UPMYUN||' ' ELSE '' END ) || NVL(DONG,RI) ||' ' || JIBUNBON || ( CASE WHEN JIBUNBONBUN !='0' AND JIBUNBONBUN IS NOT NULL THEN  '-' || JIBUNBONBUN ELSE '' END)as ADDR2
+		      ,BUILDING_MANAGER_CODE as BLDG_NUM
+		  from ${param.V_ADDR_GBN}
+		WHERE  INSTR(NEWDORO,  #{param.V_POSTNM}) > 0 
+		ORDER BY 1,2,3,5
+	</select>	
+</mapper>

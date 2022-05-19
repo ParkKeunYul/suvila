@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.o2i.dao.com.SessionLoginDAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+	<select id="SESSION_LOGIN"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	 	SELECT  A.TEMPLE_CD, 
+			    B.TEMPLE_NM,       
+			    A.AUTH_GROUP, 
+			    C.NAME AS AUTH_GROUP_NM,
+			    A.USER_ID, 
+			    A.USER_NM, 
+			    A.PASSWD,
+			    B.TELNO1 || B.TELNO2 || B.TELNO3 AS TELNO,
+				A.MOBILE_TELNO1 || A.MOBILE_TELNO2 || A.MOBILE_TELNO3 AS MOBILE_TELNO,
+				D.NAME AS SECT_NM,
+				B.USE_YN AS TEMPLE_USE_YN,
+		        B.DEATH_TYPE,
+		        B.REC_RESULT_TYPE,
+				B.SEARCH_GBN,
+				B.PRINT_AGE_YN,
+				B.SIN_SMS_YN,
+				(SELECT CASE																					
+			    			WHEN COUNT(SEQ) > 0 THEN 'Y'											
+			    			ELSE 'N'																					
+			   			 END																								
+				   FROM ASP_TEMPLE_MASTER_FILE 													
+				  WHERE DEL_YN ='F'                                      
+		    		AND TEMPLE_CD = A.TEMPLE_CD ) AS DOJANG_YN,					
+				(SELECT CASE																					
+			    			WHEN COUNT(TEMPLE_CD) > 0 THEN 'Y'								
+			    			ELSE 'N'																					
+			   	    	END
+			   	   FROM ASP_TEMPLE_PG_INFO
+			   	   WHERE TEMPLE_CD = A.TEMPLE_CD ) AS CARD_YN
+		FROM ASP_TEMPLE_USER      A,
+			 ASP_TEMPLE_MASTER    B,
+			 ASP_CODE_MGT         C,
+			 ASP_CODE_MGT         D
+		WHERE A.TEMPLE_CD    = B.TEMPLE_CD
+		  AND A.AUTH_GROUP   = C.CODE(+)
+		  AND C.GROUP_CD     = 'AUTH'
+		  AND D.GROUP_CD(+)  = 'JONGDAN'
+		  AND B.SECT_CD      = D.CODE(+)
+		  AND A.USE_YN       = 'T'
+		  AND A.USER_ID      = #{param.USER_ID}
+		  
+	</select>	
+</mapper>

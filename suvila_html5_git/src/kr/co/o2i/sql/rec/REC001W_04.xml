@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC001w_04DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+	<select id="SELECT_MISU" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT HIS.TEMPLE_CD
+			  ,HIS.SEQ
+			  ,HIS.ACCEPT_SEQ
+			  ,HIS.SUB_DATE
+			  ,HIS.AMOUNT
+			  ,USR.USER_NM AS CRT_USER
+			  ,HIS.REMOTE
+			  ,HIS.REMARK
+		  FROM REC_PAYMENT_HIS HIS
+		      ,ASP_TEMPLE_USER USR
+		 WHERE HIS.TEMPLE_CD = USR.TEMPLE_CD(+)
+		   AND HIS.CRT_USER  = USR.USER_ID(+)
+		   AND HIS.TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND HIS.ACCEPT_SEQ= #{V_ACCEPT_SEQ}
+		   AND HIS.SEQ       = #{V_SEQ}
+		ORDER BY SUB_DATE
+	</select>
+	
+	
+	<insert id="INSERT_MISU" parameterType="java.util.Map"  >
+		INSERT INTO REC_PAYMENT_HIS (
+		        TEMPLE_CD
+		       ,SEQ
+		       ,ACCEPT_SEQ
+		       ,SUB_DATE
+		       ,AMOUNT
+		       ,CRT_USER
+		       ,REMOTE
+		       ,REMARK
+		       ,APPROVAL_GBN
+		       ,PGCODE
+		       ,AUTHCODE 
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{ACCEPT_SEQ}
+		       ,(SELECT TO_CHAR(CURRENT_TIMESTAMP,'YYYYMMDDHH24MISSFF') FROM DUAL)
+		       ,#{AMOUNT}
+		       ,#{CRT_USER}
+		       ,#{REMOTE}
+		       ,''
+		       ,'1'
+		       ,''
+		       ,'' 
+		)
+	</insert>
+	
+	<update id="UPDATE_MISU_INDEUNG" parameterType="java.util.Map">
+		UPDATE REC_INDEUNG_DETAIL 
+		   SET PAYMENT_AMT = #AMOUNT# + (SELECT PAYMENT_AMT 
+                                   		   FROM REC_INDEUNG_DETAIL
+                                  		  WHERE TEMPLE_CD  = #{TEMPLE_CD}
+						            	    AND ACCEPT_SEQ = #{ACCEPT_SEQ}
+								    		AND SEQ        = #{SEQ})
+			  ,UPT_USER    = #{CRT_USER}
+			  ,UPT_DATE    = SYSDATE
+	     WHERE TEMPLE_CD   = #{TEMPLE_CD}
+  		   AND ACCEPT_SEQ  = #{ACCEPT_SEQ}
+  		   AND SEQ         = #{SEQ}
+	</update>
+	
+	<update id="UPDATE_MISU_YONDEUNG" parameterType="java.util.Map">
+		UPDATE REC_TEONDEUNG_DETAIL 
+		   SET PAYMENT_AMT = #AMOUNT# + (SELECT PAYMENT_AMT 
+                                   		   FROM REC_TEONDEUNG_DETAIL
+                                  		  WHERE TEMPLE_CD  = #{TEMPLE_CD}
+						            	    AND ACCEPT_SEQ = #{ACCEPT_SEQ}
+								    		AND SEQ        = #{SEQ})
+			  ,UPT_USER    = #{CRT_USER}
+			  ,UPT_DATE    = SYSDATE
+	     WHERE TEMPLE_CD   = #{TEMPLE_CD}
+  		   AND ACCEPT_SEQ  = #{ACCEPT_SEQ}
+  		   AND SEQ         = #{SEQ}
+	</update>
+	
+	<update id="UPDATE_REC_MASTER" parameterType="java.util.Map">
+		UPDATE REC_MASTER 
+		   SET TOT_PAYMENT_AMT = #AMOUNT# + (SELECT TOT_PAYMENT_AMT 
+		                                       FROM REC_MASTER
+		                                      WHERE TEMPLE_CD  = #{TEMPLE_CD}
+								                AND ACCEPT_SEQ = #{ACCEPT_SEQ})
+			  ,UPT_USER    = #{CRT_USER}
+			  ,UPT_DATE    = SYSDATE
+		 WHERE TEMPLE_CD   = #{TEMPLE_CD}
+	  	   AND ACCEPT_SEQ  = #{ACCEPT_SEQ}
+	</update>
+	
+	
+</mapper>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC002w_04DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+	
+	<select id="SELECT_MISU" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		    SELECT HIS.TEMPLE_CD
+		    	  ,HIS.SEQ
+		    	  ,HIS.ACCEPT_SEQ
+		    	  ,HIS.SUB_DATE
+		    	  ,HIS.AMOUNT
+		    	  ,USR.USER_NM AS CRT_USER
+		    	  ,HIS.REMOTE
+		    	  ,HIS.REMARK
+			  FROM REC_PAYMENT_HIS HIS
+			  	  ,ASP_TEMPLE_USER USR
+			 WHERE HIS.TEMPLE_CD = USR.TEMPLE_CD(+)
+			   AND HIS.CRT_USER  = USR.USER_ID(+)
+			   AND HIS.TEMPLE_CD = #{V_TEMPLE_CD}
+			   AND HIS.ACCEPT_SEQ= #{V_ACCEPT_SEQ}
+			   AND HIS.SEQ       = #{V_SEQ}
+			ORDER BY SUB_DATE
+	</select>
+	
+	
+</mapper>

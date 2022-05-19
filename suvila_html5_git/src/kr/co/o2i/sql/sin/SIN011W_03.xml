@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SIN011W_03DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="CONTENT"    column="CONTENT"  javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		 <result  property="SEL_YN" column="SEL_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+	</resultMap>
+
+	<select id="SELECT_INFO"  parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT  CSH.TEMPLE_CD
+		       ,CSH.BUD_NO
+		       ,CSH.PRAY_NM
+		       ,CSH.AMOUNT
+		       ,CSH.MOID
+		       ,CSH.SID
+		       ,CSH.TRDTM
+		       ,CSH.GUBUN
+		       ,CSH.REQDT
+		       ,CSH.AUTHCL
+		       ,CSH.REQID
+		       ,CSH.USRID
+		       ,CSH.MID
+		       ,CSH.ENCKEY
+		       ,CSH.TYPE
+		       ,CSH.ORDNM
+		       ,CSH.ORDEMAIL
+		       ,CSH.ORDHPNO
+		       ,CSH.SRCNM
+		       ,CSH.PAYSTATUS
+		       ,CSH.SENDDT
+		       ,CSH.PAYDT
+		       ,CSH.TID
+		       ,CSH.DATACNT
+		       ,CSH.REMARK
+		       ,CSH.CANCEL
+		       ,ROUND(DECODE(C.TP_RATE_COMMISSION,NULL,0, (CSH.AMOUNT * C.TP_RATE_COMMISSION)/ 100),0) AS COMMISSION 
+		       ,CSH.AMOUNT - ROUND(DECODE(C.TP_RATE_COMMISSION,NULL,0, (CSH.AMOUNT * C.TP_RATE_COMMISSION)/ 100),0)  as TOTAL
+		  FROM CARDPAY_SMS_HIS CSH
+		      ,SIN_CARD_MASTER SCM
+		      ,ASP_TEMPLE_PG_INFO_HIS C
+		      ,ASP_PG_INFO_HIS D
+		WHERE CSH.BUD_NO     = SCM.BUD_NO
+		 AND  CSH.TEMPLE_CD  = SCM.TEMPLE_CD
+		 AND CSH.TEMPLE_CD   = C.TEMPLE_CD(+)
+		 AND '01'            = C.PGCODE(+)
+		 AND CSH.PAYDT      >= C.TP_COMMISSION_FROM(+)
+		 AND CSH.PAYDT   &lt;= DECODE(C.TP_COMMISSION_TO(+),'00000000','99999999',C.TP_COMMISSION_TO(+))      
+		 AND '01'            = D.PGCODE(+)
+		 AND CSH.PAYDT      >= D.COMMISSION_FROM(+)
+		 AND  CSH.TEMPLE_CD  = #{V_TEMPLE_CD}
+		 <if test='V_SEARCH_WORD != "" and V_SEARCH_WORD != null  '>
+		 	<choose>
+		   		<when test='V_SEARCH_GBN == "BUD_NO"'>
+		   			AND CSH.BUD_NO LIKE '%'||#{V_SEARCH_WORD}||'%' 
+		   		</when>
+		   		<when test='V_SEARCH_GBN == "NAME_KOR"'>
+		   			AND CSH.NAME_KOR LIKE '%'||#{V_SEARCH_WORD}||'%'
+		   		</when>
+		   		<when test='V_SEARCH_GBN == "SACRED_KOR"'>
+		   			AND SCM.SACRED_KOR LIKE '%' || #{V_SEARCH_WORD} || '%'
+		   		</when>
+		   		<when test='V_SEARCH_GBN == "MOBILE_TELNO"'>
+		   			AND SCM.MOBILE_TELNO1 || MOBILE_TELNO2 || MOBILE_TELNO3 LIKE '%'||REPLACE(#{V_SEARCH_WORD},'-','')||'%'
+		   		</when>
+		   		<when test='V_SEARCH_GBN == "TELNO"'>
+		   			AND SCM.TELNO1 || SCM.TELNO2 || SCM.TELNO3 LIKE '%'||REPLACE(#{V_SEARCH_WORD},'-','')||'%'
+		   		</when>
+		   		<otherwise></otherwise>
+		   	</choose>
+		 </if>
+		 <choose>
+	   		<when test='V_DATE_GBN == "1"'>
+	   			AND TO_DATE(SUBSTR(CSH.REQDT,0,8), 'YYYYMMDD') BETWEEN #{V_SDATE} AND #{V_EDATE}
+	   		</when>
+	   		<when test='V_DATE_GBN == "2"'>
+	   			AND TO_DATE(CSH.PAYDT, 'YYYYMMDD') BETWEEN #{V_SDATE} AND #{V_EDATE}
+	   		</when>
+	   		<otherwise></otherwise>
+	   	</choose>
+	   	<if test='V_PAYSTATE != "" and V_PAYSTATE != null  '>
+	   		AND CSH.PAYSTATUS = #{V_PAYSTATE}
+	   	</if>
+		 ORDER BY to_number(CSH.REQDT) desc
+		         ,CSH.BUD_NO asc
+	</select>	
+	
+	<update id="updateCardPaySmsHis" parameterType="java.util.Map">
+		UPDATE CARDPAY_SMS_HIS
+		   SET PAYDT     = #{V_PAYDT}
+		   	  ,PAYSTATUS = #{V_PAYSTATUS}
+		   	  ,SRCNM     = #{V_SRCNM}
+		   	  ,TID       = #{V_TID}
+		WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+		  AND MOID       = #{MOID}
+		  AND REQID      = #{REQID} 
+	</update>
+	
+	
+	<update id="UPDATE_CANCEL_CARD" parameterType="java.util.Map">
+		UPDATE CARDPAY_SMS_HIS
+		   SET CANCEL      = 'Y'
+		      ,CANCEL_USER = #{V_USER_ID}
+		      ,CANCEL_DATE = sysdate
+		 WHERE TEMPLE_CD   = #{V_TEMPLE_CD}
+		   AND MOID        = #{MOID}
+		   AND REQID       = #{REQID}
+	</update>
+	
+	<update id="UPDATE_REMARK" parameterType="java.util.Map">
+		UPDATE CARDPAY_SMS_HIS
+		   SET REMARK      = #{REMARK}
+		 WHERE TEMPLE_CD   = #{V_TEMPLE_CD}
+		   AND MOID        = #{MOID}
+		   AND REQID       = #{REQID}
+	</update>
+	
+</mapper>

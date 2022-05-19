@@ -1,0 +1,13 @@
+[{
+    "id": 1003,
+    "calendarId": 1,
+    "endDate": "2017-04-30T01:30:00.000Z",
+    "startDate": "2017-04-30T00:30:00.000Z",
+    "title": "Meet with Development"
+}, {
+    "id": 1004,
+    "calendarId": 1,
+    "endDate": "2017-04-31T03:00:00.000Z",
+    "startDate": "2017-04-31T01:00:00.000Z",
+    "title": "Review with Marketing"
+}]

@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC002w_05DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+	
+	<select id="SELECT_ALL" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		    SELECT TEMPLE_CD
+			  ,(SELECT NAME FROM ASP_CODE_MGT WHERE GROUP_CD = 'REC' AND CODE = '1') as NAME1
+			  ,(SELECT NAME FROM ASP_CODE_MGT WHERE GROUP_CD = 'REC' AND CODE = '3') as NAME2
+			  ,SUB_DATE
+			  ,AMOUNT1
+			  ,AMOUNT2
+		 FROM (
+		 		<if test='V_TYPE == 1 or V_TYPE == 2 '>
+					SELECT RD.TEMPLE_CD
+						  ,RD.SUB_DATE AS SUB_DATE
+						  ,SUM(RD.AMOUNT) AS AMOUNT1
+	            		  ,0 AS AMOUNT2
+					 FROM (
+						SELECT RPD.TEMPLE_CD
+							  ,RM.PROPOSAL_BUD_NO
+							  ,RPH.CRT_USER
+							  ,SUBSTR(RPH.SUB_DATE,1,TO_NUMBER(#{V_DATE_GBN})) AS SUB_DATE
+							  ,RPH.AMOUNT
+						  FROM REC_PRAY_DETAIL RPD
+						  	  ,REC_PAYMENT_HIS RPH
+						  	  ,REC_MASTER RM
+						 WHERE RPD.TEMPLE_CD  = RPH.TEMPLE_CD
+						   AND RPD.ACCEPT_SEQ = RPH.ACCEPT_SEQ
+						   AND RPD.SEQ        = RPH.SEQ
+						   AND RPD.TEMPLE_CD  = RM.TEMPLE_CD
+						   AND RPD.ACCEPT_SEQ = RM.ACCEPT_SEQ
+						   AND RPD.DEL_YN     = 'F'
+						   AND RPD.TEMPLE_CD  = #{V_TEMPLE_CD}
+						   AND SUBSTR(RPH.SUB_DATE,1,TO_NUMBER(#{V_DATE_GBN}))      >= #{V_SDATE}
+						   AND SUBSTR(RPH.SUB_DATE,1,TO_NUMBER(#{V_DATE_GBN}))   &lt;= #{V_EDATE}
+						   <if test='V_BUD_NO != null and  V_BUD_NO != "" '>
+						   		AND RM.PROPOSAL_BUD_NO  LIKE  #{V_BUD_NO} || '%'
+						   </if>
+						   <if test='V_PRAY_CODE != null and  V_PRAY_CODE != "" and V_PRAY_CODE != 0 '>
+						   		AND RPD.PRAY_CODE =  #{V_PRAY_CODE}
+						   </if>
+						   <if test='V_USER != null and  V_USER != "" '>
+						   		AND RPH.CRT_USER = #{V_USER} 
+						   </if>
+						   
+					) RD
+					GROUP BY TEMPLE_CD, SUB_DATE
+				</if>
+				<if test='V_TYPE == 1 '>
+					UNION ALL
+				</if>
+				<if test='V_TYPE == 1 or V_TYPE == 3 '>
+					SELECT RD.TEMPLE_CD
+					 	  ,RD.SUB_DATE AS SUB_DATE
+					 	  ,0 AS AMOUNT1
+					 	  ,SUM(RD.AMOUNT) AS AMOUNT2             
+					 FROM (
+							 SELECT RBD.TEMPLE_CD
+							 	   ,RM.PROPOSAL_BUD_NO
+							 	   ,RPH.CRT_USER
+							 	   ,SUBSTR(RPH.SUB_DATE,1,TO_NUMBER(#{V_DATE_GBN})) AS SUB_DATE
+							 	   ,RPH.AMOUNT
+							   FROM REC_BULSA_DETAIL RBD
+							   	   ,REC_PAYMENT_HIS RPH
+							   	   ,REC_MASTER RM
+							  WHERE RBD.TEMPLE_CD  = RPH.TEMPLE_CD
+								AND RBD.ACCEPT_SEQ = RPH.ACCEPT_SEQ
+								AND RBD.SEQ 	   = RPH.SEQ
+								AND RBD.TEMPLE_CD  = RM.TEMPLE_CD
+								AND RBD.ACCEPT_SEQ = RM.ACCEPT_SEQ	
+								AND RBD.DEL_YN 	   = 'F'
+								AND RBD.TEMPLE_CD  = #{V_TEMPLE_CD}
+								AND SUBSTR(RPH.SUB_DATE,1,TO_NUMBER(#{V_DATE_GBN}))      >= #{V_SDATE}
+								AND SUBSTR(RPH.SUB_DATE,1,TO_NUMBER(#{V_DATE_GBN}))   &lt;= #{V_EDATE}
+								<if test='V_BUD_NO != null and  V_BUD_NO != "" '>
+									AND RM.PROPOSAL_BUD_NO LIKE  #{V_BUD_NO} || '%'
+								</if>
+								<if test='V_BULSA_CD != null and  V_BULSA_CD != "" and V_BULSA_CD != 0 '>
+									AND RBD.BULSA_CD =  #{V_BULSA_CD}
+								</if>
+								<if test='V_USER != null and  V_USER != "" '>
+									AND RPH.CRT_USER = #{V_USER}
+								</if>
+					 		)RD
+					GROUP BY TEMPLE_CD, SUB_DATE
+				</if>
+		)		
+		ORDER BY SUB_DATE
+	</select>
+	
+	<select id="SELECT_PRAY" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+			  ,(SELECT NAME FROM ASP_CODE_MGT WHERE GROUP_CD = 'REC' AND CODE = '1') as NAME1
+			  ,SUB_DATE
+			  ,AMOUNT1
+			FROM (
+				SELECT RD.TEMPLE_CD
+					  ,RD.SUB_DATE AS SUB_DATE
+					  ,SUM(RD.AMOUNT) AS AMOUNT1
+				 FROM (
+						SELECT RPD.TEMPLE_CD
+							  ,RM.PROPOSAL_BUD_NO
+							  ,RPH.CRT_USER
+							  ,SUBSTR(RPH.SUB_DATE,1,TO_NUMBER(#{V_DATE_GBN})) AS SUB_DATE
+							  ,RPH.AMOUNT
+						  FROM REC_PRAY_DETAIL RPD
+						  	  ,REC_PAYMENT_HIS RPH
+						  	  ,REC_MASTER RM
+						 WHERE RPD.TEMPLE_CD  = RPH.TEMPLE_CD
+						   AND RPD.ACCEPT_SEQ = RPH.ACCEPT_SEQ
+						   AND RPD.SEQ        = RPH.SEQ
+						   AND RPD.TEMPLE_CD  = RM.TEMPLE_CD
+						   AND RPD.ACCEPT_SEQ = RM.ACCEPT_SEQ
+						   AND RPD.DEL_YN     = 'F'
+						   AND RPD.TEMPLE_CD  = #{V_TEMPLE_CD}
+						   AND SUBSTR(RPH.SUB_DATE,1,TO_NUMBER(#{V_DATE_GBN}))      >= #{V_SDATE}
+						   AND SUBSTR(RPH.SUB_DATE,1,TO_NUMBER(#{V_DATE_GBN}))   &lt;= #{V_EDATE}
+						   <if test='V_BUD_NO != null and  V_BUD_NO != "" '>
+						   		AND RM.PROPOSAL_BUD_NO  LIKE  #{V_BUD_NO} || '%'
+						   </if>
+						   <if test='V_DETAIL_GBN != null and  V_DETAIL_GBN != "" '>
+						   		AND RPD.PRAY_CODE =  #{V_DETAIL_GBN}
+						   </if>
+						   <if test='V_USER != null and  V_USER != "" '>
+						   		AND RPH.CRT_USER = #{V_USER} 
+						   </if>
+				 	  ) RD
+				GROUP BY TEMPLE_CD, SUB_DATE
+			)
+			ORDER BY SUB_DATE
+	</select>
+	
+	<select id="SELECT_BULSA" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+		      ,(SELECT NAME FROM ASP_CODE_MGT WHERE GROUP_CD = 'REC' AND CODE = '3') as NAME1
+		      ,SUB_DATE
+		      ,AMOUNT1
+		  FROM (
+				 SELECT RD.TEMPLE_CD
+				 	   ,RD.SUB_DATE AS SUB_DATE
+				 	   ,SUM(RD.AMOUNT) AS AMOUNT1
+				  FROM (
+						 SELECT RBD.TEMPLE_CD
+						 	   ,RM.PROPOSAL_BUD_NO
+						 	   ,RPH.CRT_USER
+						 	   ,SUBSTR(RPH.SUB_DATE,1,TO_NUMBER(#{V_DATE_GBN})) AS SUB_DATE
+						 	   ,RPH.AMOUNT
+						   FROM REC_BULSA_DETAIL RBD
+						   	   ,REC_PAYMENT_HIS RPH
+						   	   ,REC_MASTER RM
+						  WHERE RBD.TEMPLE_CD  = RPH.TEMPLE_CD
+							AND RBD.ACCEPT_SEQ = RPH.ACCEPT_SEQ
+							AND RBD.SEQ 	   = RPH.SEQ
+							AND RBD.TEMPLE_CD  = RM.TEMPLE_CD
+							AND RBD.ACCEPT_SEQ = RM.ACCEPT_SEQ	
+							AND RBD.DEL_YN 	   = 'F'
+							AND RBD.TEMPLE_CD  = #{V_TEMPLE_CD}
+							AND SUBSTR(RPH.SUB_DATE,1,TO_NUMBER(#{V_DATE_GBN}))      >= #{V_SDATE}
+							AND SUBSTR(RPH.SUB_DATE,1,TO_NUMBER(#{V_DATE_GBN}))   &lt;= #{V_EDATE}
+							<if test='V_BUD_NO != null and  V_BUD_NO != "" '>
+								AND RM.PROPOSAL_BUD_NO LIKE  #{V_BUD_NO}
+							</if>
+							<if test='V_DETAIL_GBN != null and  V_DETAIL_GBN != "" '>
+								AND RBD.BULSA_CD =  #{V_DETAIL_GBN}
+							</if>
+							<if test='V_USER != null and  V_USER != "" '>
+								AND RPH.CRT_USER = #{V_USER}
+							</if>
+				 		)RD
+				GROUP BY TEMPLE_CD, SUB_DATE
+				)
+		ORDER BY SUB_DATE
+	</select>
+	
+	
+</mapper>

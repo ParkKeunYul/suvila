@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.o2i.dao.com.LoginDAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+	<select id="getLoginSql" parameterType="kr.co.o2i.util.CommonMap" resultType="java.util.Map">
+		SELECT A.TEMPLE_CD
+		      ,B.TEMPLE_NM
+		      ,A.AUTH_GROUP
+		      ,C.NAME AS AUTH_GROUP_NM
+		      ,A.USER_ID
+		      ,A.USER_NM
+		      ,B.TELNO1 || B.TELNO2 || B.TELNO3 AS TELNO
+		      ,A.MOBILE_TELNO1 || A.MOBILE_TELNO2 || A.MOBILE_TELNO3 AS MOBILE_TELNO
+		      ,A.PASSWD
+		      ,D.NAME AS SECT_NM
+		      ,B.USE_YN AS TEMPLE_USE_YN, B.DEATH_TYPE
+		      ,A.USE_YN AS USER_USE_YN
+		      ,B.REC_RESULT_TYPE, B.SEARCH_GBN, B.PRINT_AGE_YN
+		      ,B.SIN_SMS_YN
+		      ,B.PRINT_FORM_YN
+		      ,(SELECT CASE																					
+			             WHEN COUNT(SEQ) > 0 THEN 'Y'											
+			             ELSE 'N'																					
+			            END																								
+			      FROM ASP_TEMPLE_MASTER_FILE 													
+			     WHERE DEL_YN ='F'                                      
+		            AND TEMPLE_CD = A.TEMPLE_CD ) AS DOJANG_YN
+		      ,(SELECT CASE																					
+			             WHEN COUNT(TEMPLE_CD) > 0 THEN 'Y'								
+			             ELSE 'N'																					
+			            END																								
+			      FROM ASP_TEMPLE_PG_INFO 													    
+			      WHERE TEMPLE_CD = A.TEMPLE_CD ) AS CARD_YN						
+		FROM ASP_TEMPLE_USER A
+		    ,ASP_TEMPLE_MASTER B
+		    ,ASP_CODE_MGT C
+		    ,ASP_CODE_MGT D																				
+	   WHERE A.TEMPLE_CD    = B.TEMPLE_CD											
+		 AND A.AUTH_GROUP   = C.CODE(+)												
+		 AND C.GROUP_CD     = 'AUTH'														
+		 AND D.GROUP_CD(+)  = 'JONGDAN'												
+		 AND B.SECT_CD      = D.CODE(+)		
+		 AND A.USER_ID      = #{param.user_id}
+	</select>
+	
+	<insert id=""></insert>
+	
+	<insert  id="insertLoginLog" parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO ASP_TEMPLE_USER_LOGIN_LOG ( 
+		      LOGIN_DATE 
+		     ,USER_ID 
+		     ,USER_NM 
+		     ,TEMPLE_CD 
+		     ,TEMPLE_NM 
+		     ,CLIENT_IP 
+		     ,SERVER_IP 
+		     ,SUCCESS_YN 
+		     ,ERROR_MESSAGE 
+	    ) VALUES ( 
+		      SYSDATE 
+		     ,#{param.user_id      ,jdbcType=VARCHAR}  
+		     ,#{param.USER_NM      ,jdbcType=VARCHAR}
+		     ,#{param.TEMPLE_CD    ,jdbcType=VARCHAR} 
+		     ,#{param.TEMPLE_NM    ,jdbcType=VARCHAR} 
+		     ,#{param.CLIENT_IP    ,jdbcType=VARCHAR} 
+		     ,#{param.SERVER_IP    ,jdbcType=VARCHAR} 
+		     ,#{param.SUCCESS_YN   ,jdbcType=VARCHAR} 
+		     ,#{param.ERROR_MESSAGE,jdbcType=VARCHAR} 
+	    ) 
+	</insert>
+	
+	<update id="updateLoginInfo"  parameterType="kr.co.o2i.util.CommonMap">
+		UPDATE SIN_LOGIN_CHECK
+		<if test="param.type == 1 ">
+			SET LOGIN_YN = 'N'
+		</if>
+		<if test="param.type != 1 ">
+			SET UPT_DATE = sysdate
+		</if>
+		WHERE temple_cd 	= #{param.TEMPLE_CD    ,jdbcType=VARCHAR} 	
+		   AND iD   		= #{param.user_id      ,jdbcType=VARCHAR} 	
+		   AND IP        	= #{param.CLIENT_IP    ,jdbcType=VARCHAR}  	
+		   AND LOGIN_YN  	= 'Y' 				
+	</update>
+	
+	
+	<select id="autoLoginSql" parameterType="kr.co.o2i.util.CommonMap" resultType="java.util.Map">
+		SELECT T1.TEMPLE_CD,T1.ID,T1.IP 				
+		      ,(SELECT PASSWD FROM ASP_TEMPLE_USER WHERE TEMPLE_CD = T1.TEMPLE_CD AND USER_ID = T1.ID ) as PWD 
+		  FROM SIN_LOGIN_CHECK	T1							
+		 WHERE T1.LOGIN_YN 		= 'Y'      			
+		   AND T1.TEMPLE_CD  	=  #{param.TEMPLE_CD    ,jdbcType=VARCHAR}
+		   AND T1.ID        	=  #{param.user_id      ,jdbcType=VARCHAR}   	
+		   AND T1.IP        	=  #{param.CLIENT_IP    ,jdbcType=VARCHAR} 
+	</select>
+	
+	<insert id="insertLoginInfo" parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO SIN_LOGIN_CHECK(
+			 SEQ
+			,TEMPLE_CD
+			,ID
+			,REG_DATE
+			,IP
+		)VALUES(
+			 (select nvl(max(seq),0 )+1 from SIN_LOGIN_CHECK) 
+			, #{param.TEMPLE_CD    ,jdbcType=VARCHAR}
+			, #{param.USER_ID      ,jdbcType=VARCHAR}   
+			, sysdate
+			, #{param.CLIENT_IP    ,jdbcType=VARCHAR} 
+		)
+	</insert>
+	
+	
+</mapper>

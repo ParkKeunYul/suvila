@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.o2i.dao.com.CodeSearchDAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+	<!-- # 공통코드 정보 조회 # -->
+	<select id="CODESEARCH"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	<![CDATA[
+		  SELECT   1  AS SEQ,
+		         CODE AS CODE, 
+				 NAME AS NAME
+		    FROM ASP_CODE_MGT
+		   WHERE GROUP_CD  = upper(#{param.group_cd})
+		     AND CODE <> '-1'
+		     AND USE_YN = 'Y'
+		ORDER BY SORT_SEQ ASC , CODE ASC
+	]]>
+	</select>
+	
+	<!-- # 공통코드 정보 조회(전체) # -->
+	<select id="CODESEARCHALL"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	<![CDATA[
+		SELECT 1     AS SEQ,
+		       ''    AS CODE,
+		       '전체' AS NAME,
+		       0     AS SORT_SEQ
+		  FROM DUAL
+		UNION    
+		SELECT   2      AS SEQ,
+	           CODE     AS CODE, 
+			   NAME     AS NAME,
+			   SORT_SEQ AS SORT_SEQ
+	     FROM ASP_CODE_MGT
+	    WHERE GROUP_CD  = upper(#{param.group_cd})
+	      AND CODE <> '-1'
+	      AND USE_YN = 'Y'
+	    ORDER BY SEQ ASC , SORT_SEQ ASC , CODE ASC
+	]]>
+	</select>
+	
+	<!-- # 공통코드 정보 조회(선택) # -->
+	<select id="CODESEARCHSELECT"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	
+		 SELECT 1     AS SEQ,
+		       ''     AS CODE,
+		       <choose>
+		       		 <when test='param.txtType == "all" '>
+		       			'전체' AS NAME, 	
+		       		 </when>
+		       		 <otherwise>
+		       			'선택' AS NAME,		 	
+		       		 </otherwise>
+		       </choose>
+		       0      AS SORT_SEQ
+		 FROM DUAL
+	<![CDATA[
+		 UNION	
+		SELECT   2        AS SEQ,
+		       CODE     AS CODE, 
+			   NAME     AS NAME,
+			   SORT_SEQ AS SORT_SEQ
+		 FROM ASP_CODE_MGT
+		WHERE GROUP_CD  = upper(#{param.group_cd})
+		  AND CODE <> '-1'
+		  AND USE_YN = 'Y'
+		ORDER BY SEQ ASC , SORT_SEQ ASC , CODE ASC
+	]]>
+	</select>
+	
+	
+	<!-- # 사찰코드 정보 조회 # -->
+	<select id="TEMPLESEARCH_IMSI"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	<![CDATA[
+		SELECT 1         AS SEQ,
+	           TEMPLE_CD AS TEMPLE_CD, 
+			   TEMPLE_NM AS TEMPLE_NM
+	      FROM ASP_TEMPLE_MASTER
+	     WHERE TEMPLE_CD <> '000000'
+	     ORDER BY TEMPLE_CD ASC
+	]]>
+	</select>
+	
+	<select id="TEMPLESEARCH"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		   SELECT 1 AS SEQ,
+				 (SELECT count(temple_cd) FROM ASP_TEMPLE_CMS_INFO WHERE T1.TEMPLE_CD  = TEMPLE_CD AND USE_YN = 'T')
+				 ||' ('||
+				 (SELECT count(temple_cd) FROM ASP_TEMPLE_CMS_INFO WHERE T1.TEMPLE_CD  = TEMPLE_CD)||') '  AS USE_YN,   
+				 (SELECT count(temple_cd) FROM ASP_TEMPLE_PG_INFO  WHERE T1.TEMPLE_CD  = TEMPLE_CD AND USE_YN = 'T')
+				 ||' ('||
+				 (SELECT count(temple_cd) FROM ASP_TEMPLE_PG_INFO WHERE T1.TEMPLE_CD  = TEMPLE_CD)||') 'AS CARD_YN,  
+			     T1.TEMPLE_CD AS TEMPLE_CD, 
+				 T1.TEMPLE_NM AS TEMPLE_NM, 
+				 T1.USE_YN AS USE_YN_CHAR
+		    FROM ASP_TEMPLE_MASTER T1		    
+		   <if test='V_TEMPLE_NM != nul and  V_TEMPLE_NM != "" '>
+		   	WHERE T1.TEMPLE_NM  like #{param.V_TEMPLE_NM}  || '%'	
+		   </if>
+		   
+		   ORDER BY T1.TEMPLE_CD ASC
+	</select>
+	
+	<!--# 사찰코드 정보 조회 # -->
+	<select id="TEMPLESEARCHALL"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		<if test='param.TEMPLE_ALL != null and param.TEMPLE_ALL != ""'>
+			SELECT  1     AS SEQ
+			      ,''     AS TEMPLE_CD
+			      ,'전체' AS TEMPLE_NM  
+ 		      FROM DUAL            
+ 		     UNION ALL             
+		</if>
+	
+		<![CDATA[
+			SELECT   2         AS SEQ,
+			         TEMPLE_CD AS TEMPLE_CD, 
+					 TEMPLE_NM AS TEMPLE_NM
+			    FROM ASP_TEMPLE_MASTER
+			  WHERE  TEMPLE_CD <> '000000'
+			ORDER BY SEQ ASC, TEMPLE_CD ASC
+		]]>
+	</select>
+	
+	
+	<!--# 사찰코드 정보 조회 # -->
+	<select id="TEMPLESEARCHSELECT"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	<![CDATA[
+		  
+		SELECT   2         AS SEQ,
+		         TEMPLE_CD AS TEMPLE_CD, 
+				 TEMPLE_NM AS TEMPLE_NM
+		    FROM ASP_TEMPLE_MASTER
+		  WHERE  TEMPLE_CD <> '000000'
+		ORDER BY SEQ ASC, TEMPLE_CD ASC
+	]]>
+	</select>
+	
+	
+	<!--# 접수항목 정보조회(선택 / 전체) # -->
+	<select id="RECSEARCHSELECT"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	<![CDATA[
+		 SELECT 1    AS SEQ,
+		       ''   AS CODE,
+		       DECODE(#SearchGbn#,'ALL','전체','선택') AS NAME,
+		       ''   AS ETC1
+		  FROM DUAL
+		UNION  
+		SELECT 2    AS SEQ,
+		       CODE AS CODE, 
+		       NAME AS NAME,
+		       ETC1
+		  FROM ASP_CODE_MGT
+		 WHERE GROUP_CD  = upper(#{param.group_cd})
+		   AND NVL(ETC2,' ') like #{param.etc2} || '%'
+		   AND CODE <> '-1'
+		   AND USE_YN = 'Y'
+		ORDER BY SEQ ASC, CODE ASC
+	]]>
+	</select>
+	
+	<!--# 정각코드 정보 조회 # -->
+	<select id="JUNGAKCODESEARCH"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		  SELECT
+		       TEMPLE_CD, 
+		       JUNGAK_CD, 
+			   JUNGAK_CD AS CODE,
+		       JUNGAK_NM, 
+			   JUNGAK_GBN,
+			   CASE WHEN JUNGAK_GBN='I' THEN JUNGAK_NM||'[내부등]'
+			        WHEN JUNGAK_GBN='O' THEN JUNGAK_NM||'[외부등]'
+			   END AS NAME, 
+		       USE_YN, 
+		       REMARK, 
+		       CRT_USER, 
+		       CRT_DATE, 
+		       UPT_DATE, 
+		       UPT_USER, 
+		       REMOTE
+		  FROM ST_JUNGAKCODE 
+		 WHERE TEMPLE_CD = #temple_cd#
+		   AND USE_YN    = 'Y'
+		   AND JUNGAK_CD like  '%'||#{param.jungak_cd}||'%'
+		   AND JUNGAK_GBN like '%'||#{param.jungak_gbn}||'%'
+		 ORDER BY JUNGAK_CD ASC
+	</select>
+	
+	
+	<!-- # 공통코드 본 정보 조회정보조회(선택) # -->
+	<select id="CODESEARCHBONSELECT"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	<![CDATA[
+		SELECT 1      AS SEQ,
+		       ''     AS CODE,
+		       '선택' AS NAME,
+		       0      AS SORT_SEQ
+		  FROM DUAL
+		UNION  
+		SELECT   2        AS SEQ,
+		         CODE     AS CODE, 
+				 NAME     AS NAME,
+				 SORT_SEQ AS SORT_SEQ
+		    FROM ASP_CODE_MGT
+		   WHERE GROUP_CD  = upper(#{param.group_cd})
+		     AND REMARK    = #{param.remark}
+			 AND CODE      <> '-1'
+		     AND USE_YN    = 'Y'
+		ORDER BY SEQ, NAME, CODE
+	]]>
+	</select>
+	
+	
+	<select id="ACCTGBN"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	
+		<if test='param.SearchGbn != null and param.SearchGbn != ""'>
+			SELECT 1     AS SEQ
+			      ,0     AS CODE
+			      ,'전체' AS NAME  
+ 		      FROM DUAL            
+ 		     UNION ALL             
+		</if>
+		SELECT DISTINCT 2  AS SEQ
+		      ,ACCT_GBN AS CODE
+		      ,ACCT_NM  AS NAME
+		  FROM ACC_ACCOUNTS
+		WHERE TEMPLE_CD = #{param.V_TEMPLE_CD ,jdbcType=VARCHAR}
+		ORDER BY SEQ
+		        ,CODE ASC
+	</select>
+	
+	
+	<select id="SELECT_KWAN"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT  TEMPLE_CD,
+				KWAN,
+				HANG,
+				MOK,
+				KWAN_NAME,
+				HANG_NAME,
+				MOK_NAME,
+				ACCT_GBN,
+				REMARK,
+				IE_GBN,
+				ETC1,
+				ETC2,
+				ETC3,
+				'' AS USE_YN
+		FROM ACC_ACCOUNTS
+		WHERE TEMPLE_CD  = #{param.V_TEMPLE_CD}
+		  AND  ACCT_GBN  = #{param.V_ACCT_GBN}
+		  AND  IE_GBN    = #{param.V_IE_GBN}
+		  AND  HANG      = #{param.V_HANG}
+		  AND  MOK       = #{param.V_MOK}
+		ORDER BY KWAN 
+		        ,HANG
+		        ,MOK 
+	</select>
+	
+	<select id="SELECT_HANG"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT  TEMPLE_CD,HANG,
+				HANG_NAME,
+				'' AS USE_YN
+		FROM ACC_ACCOUNTS
+		WHERE TEMPLE_CD = #{param.V_TEMPLE_CD}
+		 AND  ACCT_GBN  = #{param.V_ACCT_GBN}
+		 AND  IE_GBN    = #{param.V_IE_GBN}
+		 AND  KWAN      = #{param.V_KWAN}
+		 AND  HANG      &lt;&gt; 0
+		 AND  MOK       = 0
+		ORDER BY  HANG
+	</select>
+	
+	<select id="SELECT_MOK"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+		      ,ACCT_GBN
+		      ,IE_GBN
+		      ,KWAN,HANG
+		      ,MOK
+		      ,KWAN_NAME
+		      ,HANG_NAME
+		      ,MOK_NAME
+		      ,UPT_USER
+		      ,REMOTE
+		      ,REMARK
+		  FROM ACC_ACCOUNTS
+		 WHERE TEMPLE_CD  = #{param.V_TEMPLE_CD}
+		   AND  ACCT_GBN  = #{param.V_ACCT_GBN}
+		   AND  IE_GBN    = #{param.V_IE_GBN}
+		   AND  KWAN      = #{param.V_KWAN}
+		   AND  HANG      = #{param.V_HANG}
+ 		   AND  MOK       &lt;&gt; '0'		  
+		 ORDER BY  MOK 
+	</select>
+	
+	<select id="SELECT_MOK_NAME"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+		      ,KWAN
+		      ,HANG
+		      ,MOK
+		      ,KWAN_NAME
+		      ,HANG_NAME
+		      ,MOK_NAME
+		      ,ACCT_GBN
+		      ,REMARK
+		      ,IE_GBN
+		      ,ETC1
+		      ,ETC2
+		      ,ETC3
+		      ,UPT_USER
+		      ,REMOTE
+		 FROM ACC_ACCOUNTS
+	    WHERE TEMPLE_CD    = #{param.V_TEMPLE_CD}
+		  AND  ACCT_GBN    = #{param.V_ACCT_GBN}
+		  AND  IE_GBN      = #{param.V_IE_GBN}
+		  AND  HANG  &lt;&gt; '0'
+		  AND  MOK   &lt;&gt; '0'
+		  AND  MOK_NAME like '%' || #{param.V_MOK_NAME,jdbcType=VARCHAR} || '%'
+		ORDER BY KWAN
+		       , HANG
+		       , MOK
+	</select>
+	
+	<!-- # 공통코드 정보 조회 # -->
+	<select id="SELECT_TEMPLEUSER"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+		      ,USER_ID
+		      ,USER_NM
+	     FROM (SELECT #{param.temple_cd ,jdbcType=VARCHAR} AS TEMPLE_CD
+	                 ,'' AS USER_ID
+	                 ,DECODE(#{param.SearchGbn ,jdbcType=VARCHAR},'','전체','선택') AS USER_NM
+	             FROM DUAL
+	            UNION ALL
+	           SELECT TEMPLE_CD
+	                 ,USER_ID
+	                 ,USER_NM
+	             FROM ASP_TEMPLE_USER
+	            WHERE TEMPLE_CD = #{param.temple_cd  ,jdbcType=VARCHAR}
+	              AND USE_YN = NVL(#{param.use_yn ,jdbcType=VARCHAR},USE_YN)
+	           )
+	      ORDER BY DECODE(USER_ID,'',0, #{param.user_id , jdbcType=VARCHAR},2,3), USER_NM
+	</select>
+	
+	<select id="SELECT_CLASS_MGT"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT #{param.V_TEMPLE_CD} TEMPLE_CD
+		      ,0    AS CLASS_CD
+		      ,'전체' AS CLASS_NAME
+		      ,'T' USE_YN
+		      ,'' CRT_USER
+		      ,'' UPT_USER
+		      ,'' REMOTE
+		      ,0  AS SORT_SEQ
+		  FROM DUAL
+		UNION ALL
+		SELECT TEMPLE_CD
+		      ,CLASS_CD
+		      ,CLASS_NAME
+		      ,USE_YN
+		      ,CRT_USER
+		      ,UPT_USER
+		      ,REMOTE
+		      ,SORT_SEQ
+		FROM SIN_CLASS_MGT
+		 WHERE TEMPLE_CD = #{param.V_TEMPLE_CD}
+		   AND USE_YN    = 'T'
+		ORDER BY SORT_SEQ
+	</select>
+	
+	<select id="SELECT_MONK"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT #{param.V_TEMPLE_CD} AS TEMPLE_CD
+		      ,'' AS USER_ID
+		      ,DECODE(#{param.SearchGbn ,jdbcType=VARCHAR},'all','전체','선택') AS USER_NM
+		      ,'' AS SACRED_KOR
+		      ,'' AS TELNO1
+		      ,'' AS TELNO2
+		      ,'' AS TELNO3
+		      ,'' AS TELNO
+		      ,'' AS MOBILE_TELNO1
+		      ,'' AS MOBILE_TELNO2
+		      ,'' AS MOBILE_TELNO3
+		      ,'' AS MOBILE_TELNO
+		  FROM DUAL
+		UNION ALL
+		SELECT TEMPLE_CD
+		  	  ,USER_ID
+		  	  ,DECODE(SACRED_KOR,null,USER_NM,SACRED_KOR) as USER_NM
+		  	  ,SACRED_KOR
+		  	  ,TELNO1
+		  	  ,TELNO2
+		  	  ,TELNO3
+		  	  ,TELNO1 || DECODE(TELNO1,NULL,'','-') || TELNO2 || DECODE(TELNO2,NULL,'','-') || TELNO3 AS TELNO
+		  	  ,MOBILE_TELNO1
+		  	  ,MOBILE_TELNO2
+		  	  ,MOBILE_TELNO3
+		  	  ,MOBILE_TELNO1 || DECODE(MOBILE_TELNO1,NULL,'','-') || MOBILE_TELNO2 || DECODE(MOBILE_TELNO2,NULL,'','-') || MOBILE_TELNO3 AS MOBILE_TELNO
+		  FROM ASP_TEMPLE_USER
+		 WHERE TEMPLE_CD  = #{param.V_TEMPLE_CD}
+		   AND AUTH_GROUP = '8S'
+	</select>
+	
+</mapper>

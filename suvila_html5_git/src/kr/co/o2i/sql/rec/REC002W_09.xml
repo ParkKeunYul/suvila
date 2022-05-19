@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC002W_09DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="USE_YN" column="USE_YN"   typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+
+
+	<!-- # 접수중인 목록 # -->
+	<select id="SELECT_Ing" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	<![CDATA[
+	    SELECT TEMPLE_CD,
+		       PRAY_GBN,
+		       PRAY_CODE,
+		       PRAY_NM,
+		       FDATE,
+		       PERIOD,
+		       RDATE,
+		       AMT,
+		       USE_YN,
+		       REMARK,
+		       CRT_USER,
+		       CRT_DATE,
+		       UPT_DATE,
+		       UPT_USER,
+		       REMOTE,
+		       ( CASE 
+		       		WHEN NVL(SORT_SEQ, 0) = 0 THEN ROWNUM
+		       		ELSE SORT_SEQ
+		       	 END ) SORT_SEQ
+		  FROM REC_PRAY_MGT
+		WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		 AND  PRAY_GBN  = #{V_PRAY_GBN}
+		 AND  USE_YN    = 'F'
+		 AND  FDATE     <> '-1'
+		 ORDER BY SORT_SEQ ASC
+		         ,PRAY_GBN ASC 
+		         ,FDATE DESC 
+		         ,PRAY_CODE ASC 
+	]]>
+	</select>
+	
+	<!-- # 기도 순서 변경 # -->
+	<update id="UPDATE_SORT_Ing" parameterType="kr.co.o2i.util.CommonMap"  >
+	<![CDATA[
+		UPDATE REC_PRAY_MGT
+		   SET SORT_SEQ  = '${SORT_SEQ}' 
+		 WHERE TEMPLE_CD = '${TEMPLE_CD}'
+		   AND PRAY_GBN  = '${PRAY_GBN}'
+		   AND PRAY_CODE = '${PRAY_CODE}'
+		   AND USE_YN    = 'F'
+		   AND FDATE     <> '-1'
+		   AND FDATE     = '${FDATE}'
+		   AND RDATE     = '${RDATE}'
+	]]>
+	</update>
+	
+	
+	<!-- #  # -->
+	<select id="SELECT_General" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	<![CDATA[
+		SELECT MGT.TEMPLE_CD,
+		       MGT.PRAY_GBN,
+		       MGT.PRAY_CODE,
+		       MGT.TEMPLE_CD as TEMPLE_CD_TEMP ,
+		       MGT.PRAY_GBN  as PRAY_GBN_TEMP  , 
+		       MGT.PRAY_CODE as PRAY_CODE_TEMP ,
+		       MGT.PRAY_NM,
+		       MGT.FDATE,
+		       MGT.PERIOD,
+		       MGT.RDATE,
+		       MGT.AMT,
+		       MGT.USE_YN,
+		       MGT.REMARK,
+		       MGT.ACCT_GBN, 
+		       MGT.IE_GBN,
+		       MGT.KWAN,
+		       MGT.HANG,
+		       MGT.MOK,
+		       FN_ACC_NAME(MGT.TEMPLE_CD, MGT.ACCT_GBN, MGT.IE_GBN, MGT.KWAN, MGT.HANG, MGT.MOK , 'MOK')  AS ACCNAME,
+		       MGT.CRT_USER,
+		       MGT.CRT_DATE,
+		       MGT.UPT_DATE,
+		       MGT.UPT_USER,
+		       MGT.KWAN||MGT.HANG||MGT.MOK REMOTE,
+		       ( CASE 
+		          WHEN NVL(MGT.SORT_SEQ, 0) = 0 THEN ROWNUM
+		          ELSE MGT.SORT_SEQ
+		         END ) SORT_SEQ,
+		      (SELECT count(TEMPLE_CD) FROM REC_PRAY_MGT WHERE TEMPLE_CD = MGT.TEMPLE_CD AND MGT.PRAY_CODE = PRAY_CODE AND FDATE <> '-1' ) as USING_COUNT
+		  FROM REC_PRAY_MGT MGT
+		 WHERE MGT.TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND  MGT.PRAY_GBN  = #{V_PRAY_GBN}
+		   AND  MGT.FDATE     = '-1'
+		   AND  MGT.USE_YN    = 'F'
+		 ORDER BY MGT.SORT_SEQ ASC 
+		         ,MGT.PRAY_CODE ASC 
+		         ,MGT.FDATE ASC	
+	]]>
+	</select>
+	
+	<insert id="INSERT_General" parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO REC_PRAY_MGT(  
+		   TEMPLE_CD,
+		   PRAY_GBN,
+		   PRAY_CODE,
+		   PRAY_NM,
+		   FDATE,
+		   PERIOD,
+		   RDATE,
+		   AMT,
+		   USE_YN,
+		   REMARK,
+		   CRT_USER,
+		   CRT_DATE,
+		   UPT_DATE,
+		   UPT_USER,
+		   REMOTE ,
+		   ACCT_GBN, 
+		   IE_GBN,
+		   KWAN,
+		   HANG,
+		   MOK
+		)VALUES(
+		   #{V_TEMPLE_CD},
+		   #{PRAY_GBN},
+		   PRAY_MGT.NEXTVAL,
+		   #{PRAY_NM},
+		   '-1',
+		   #{PERIOD},
+		   #{RDATE  ,jdbcType=VARCHAR}, 
+		   #{AMT},
+		   'F',
+		   #{REMARK  ,jdbcType=VARCHAR},
+		   #{CRT_USER},
+		   SYSDATE,
+		   SYSDATE,
+		   #{UPT_USER},
+		   #{REMOTE},
+		   #{ACCT_GBN ,jdbcType=VARCHAR}, 
+		   #{IE_GBN   ,jdbcType=VARCHAR},
+		   #{KWAN     ,jdbcType=VARCHAR},
+		   #{HANG     ,jdbcType=VARCHAR},
+		   #{MOK      ,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<update id="UPDATE_General" parameterType="kr.co.o2i.util.CommonMap">
+		UPDATE REC_PRAY_MGT      
+		  SET  PRAY_GBN  = #{PRAY_GBN},
+		       PRAY_NM   = #{PRAY_NM},
+		       PERIOD    = #{PERIOD},
+		       AMT       = #{AMT},
+		       REMARK    = #{REMARK   ,jdbcType=VARCHAR},
+		       UPT_DATE  = sysdate,
+		       UPT_USER  = #{UPT_USER},
+		       REMOTE    = #{REMOTE},
+		       ACCT_GBN  = #{ACCT_GBN ,jdbcType=VARCHAR}, 
+		       IE_GBN    = #{IE_GBN   ,jdbcType=VARCHAR},
+		       KWAN      = #{KWAN     ,jdbcType=VARCHAR},
+		       HANG      = #{HANG     ,jdbcType=VARCHAR},
+		       MOK       = #{MOK      ,jdbcType=VARCHAR},
+		       SORT_SEQ  = #{SORT_SEQ}
+		WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		 AND  PRAY_GBN   = #{PRAY_GBN_TEMP}
+		 AND  PRAY_CODE  = #{PRAY_CODE_TEMP}
+		 AND  USE_YN     = 'F'
+		 AND  FDATE      = '-1'
+	</update>
+	
+	<delete id="DELETE_General" parameterType="kr.co.o2i.util.CommonMap">
+		DELETE FROM REC_PRAY_MGT
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		   AND  PRAY_GBN  = #{PRAY_GBN_TEMP}
+		   AND  PRAY_CODE = #{PRAY_CODE_TEMP}
+		   AND  FDATE     = '-1'
+	</delete>
+	
+	<!-- #기도/법회 상세정보 # -->
+	<select id="SELECT_Detail" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	<![CDATA[
+		SELECT MGT.TEMPLE_CD,
+		       MGT.PRAY_GBN,
+		       MGT.PRAY_CODE,
+		       MGT.TEMPLE_CD as TEMPLE_CD_TEMP ,
+		       MGT.PRAY_GBN  as PRAY_GBN_TEMP  , 
+		       MGT.PRAY_CODE as PRAY_CODE_TEMP ,
+		       MGT.PRAY_NM,
+		       MGT.FDATE,
+		       MGT.FDATE     as FDATE_TEMP,
+		       MGT.PERIOD,
+		       MGT.RDATE,
+		       MGT.AMT,
+		       MGT.USE_YN,
+		       MGT.REMARK,
+		       MGT.CRT_USER,
+		       MGT.CRT_DATE,
+		       MGT.UPT_DATE,
+		       MGT.UPT_USER,
+		       (SELECT KWAN||HANG||MOK 
+		          FROM REC_PRAY_MGT 
+		         WHERE TEMPLE_CD = MGT.TEMPLE_CD 
+		           AND FDATE     = '-1' 
+		           AND PRAY_CODE = MGT.PRAY_CODE 
+		           AND PRAY_GBN  = MGT.PRAY_GBN 
+		           AND ROWNUM = 1 ) AS REMOTE ,
+		       NVL(DET.USING_COUNT,0) AS USING_COUNT
+		  FROM REC_PRAY_MGT MGT,
+		       (SELECT temple_cd,
+		               PRAY_GBN,
+		               PRAY_CODE,
+		               FDATE,
+		               COUNT(*) AS USING_COUNT
+		          FROM REC_PRAY_DETAIL
+		        GROUP BY temple_cd, PRAY_GBN, PRAY_CODE, FDATE) DET
+		WHERE MGT.TEMPLE_CD = DET.TEMPLE_CD(+)
+		  AND MGT.PRAY_GBN  = DET.PRAY_GBN(+)
+		  AND MGT.PRAY_CODE = DET.PRAY_CODE(+)
+		  AND MGT.FDATE     = DET.FDATE(+)
+		  AND MGT.TEMPLE_CD = #{TEMPLE_CD}
+		  AND MGT.PRAY_GBN  = #{V_PRAY_GBN}
+		  AND MGT.PRAY_CODE = #{V_PRAY_CODE}
+		  AND MGT.FDATE     <> '-1'
+		ORDER BY FDATE DESC
+	]]>
+	</select>
+	
+	<!-- #기도/법회 상세정보 # -->
+	<select id="SELECT_Detail_TEMP" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	<![CDATA[
+		SELECT TEMPLE_CD,
+		       PRAY_GBN,
+		       PRAY_CODE,
+		       TEMPLE_CD as TEMPLE_CD_TEMP ,
+		       PRAY_GBN  as PRAY_GBN_TEMP  , 
+		       PRAY_CODE as PRAY_CODE_TEMP ,
+		       PRAY_NM,
+		       FDATE,
+		       FDATE     as FDATE_TEMP,
+		       PERIOD,
+		       RDATE,
+		       AMT,
+		       USE_YN,
+		       REMARK,
+		       CRT_USER,
+		       CRT_DATE,
+		       UPT_DATE,
+		       UPT_USER,
+		       REMOTE
+		  FROM REC_PRAY_MGT
+		WHERE TEMPLE_CD = #{TEMPLE_CD}
+		 AND  PRAY_GBN  = #{V_PRAY_GBN}
+		 AND  PRAY_CODE = #{V_PRAY_CODE}
+		 AND  FDATE     <> '-1'
+		ORDER BY FDATE DESC
+	]]>
+	</select>
+	
+	<insert  id="INSERT_Detail" parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO REC_PRAY_MGT(  
+		   TEMPLE_CD,
+		   PRAY_GBN,
+		   PRAY_CODE,
+		   PRAY_NM,
+		   FDATE,
+		   PERIOD,
+		   RDATE,
+		   AMT,
+		   USE_YN,
+		   REMARK,
+		   CRT_USER,
+		   CRT_DATE,
+		   UPT_DATE,
+		   UPT_USER,
+		   REMOTE   
+		)VALUES(
+		   #{TEMPLE_CD},
+		   #{PRAY_GBN},
+		   #{PRAY_CODE},
+		   #{PRAY_NM},
+		   #{FDATE},
+		   #{PERIOD},
+		   #{RDATE},
+		   #{AMT ,jdbcType=VARCHAR},
+		   #{USE_YN},
+		   #{REMARK ,jdbcType=VARCHAR},
+		   #{CRT_USER},
+		   SYSDATE,
+		   SYSDATE,
+		   #{UPT_USER},
+		   #{REMOTE}  
+		)
+	</insert>
+	
+	<update id="UPDATE_Detail" parameterType="kr.co.o2i.util.CommonMap">
+		update REC_PRAY_MGT      
+		   SET FDATE     = #{FDATE}
+		      ,PERIOD    = #{PERIOD}
+		      ,RDATE     = #{RDATE}
+		      ,AMT       = #{AMT}
+		      ,USE_YN    = #{USE_YN}
+		      ,REMARK    = #{REMARK  ,jdbcType=VARCHAR}
+		      ,UPT_DATE  = sysdate
+		      ,UPT_USER  = #{UPT_USER}
+		      ,REMOTE    = #{REMOTE}
+		WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		  AND PRAY_GBN   = #{PRAY_GBN_TEMP}
+		  AND PRAY_CODE  = #{PRAY_CODE_TEMP}
+		  AND FDATE      = #{FDATE_TEMP}
+	</update>
+	
+	<delete id="DELETE_Detail" parameterType="kr.co.o2i.util.CommonMap">
+		DELETE FROM REC_PRAY_MGT
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		   AND PRAY_GBN   = #{PRAY_GBN_TEMP}
+		   AND PRAY_CODE  = #{PRAY_CODE_TEMP}
+		   AND FDATE      = #{FDATE_TEMP}
+	</delete>
+</mapper>

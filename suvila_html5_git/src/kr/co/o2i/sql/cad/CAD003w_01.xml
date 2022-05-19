@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="CAD003w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+
+
+
+	<!-- ,#{NAME_KOR      ,jdbcType=VARCHAR} -->
+
+	<insert id="INSERT_NAME_SMS_NOW" parameterType="kr.co.o2i.util.CommonMap">
+			INSERT INTO SMSKT.SDK_SMS_SEND ( 
+				  MSG_ID
+				, NOW_DATE
+				, USER_ID
+				, CDR_ID
+				, SCHEDULE_TYPE
+				, SMS_MSG
+				, CALLBACK
+				, RESERVED1
+				, RESERVED2
+				, RESERVED3
+				, RESERVED4
+				, RESERVED5
+				, RESERVED6
+				, DEST_INFO
+				, SEND_DATE 
+			) ( 
+			SELECT 
+			 	SMSKT.SDK_SMS_SEQ.nextval,
+			 	TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+			 	#{USER_ID},
+			 	#{CDR_ID}, 
+			 	#{V_TR_MSGTYPE},
+			 	#{V_TR_MESSAGE},
+			 	#{V_TR_CALLBACK},
+			 	TEMPLE_CD, 
+			 	SORT_SEQ, 
+			 	#{RESERVED3},
+			 	#{RESERVED4},
+			 	#{V_TR_ETC5},
+			 	'',
+			 	NVL(NAME_KOR,' ')||'^'||MOBILE_TELNO1||MOBILE_TELNO2||MOBILE_TELNO3,
+			 	DECODE(#{V_TR_MSGTYPE},'1',#{V_TR_SENDDATE,jdbcType=VARCHAR}||#{V_TR_SENDTIME,jdbcType=VARCHAR}||'00',TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'))
+			FROM ASP_NAME_CARD_MASTER 													
+			WHERE	TEMPLE_CD 		=  #{V_TEMPLE_CD}												
+			 	AND USER_ID		 	=  #{V_USER_ID}												
+			 	AND MOBILE_TELNO1 	IS NOT NULL 										
+			 	AND MOBILE_TELNO2 	IS NOT NULL 										
+			 	AND MOBILE_TELNO3 	IS NOT NULL 										
+			 	AND SORT_SEQ		IN ( ${V_BUD_NO_LIST} ) 					
+			) 																			                                																		
+	</insert>
+	
+	
+	<insert id="INSERT_NAME_LMS_NOW" parameterType="kr.co.o2i.util.CommonMap">
+		INSERT INTO SMSKT.SDK_MMS_SEND ( 
+				  MSG_ID
+				, NOW_DATE
+				, USER_ID
+				, CDR_ID
+				, SCHEDULE_TYPE
+				, MMS_MSG
+				, CALLBACK
+				, RESERVED1
+				, RESERVED2
+				, RESERVED3
+				, RESERVED4
+				, RESERVED5
+				, RESERVED6
+				, DEST_INFO
+				, SEND_DATE 
+			) ( 
+			SELECT 
+			 	SMSKT.SDK_MMS_SEQ.nextval,
+			 	TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+			 	#{USER_ID},
+			 	#{CDR_ID},
+			 	#{V_TR_MSGTYPE},
+			 	#{V_TR_MESSAGE},
+			 	#{V_TR_CALLBACK},
+			 	TEMPLE_CD,
+			 	SORT_SEQ,
+			 	#{RESERVED3},
+			 	#{RESERVED4},
+			 	#{V_TR_ETC5},
+			 	'',
+			 	NVL(NAME_KOR,' ')||'^'||MOBILE_TELNO1||MOBILE_TELNO2||MOBILE_TELNO3,
+			 	DECODE(#{V_TR_MSGTYPE},'1',#{V_TR_SENDDATE,jdbcType=VARCHAR}||#{V_TR_SENDTIME,jdbcType=VARCHAR}||'00',TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'))
+			FROM ASP_NAME_CARD_MASTER 													
+			WHERE	TEMPLE_CD 		=  #{V_TEMPLE_CD}												
+			 	AND USER_ID		 	=  #{V_USER_ID}												
+			 	AND MOBILE_TELNO1 	IS NOT NULL 										
+			 	AND MOBILE_TELNO2 	IS NOT NULL 										
+			 	AND MOBILE_TELNO3 	IS NOT NULL 										
+			 	AND SORT_SEQ		IN ( ${V_BUD_NO_LIST} ) 					
+			) 																			
+	</insert>
+</mapper>

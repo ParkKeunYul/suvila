@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC017w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="SEL_YN" column="SEL_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+
+	
+	<select id="SELECT_SIN_GROUP_MGT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	<choose>
+		<when test="V_SELECT == 'T'">
+			 SELECT #{V_TEMPLE_CD} AS TEMPLE_CD    
+			       , 0     AS ORG_CD               
+			       , '선택' AS ORG_NAME            
+			       , 0     AS FEE_AMT              
+			       , 0     AS AMOUNT               
+			       , '1900000000'  AS CRT_DATE     
+			       , 0  AS SORT_SEQ     			
+			   FROM  DUAL                          
+		</when>
+		<otherwise>
+		    SELECT #{V_TEMPLE_CD} AS TEMPLE_CD   
+		          ,0     AS ORG_CD              
+		          ,'전체' AS ORG_NAME            
+		          ,0     AS FEE_AMT              
+		          ,0     AS AMOUNT               
+		          ,'1900000000'  AS CRT_DATE     
+		          ,0  AS SORT_SEQ  
+		      FROM   DUAL                          
+		</otherwise>
+	</choose>
+	UNION ALL
+		SELECT TEMPLE_CD
+       	      ,ORG_CD
+       	      ,ORG_NAME
+       		  ,FEE_AMT
+       		  ,AMOUNT
+       		  ,TO_CHAR(CRT_DATE , 'yyyymmddhhMiss')
+       		  ,SORT_SEQ
+  		 FROM SIN_GROUP_MGT
+ 		WHERE TEMPLE_CD     = #{V_TEMPLE_CD} 
+   		  AND USE_YN        = 'T'
+ 		ORDER BY SORT_SEQ asc
+	</select>
+	
+	
+	
+</mapper>

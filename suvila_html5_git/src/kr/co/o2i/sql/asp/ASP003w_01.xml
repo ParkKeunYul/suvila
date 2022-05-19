@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ASP003w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+
+	<!--  사찰계정 조회  -->
+	<select id="GroupSelect" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT  GROUP_CD,
+		        GROUP_CD AS GROUP_CD_TEMP,
+		        CODE,
+		        CODE AS CODE_TEMP,   
+		        NAME ,
+		        'SELECT' AS SQL_MODE
+		FROM ASP_CODE_MGT
+		WHERE CODE = '-1'
+		<if test='V_SEARCH_VALUE != nul and  V_SEARCH_VALUE != "" '>
+			AND	 ${V_SEARCH_TYPE} like '%'||#{V_SEARCH_VALUE}||'%'
+		</if>
+		ORDER by GROUP_CD
+	</select>
+	
+	
+	<insert id="GroupInsert" parameterType="java.util.Map" >
+		INSERT INTO ASP_CODE_MGT (
+		       GROUP_CD,
+		       CODE,
+		       NAME,
+		       USE_YN,
+		       REMARK,
+		       SORT_SEQ,
+		       ETC1,
+		       ETC2,
+		       ETC3,
+		       CRT_USER,
+		       CRT_DATE,
+		       UPT_USER,
+		       UPT_DATE,
+		       REMOTE
+		) VALUES (
+		       UPPER(#{GROUP_CD,jdbcType=VARCHAR}),
+		       '-1',
+		       #{NAME     ,jdbcType=VARCHAR},
+		       'Y',
+		       #{REMARK   ,jdbcType=VARCHAR},
+		       #{SORT_SEQ ,jdbcType=VARCHAR},
+		       #{ETC1     ,jdbcType=VARCHAR},
+		       #{ETC2     ,jdbcType=VARCHAR},
+		       #{ETC3     ,jdbcType=VARCHAR},
+		       #{CRT_USER ,jdbcType=VARCHAR},
+		       sysdate,
+		       #{UPT_USER ,jdbcType=VARCHAR},
+		       sysdate,
+		       #{V_REMOTE,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<update id="GroupUpdate" parameterType="java.util.Map" >
+		UPDATE ASP_CODE_MGT 
+		   SET NAME     = #{NAME      ,jdbcType=VARCHAR},
+	       	   UPT_USER = #{UPT_USER  ,jdbcType=VARCHAR},
+	       	   UPT_DATE = sysdate,
+	       	   REMOTE   = #{V_REMOTE  ,jdbcType=VARCHAR}
+		 WHERE GROUP_CD = #{GROUP_CD  ,jdbcType=VARCHAR}
+	  	   AND CODE     = '-1'
+	</update>
+	
+	<delete id="GroupDelete">
+		<!-- 
+		delete 
+		  from ASP_CODE_MGT
+		WHERE GROUP_CD  = #GROUP_CD#
+		-->
+	</delete>
+	
+	
+	<select id="CodeSelect" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		<![CDATA[
+			SELECT   GROUP_CD,  
+					 GROUP_CD   AS GROUP_CD_TEMP, 
+					 CODE, 
+					 CODE       AS CODE_TEMP, 
+					 NAME, 
+					 USE_YN, 
+					 REMARK,
+					 ETC1 ,
+					 ETC2 ,
+					 ETC3 ,
+					 SORT_SEQ
+			    FROM ASP_CODE_MGT
+			   WHERE GROUP_CD  = #{V_GROUP_CD}
+			     AND CODE <> '-1'
+			ORDER BY SORT_SEQ ASC ,CODE ASC
+		]]>
+	</select>
+	
+	
+	<insert id="CodeInsert" parameterType="java.util.Map" >
+		INSERT INTO ASP_CODE_MGT (
+		       GROUP_CD,
+		       CODE,
+		       NAME,
+		       USE_YN,
+		       REMARK,
+		       SORT_SEQ,
+		       ETC1,
+		       ETC2,
+		       ETC3,
+		       CRT_USER,
+		       CRT_DATE,
+		       UPT_USER,
+		       UPT_DATE,
+		       REMOTE
+		) VALUES (
+		       UPPER(#{GROUP_CD,jdbcType=VARCHAR}),
+		       #{CODE     ,jdbcType=VARCHAR},
+		       #{NAME     ,jdbcType=VARCHAR},
+		       #{USE_YN   ,jdbcType=VARCHAR},
+		       #{REMARK   ,jdbcType=VARCHAR},
+		       #{SORT_SEQ ,jdbcType=VARCHAR},
+		       #{ETC1     ,jdbcType=VARCHAR},
+		       #{ETC2     ,jdbcType=VARCHAR},
+		       #{ETC3     ,jdbcType=VARCHAR},
+		       #{CRT_USER ,jdbcType=VARCHAR},
+		       sysdate,
+		       #{UPT_USER ,jdbcType=VARCHAR},
+		       sysdate,
+		       #{V_REMOTE ,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	
+	<update id="CodeUpdate" parameterType="java.util.Map" >
+		UPDATE ASP_CODE_MGT 
+		   SET NAME      = #{NAME     ,jdbcType=VARCHAR}
+		      ,USE_YN    = #{USE_YN   ,jdbcType=VARCHAR}
+		      ,REMARK    = #{REMARK   ,jdbcType=VARCHAR}
+		      ,SORT_SEQ  = #{SORT_SEQ ,jdbcType=VARCHAR}
+		      ,ETC1      = #{ETC1     ,jdbcType=VARCHAR}
+		      ,ETC2      = #{ETC2     ,jdbcType=VARCHAR}
+		      ,ETC3      = #{ETC3     ,jdbcType=VARCHAR}
+		      ,UPT_USER  = #{UPT_USER ,jdbcType=VARCHAR}
+		      ,UPT_DATE  = sysdate
+		      ,REMOTE    = #{V_REMOTE ,jdbcType=VARCHAR}
+		WHERE  GROUP_CD  = #{GROUP_CD ,jdbcType=VARCHAR}
+		  AND  CODE      = #{CODE     ,jdbcType=VARCHAR}	
+	</update>
+	
+	<delete id="CodeDelete">
+		<!--
+			 delete 
+			  from ASP_CODE_MGT
+			WHERE GROUP_CD  = #GROUP_CD# 
+			  AND CODE      = #CODE# 
+		-->
+	</delete>
+	
+
+</mapper>

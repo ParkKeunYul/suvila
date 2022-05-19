@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ASP044w_10DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="CHECK_P" column="CHECK_P"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 		
+	</resultMap>
+
+
+
+	<select id="SELECT_LOG" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT SEQ
+		      ,GUEST_IP
+		      ,CONNECT_CNT
+		      ,YYYYMMDD
+		      ,FIRST_TIME
+		      ,LAST_TIME 
+		  FROM ASP_TEMPLE_GUEST_LOG 
+		 WHERE YYYYMMDD between #{V_SDATE} and #{V_EDATE}
+		<if test="V_SEARCH != '' and V_SEARCH != null  ">
+			AND GUEST_IP like '%' ||  #{V_SEARCH}  || '%'
+		</if>
+		ORDER BY SEQ asc
+	</select>
+	
+</mapper>

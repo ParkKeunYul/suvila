@@ -1,0 +1,15 @@
+{
+"success":true,
+"data":{
+    "list":[
+         {"value":"NAME_KOR"     ,"display":"신도명"},
+         {"value":"BUD_NO"       ,"display":"신도번호"},
+         {"value":"CARD_NO"      ,"display":"카드번호"},
+         {"value":"SACRED_KOR"   ,"display":"법명"},
+         {"value":"MOBILE_TELNO" ,"display":"휴대번호"},
+         {"value":"TELNO"        ,"display":"전화번호"},
+         {"value":"YOUNGGA"      ,"display":"영가명"}
+    ]
+},
+"msg":"정상조회됨"    
+}

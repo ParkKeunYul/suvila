@@ -1,0 +1,34 @@
+{ 
+    "success":true,
+    "msg":"",
+    "data":{
+    "list":[
+            {"custNo":"A","divName":"홍길동","birth":"20140101","sortNo":1,"addr":"서울시 종로구 세종대로 175 "
+            ,"useYn":false, "image":"./resources/img/test1.jpg",
+            "children":[]
+        }, {"custNo":"B","divName":"이순신","birth":"20150101","sortNo":2,"addr":"부산광역시 수영구 감포로 8번길"
+            ,"useYn":false, "image":"./resources/img/test2.jpg",
+            "children":[]
+        }, {"custNo":"C","divName":"임걱정","birth":"20160101","sortNo":3,"addr":"경기도 수원시 장안구 화산로 1번길"
+            ,"useYn":false, "image":"./resources/img/test3.jpg",
+            "children":[]
+        }, {"custNo":"D","divName":"임경업","birth":"20160422","sortNo":4,"addr":"강원도 춘천시 수변공원길 54"
+            ,"useYn":false, "image":"./resources/img/test4.jpg",
+            "children":[]
+        }, {"custNo":"E","divName":"유관순","birth":"20141219","sortNo":5,"addr":"전라북도 익산시 금마면 황금로 916"
+            ,"useYn":false, "image":"",
+            "children":[]
+        }, {"custNo":"F","divName":"전우치","birth":"20151121","sortNo":6,"addr":"울산광역시 울주군 범서읍 입암길 14"
+            ,"useYn":true, "image":"./resources/img/test1.jpg"
+        }, {"custNo":"G","divName":"정중부","birth":"20141231","sortNo":7,"addr":"충청북도 충주시 중원대로 1"
+            ,"useYn":true, "image":"./resources/img/test1.jpg"
+        }, {"custNo":"H","divName":"이성계","birth":"20160302","sortNo":8,"addr":"충청남도 천안시 동남구 목천읍 신계2길"
+            ,"useYn":true, "image":"./resources/img/test1.jpg"
+        }, {"custNo":"I","divName":"안중근","birth":"20160402","sortNo":9,"addr":"인천광역시 남동구 서판로 50번길"
+            ,"useYn":true, "image":"./resources/img/test1.jpg"
+        }, {"custNo":"J","divName":"김구","birth":"20160318","sortNo":10,"addr":"제주특별자치도 서귀포시 남성로 115번길 "
+            ,"useYn":true, "image":"./resources/img/test1.jpg"
+        }
+    ]
+    }
+}

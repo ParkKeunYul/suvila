@@ -1,0 +1,23 @@
+Ext.define('ExFrm.view.com.support',{
+	extend:'ExFrm.view.widget.container.ExWindowMain',
+	alias:'widget.support',
+	requires:[
+		'ExFrm.view.com.supportController',
+        'ExFrm.view.com.supportModel'
+	],
+	controller:'support',
+	viewModel:{
+        type:'support'
+    },
+    name:'support',
+    isRootView:true,
+    title:'기도접수',
+    closable:true,
+    scrollable:true,
+    items:[{
+        xtype:'exformmain',
+	    items:[{
+	    	html : '<iframe src="https://stackoverflow.com/questions/37799258/content-security-policy-directive-frame-ancestors-self"  style="width:100%;height:100%;"></iframe>'
+	    }]/*container*/
+    }]/*exformmain*/ 
+});

@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC002W_13DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="CONTENT"    column="CONTENT"      javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		 
+	</resultMap>
+
+
+	<select id="SELECT_GDREC_PRINT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">	
+	    SELECT TEMPLE_CD
+	          ,ROWNUM
+	    	  ,FILTER_KEY
+	    	  ,ACCEPT_SEQ || SEQ as ACCEPT_SEQ
+	    	  ,ACCEPT_DATE
+	    	  ,PROPOSAL_BUD_NO
+	    	  ,PROPOSAL_NAME_KOR
+	    	  ,APPROVAL_GBN
+	    	  ,SEQ
+	    	  ,ACCEPT_GBN
+	    	  ,PRAY_GBN
+	    	  ,PRAY_GBN_NAME
+	    	  ,PRAY_CODE
+	    	  ,PRAY_NM
+	    	  ,FDATE
+	    	  ,RDATE
+	    	  ,PERIOD
+	    	  ,DECODE(R_NO,'1',PAYMENT_PLAN_AMT,'') PAYMENT_PLAN_AMT
+	    	  ,DECODE(R_NO,'1',PAYMENT_AMT,'') PAYMENT_AMT
+	    	  ,DECODE(R_NO,'1',MISU_AMT,'') MISU_AMT
+	    	  ,REMARK
+	    	  ,DEL_YN
+	    	  ,CRT_USER
+	    	  ,UPT_USER
+	    	  ,CRT_DATE
+	    	  ,UPT_DATE
+	    	  ,REMOTE
+	    	  ,ADDR1||' '||ADDR2 AS ADDR1
+	    	  ,ADDR2
+	    	  ,ZIP_CD
+	    	  ,NAME_KOR
+	    	  ,BUD_NO
+	    	  ,REPRESEN_REL
+	    	  ,SEXAGENARY
+	    	  ,SEXAGENARY_NM
+	    	  ,LUNAR_SOLAR
+	    	  ,LUNAR_SOLAR_NM
+	    	  ,BIRTHDAY
+	    	  ,TO_CHAR(TO_DATE(FDATE, 'yyyymmdd'),'YYYY/MM/DD')  as FDATE1
+	    	  ,TO_CHAR(TO_DATE(RDATE, 'yyyymmdd'),'YYYY/MM/DD')  as RDATE1
+		  FROM (
+			    SELECT ROW_NUMBER() OVER (PARTITION BY DET.ACCEPT_SEQ ORDER BY DET.SEQ) R_NO
+			    	  ,DET.TEMPLE_CD
+			    	  ,DET.ACCEPT_SEQ || DET.SEQ AS FILTER_KEY
+			    	  ,DET.ACCEPT_SEQ
+			    	  ,MST.ACCEPT_DATE
+			    	  ,MST.PROPOSAL_BUD_NO
+			    	  ,CAD.NAME_KOR AS PROPOSAL_NAME_KOR
+			    	  ,MST.APPROVAL_GBN
+			    	  ,DET.SEQ
+			    	  ,SUB.ACCEPT_GBN
+			    	  ,DET.PRAY_GBN
+			    	  ,PRY.NAME AS PRAY_GBN_NAME
+			    	  ,DET.PRAY_CODE
+			    	  ,MGT.PRAY_NM
+			    	  ,DET.FDATE
+			    	  ,MGT.RDATE
+			    	  ,MGT.PERIOD
+			    	  ,DET.PAYMENT_PLAN_AMT
+			    	  ,(SELECT SUM(AMOUNT) 
+			    	  	  FROM REC_PAYMENT_HIS 
+			    	  	 WHERE TEMPLE_CD  = DET.TEMPLE_CD 
+			    	  	   AND ACCEPT_SEQ = DET.ACCEPT_SEQ 
+			    	  	   AND SEQ        = DET.SEQ) AS PAYMENT_AMT
+			    	  ,DET.PAYMENT_PLAN_AMT - (SELECT SUM(AMOUNT) 
+			    	  							FROM REC_PAYMENT_HIS 
+			    	  						   WHERE TEMPLE_CD  = DET.TEMPLE_CD 
+			    	  						     AND ACCEPT_SEQ = DET.ACCEPT_SEQ 
+			    	  						     AND SEQ = DET.SEQ) AS MISU_AMT
+			    	  ,DET.REMARK
+			    	  ,DET.DEL_YN
+			    	  ,DET.CRT_USER
+			    	  ,DET.UPT_USER
+			    	  ,TO_CHAR(DET.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+			    	  ,TO_CHAR(DET.UPT_DATE,'YYYYMMDD') AS UPT_DATE
+			    	  ,DET.REMOTE
+			    	  ,SIN.ADDR1
+			    	  ,SIN.ADDR2||' '||FN_ADDR_BLDG(SIN.BLDG_NUM) ADDR2
+			    	  ,SIN.ZIP_CD
+			    	  ,SIN.NAME_KOR
+			    	  ,SIN.BUD_NO
+			    	  ,SIN.REPRESEN_REL
+			    	  ,SIN.SEXAGENARY
+			    	  ,NVL2(CM_SEX.NAME,CM_SEX.NAME||'생','') AS SEXAGENARY_NM
+			    	  ,SIN.LUNAR_SOLAR
+			    	  ,CM_LS.NAME AS LUNAR_SOLAR_NM
+			    	  ,DECODE(LENGTH(SIN.BIRTHDAY),8,SUBSTR(NVL(CM_LS.NAME,''),1,1)|| NVL2(SIN.BIRTHDAY,' ' || SUBSTR(SIN.BIRTHDAY,5,2) ||'월 '||SUBSTR(SIN.BIRTHDAY,7,2) || '일',''),'')  AS BIRTHDAY
+			      FROM REC_PRAY_DETAIL DET
+			      	  ,REC_PRAY_MGT MGT
+			      	  ,REC_SUB SUB
+			      	  ,REC_MASTER MST
+			      	  ,SIN_CARD_MASTER CAD
+			      	  ,ASP_CODE_MGT PRY
+			      	  ,SIN_CARD_MASTER SIN
+			      	  ,ASP_CODE_MGT CM_SEX
+			      	  ,ASP_CODE_MGT CM_LS
+			     WHERE MST.TEMPLE_CD       = DET.TEMPLE_CD
+			       AND MST.ACCEPT_SEQ      = DET.ACCEPT_SEQ
+			       AND MST.TEMPLE_CD       = CAD.TEMPLE_CD(+)
+			       AND MST.PROPOSAL_BUD_NO = CAD.BUD_NO(+)
+			       AND CAD.TEMPLE_CD       = SIN.TEMPLE_CD
+			       AND SIN.BUD_NO LIKE CAD.BUD_CODE || '%'
+			       AND PRY.GROUP_CD(+)     = 'PRAYGBN'
+			       AND DET.PRAY_GBN        = PRY.CODE(+)
+			       AND CM_SEX.GROUP_CD(+)  = 'GANJI'
+			       AND SIN.SEXAGENARY      = CM_SEX.CODE(+)
+			       AND CM_LS.GROUP_CD(+)   = 'LUNAR_SOLAR'
+			       AND SIN.LUNAR_SOLAR     = CM_LS.CODE(+)
+			       AND DET.TEMPLE_CD       = MGT.TEMPLE_CD
+			       AND DET.PRAY_GBN        = MGT.PRAY_GBN
+			       AND DET.PRAY_CODE       = MGT.PRAY_CODE
+			       AND DET.FDATE           = MGT.FDATE
+			       AND DET.TEMPLE_CD       = SUB.TEMPLE_CD
+			       AND DET.ACCEPT_SEQ      = SUB.ACCEPT_SEQ
+			       AND DET.SEQ             = SUB.SEQ
+			       AND SUB.DEL_YN          = 'F'
+			       AND DET.DEL_YN          = 'F'
+			       AND SIN.DEL_YN          = 'F'
+			       AND DET.TEMPLE_CD       = #{V_TEMPLE_CD}
+			       AND SIN.BUD_NO IN (SELECT BUD_NO 
+			       					    FROM SIN_CARD_MASTER 
+			       					   WHERE TEMPLE_CD = DET.TEMPLE_CD 
+			       					   MINUS 
+			       					  SELECT BUD_NO 
+			       					    FROM SIN_DEATH_INFO 
+			       					   WHERE TEMPLE_CD = DET.TEMPLE_CD)
+				  <if test="V_PROPOSAL_BUD_NO != '' and V_PROPOSAL_BUD_NO != null  ">
+				  	AND MST.PROPOSAL_BUD_NO LIKE SUBSTR(#{V_PROPOSAL_BUD_NO},0,10) || '%'
+				  </if>	
+				  <if test="V_DATE_GBN == 1">
+				  	AND MST.ACCEPT_DATE BETWEEN #{V_SDATE} AND #{V_EDATE}
+				  </if>
+				  <if test="V_DATE_GBN == 2">
+				  	AND DET.FDATE       BETWEEN #{V_SDATE} AND #{V_EDATE}
+				  </if>
+				  <if test="V_DATE_GBN == 3">
+				  	AND MGT.RDATE       BETWEEN #{V_SDATE} AND #{V_EDATE}
+				  </if>
+				  <if test="V_CODE != '' and V_CODE != null  ">
+				  	AND DET.PRAY_CODE = #{V_CODE}
+				  </if>
+				  <if test="V_CLASS_CD != '' and V_CLASS_CD != null and V_CLASS_CD != 0 ">
+				  	AND MST.PROPOSAL_BUD_NO IN (SELECT BUD_NO 
+				  								  FROM SIN_CLASS_INFO 
+				  								 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+				  								   AND CLASS_CD  = #{V_CLASS_CD})
+				  </if>
+			ORDER BY DET.ACCEPT_SEQ
+					,DET.SEQ
+					,SIN.SORT_SEQ
+		   )
+	</select>
+	
+	
+	
+</mapper>

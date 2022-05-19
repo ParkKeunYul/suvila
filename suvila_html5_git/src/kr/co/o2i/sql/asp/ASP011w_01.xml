@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ASP011w_01DAO">
+
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+	</resultMap>
+	
+	
+	<select id="SELECT_DATE" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT PLUS_YYYYMMDD
+			  ,ETC4
+		  FROM ASP_PLUS_MINUS_MAPPER
+		 WHERE PLUS_YYYYMMDD LIKE #{V_DATE} || '%'
+		 ORDER BY PLUS_YYYYMMDD
+	</select>
+	
+	
+	
+	<update id="UPDATE_DATE" parameterType="java.util.Map" >
+		UPDATE ASP_PLUS_MINUS_MAPPER
+	       SET ETC4          = #{ETC4}
+         WHERE PLUS_YYYYMMDD = #{PLUS_YYYYMMDD}
+	</update>
+	
+	
+	
+</mapper>

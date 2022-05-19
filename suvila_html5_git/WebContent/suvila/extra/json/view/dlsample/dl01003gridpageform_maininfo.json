@@ -1,0 +1,18 @@
+{
+   "success":true,
+   "data":{
+       "list":[
+        {"custNo":"A","custName":"홍길동","birth":"20140101","point":0.0001,"addr":"서울시 종로구 세종대로 175 " },
+        {"custNo":"B","custName":"이순신","birth":"20150101","point":100.234,"addr":"부산광역시 수영구 감포로 8번길" },
+        {"custNo":"C","custName":"임걱정","birth":"20160101","point":1200.345,"addr":"경기도 수원시 장안구 화산로 1번길" },
+        {"custNo":"D","custName":"임경업","birth":"20160422","point":300.34,"addr":"강원도 춘천시 수변공원길 54" },
+        {"custNo":"E","custName":"유관순","birth":"20141219","point":15.0,"addr":"전라북도 익산시 금마면 황금로 916" },
+        {"custNo":"F","custName":"전우치","birth":"20151121","point":30.678,"addr":"울산광역시 울주군 범서읍 입암길 14" },
+        {"custNo":"G","custName":"정중부","birth":"20141231","point":40.456,"addr":"충청북도 충주시 중원대로 1" },
+        {"custNo":"H","custName":"이성계","birth":"20160302","point":500.000001,"addr":"충청남도 천안시 동남구 목천읍 신계2길" },
+        {"custNo":"I","custName":"안중근","birth":"20160402","point":5000.876,"addr":"인천광역시 남동구 서판로 50번길" },
+        {"custNo":"J","custName":"김구","birth":"20160318","point":5000.3,"addr":"제주특별자치도 서귀포시 남성로 115번길 " }],
+       "listTotalSize":100,
+   },
+   "msg":""
+}

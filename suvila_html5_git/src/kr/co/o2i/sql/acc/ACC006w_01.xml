@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ACC006w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+<!--
+	<resultMap id="acc006w_01a" type="java.util.Map"> 
+		<result  property="CHECK_P" column="CHECK_P"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+	</resultMap>
+-->
+	<select id="SELECT_ACC" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT 
+		       AMM.TEMPLE_CD, 
+		       AMM.ACT_DATE, 
+		       AMM.ACT_NO, 
+		       AMM.ACCT_GBN,
+			   AA.ACCT_NM, 
+		       AMM.IE_GBN,
+		       ( CASE
+	      			WHEN AMM.IE_GBN = 'I' THEN '세입'
+	      			ELSE '세출'
+	      		 END ) IE_GBN_NM, 
+		       AMM.KWAN, 
+		       AAC.KWAN_NAME,
+		       AMM.HANG, 
+		       AAC.HANG_NAME,
+		       AMM.MOK, 
+		       AAC.MOK_NAME,
+			   DECODE(AMM.IE_GBN,'I',AMM.AMOUNT,0) AS I_AMOUNT,
+			   DECODE(AMM.IE_GBN,'O',AMM.AMOUNT,0) AS O_AMOUNT,
+			   AMOUNT,
+			   NVL(SUM(DECODE(AMM.IE_GBN,'I',AMM.AMOUNT, AMM.AMOUNT*-1)) OVER (ORDER BY AMM.ACT_DATE, AMM.ACT_NO RANGE UNBOUNDED PRECEDING),0) +
+			   (
+					SELECT 
+						NVL(SUM(DECODE(IE_GBN,'I',AMOUNT, AMOUNT*-1)),0)
+					FROM ACC_MONEY_MGT 
+					WHERE TEMPLE_CD = AMM.TEMPLE_CD
+					AND ACT_DATE  >= SUBSTR(#{V_SACT_DATE},1,4) || '0101'
+					AND ACT_DATE &lt; #{V_SACT_DATE}
+					<if test='V_ACCT_GBN != null and   V_ACCT_GBN != ""and V_ACCT_GBN != 0 and V_ACCT_GBN != "0"'>
+						AND ACCT_GBN = #{V_ACCT_GBN}
+					</if>
+					<if test='V_IE_GBN != "0" '>
+						AND IE_GBN = #{V_IE_GBN}
+					</if>
+					<if test='V_KWAN != 0  and V_KWAN != "0" '>
+						AND KWAN = #{V_KWAN} 
+					</if>
+		          )
+			   AS TOTAL,
+		 	   AMM.REMARK, 
+			   ATU.USER_NM,
+				AMM.USER_ID,
+			   AMM.ACT_DATE || AMM.ACT_NO AS PAGE_SKIP,
+			   'T' AS CHECK_P,
+			   'T' AS OLD_YN
+		  FROM ACC_MONEY_MGT  			AMM, 
+		  	   ACC_ACCOUNTS 			AAC,
+			   ASP_TEMPLE_MASTER 		ATM,
+			   ASP_TEMPLE_USER			ATU,
+				 (	SELECT 
+						   DISTINCT
+						   TEMPLE_CD,
+						   ACCT_GBN, 
+						   ACCT_NM
+					FROM ACC_ACCOUNTS
+					WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+					AND KWAN = 1
+					AND HANG = 0
+					AND MOK  = 0
+				  ) AA
+		 WHERE AMM.TEMPLE_CD 		  = AAC.TEMPLE_CD
+		   AND AMM.IE_GBN    		  = AAC.IE_GBN
+		   AND AMM.ACCT_GBN  		  = AAC.ACCT_GBN
+		   AND AMM.KWAN      		  = AAC.KWAN
+		   AND AMM.HANG      		  = AAC.HANG
+		   AND AMM.MOK       		  = AAC.MOK
+		   AND AMM.TEMPLE_CD          = ATM.TEMPLE_CD
+		   AND AMM.TEMPLE_CD   		  = AA.TEMPLE_CD
+		   AND AMM.ACCT_GBN			  = AA.ACCT_GBN
+		   AND AMM.TEMPLE_CD		  = ATU.TEMPLE_CD(+)
+		   AND AMM.USER_ID			  = ATU.USER_ID(+)
+		   AND AMM.TEMPLE_CD 		  = #{V_TEMPLE_CD}
+		   AND AMM.ACT_DATE  		  >= #{V_SACT_DATE}
+		   AND AMM.ACT_DATE  	   &lt;= #{V_EACT_DATE}
+		   <if test='V_ACCT_GBN != null and   V_ACCT_GBN != "" and V_ACCT_GBN != 0 and V_ACCT_GBN != "0"'>
+		   		AND AMM.ACCT_GBN = #{V_ACCT_GBN}
+		   </if>
+		   <if test='V_IE_GBN != "0" '>
+		   		AND AMM.IE_GBN = #{V_IE_GBN}
+		   </if>
+		   <if test='V_KWAN != 0  and V_KWAN != "0" '>
+		   		AND AMM.KWAN = #{V_KWAN}
+		   </if>
+		   <if test='V_REMARK != null and   V_REMARK != "" '>
+		   		AND AMM.REMARK LIKE '%' || #{V_REMARK} || '%'
+		   </if>
+		ORDER BY AMM.ACT_DATE
+		       , AMM.ACT_NO
+	</select>
+	
+	<insert id="INSERT_ACC" parameterType="java.util.Map" >
+		INSERT INTO ACC_MONEY_MGT (
+		        TEMPLE_CD
+		       ,ACT_DATE
+		       ,ACT_NO
+		       ,KWAN
+		       ,HANG
+		       ,MOK
+		       ,ACCT_GBN
+		       ,CRT_USER
+		       ,AMOUNT
+		       ,USER_ID
+		       ,REMARK
+		       ,IE_GBN
+		       ,CRT_DATE
+		       ,UPT_USER
+		       ,UPT_DATE
+		       ,REMOTE
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{ACT_DATE}
+		       ,#{ACT_NO}
+		       ,#{KWAN}
+		       ,#{HANG}
+		       ,#{MOK}
+		       ,#{ACCT_GBN}
+		       ,#{V_USER_ID}
+		       ,#{AMOUNT}
+		       ,#{USER_ID  ,jdbcType=VARCHAR}
+		       ,#{REMARK   ,jdbcType=VARCHAR}
+		       ,#{IE_GBN}
+		       ,SYSDATE
+		       ,#{V_USER_ID}
+		       ,SYSDATE
+		       ,#{V_REMOTE}
+		)
+	</insert>
+	
+	<select id="SELECT_CHONGMU" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT AMM.TEMPLE_CD
+		      ,AMM.ACT_DATE
+		      ,AMM.ACT_NO
+		      ,AMM.ACCT_GBN
+		      ,AA.ACCT_NM
+		      ,AMM.IE_GBN
+		      ,AMM.KWAN
+		      ,AAC.KWAN_NAME
+		      ,AMM.HANG
+		      ,AAC.HANG_NAME
+		      ,AMM.MOK
+		      ,AAC.MOK_NAME
+		      ,DECODE(AMM.IE_GBN,'I',AMM.AMOUNT,0) AS I_AMOUNT
+		      ,DECODE(AMM.IE_GBN,'O',AMM.AMOUNT,0) AS O_AMOUNT
+		      ,AMOUNT
+		      ,NVL(SUM(DECODE(AMM.IE_GBN,'I',AMM.AMOUNT, AMM.AMOUNT*-1)) OVER (ORDER BY AMM.ACT_DATE, AMM.ACT_NO RANGE UNBOUNDED PRECEDING),0) 
+		       +(SELECT NVL(SUM(DECODE(IE_GBN,'I',AMOUNT, AMOUNT*-1)) ,0)
+				   FROM ACC_CHONGMU_MONEY_MGT 
+				  WHERE TEMPLE_CD    = AMM.TEMPLE_CD
+					AND ACT_DATE    >= SUBSTR(#{V_SACT_DATE},1,4) || '0101'
+					AND ACT_DATE  &lt; #{V_SACT_DATE}
+					<if test='V_ACCT_GBN != null and   V_ACCT_GBN != "" and V_ACCT_GBN != 0 and V_ACCT_GBN != "0"'>
+						AND ACCT_GBN = #{V_ACCT_GBN}
+					</if>					
+		         ) AS TOTAL
+		       ,AMM.REMARK
+		       ,ATU.USER_NM
+		       ,AMM.ACT_DATE || AMM.ACT_NO AS PAGE_SKIP
+		       ,'T' AS CHECK_P
+		  FROM ACC_CHONGMU_MONEY_MGT 	AMM
+		      ,ACC_ACCOUNTS 			AAC
+		      ,ASP_TEMPLE_MASTER 		ATM
+		      ,ASP_TEMPLE_USER			ATU
+		      ,(SELECT DISTINCT TEMPLE_CD
+		              ,ACCT_GBN
+		              , ACCT_NM
+				  FROM ACC_ACCOUNTS
+				 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+				   AND KWAN = 1
+				   AND HANG = 0
+				   AND MOK  = 0
+				 ) AA
+		 WHERE AMM.TEMPLE_CD 	  = AAC.TEMPLE_CD
+		   AND AMM.IE_GBN    	  = AAC.IE_GBN
+		   AND AMM.ACCT_GBN  	  = AAC.ACCT_GBN
+		   AND AMM.KWAN      	  = AAC.KWAN
+		   AND AMM.HANG      	  = AAC.HANG
+		   AND AMM.MOK       	  = AAC.MOK
+		   AND AMM.TEMPLE_CD      = ATM.TEMPLE_CD
+		   AND AMM.TEMPLE_CD   	  = AA.TEMPLE_CD
+		   AND AMM.ACCT_GBN		  = AA.ACCT_GBN
+		   AND AMM.TEMPLE_CD	  = ATU.TEMPLE_CD(+)
+		   AND AMM.USER_ID		  = ATU.USER_ID(+)
+		   AND AMM.TEMPLE_CD 	  = #{V_TEMPLE_CD}
+		   AND AMM.ACT_DATE  	 >= #{V_SACT_DATE}
+		   AND AMM.ACT_DATE   &lt;= #{V_EACT_DATE}
+		   <if test='V_ACCT_GBN != null and   V_ACCT_GBN != "" and V_ACCT_GBN != 0 and V_ACCT_GBN != "0"'>
+		   		AND AMM.ACCT_GBN = #{V_ACCT_GBN}
+		   </if>
+		   <if test='V_REMARK != null and   V_REMARK != "" '>
+		   		AND AMM.REMARK LIKE '%' || #{V_REMARK} || '%' 
+		   </if>
+		ORDER BY AMM.ACT_DATE
+		        ,AMM.ACT_NO
+	</select>
+
+	<update id="UPDATE_CHONGMU" parameterType="java.util.Map">
+		UPDATE ACC_CHONGMU_MONEY_MGT 
+		   SET AMOUNT    = DECODE(#{IE_GBN},'I',#{I_AMOUNT}, #{O_AMOUNT})
+		      ,UPT_USER  = #{V_USER_ID}
+		      ,UPT_DATE  = SYSDATE
+		      ,REMOTE    = #{V_REMOTE}
+	     WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+	       AND ACT_DATE  = #{ACT_DATE}
+		   AND ACT_NO 	 = #{ACT_NO}
+	</update>
+</mapper>

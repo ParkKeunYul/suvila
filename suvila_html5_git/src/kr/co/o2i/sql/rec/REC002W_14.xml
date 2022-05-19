@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC002W_14DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="CONTENT"    column="CONTENT"      javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		 
+	</resultMap>
+
+
+	<select id="SELECT_WP_DONGCHAM_PRINT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	    SELECT MST.TEMPLE_CD
+			  ,MST.ACCEPT_SEQ  || SUB.SEQ as ACCEPT_SEQ
+			  ,(SELECT ADDR1||' '||ADDR2 
+			  	  FROM SIN_CARD_MASTER 
+			  	 WHERE TEMPLE_CD       = #{V_TEMPLE_CD} 
+			  	   AND DONG.BOKWIJA_NO = BUD_NO 
+			  	   AND ROWNUM          = 1 
+			  	   AND DEL_YN          ='F' ) AS ADDR
+			   ,DONG.BOKWIJA_NO  as PROPOSAL_BUD_NO 
+			   ,FN_SINDO_INFO('NAME_KOR',MST.TEMPLE_CD,MST.PROPOSAL_BUD_NO) PROPOSAL_BUD_NAME 
+			   ,MGT.EVENT_NAME||' ('||FN_FMT_DATE(DET.EVENT_DATE,'/')||')' EVENT_NAME      
+			   ,DONG.EVENT_SEQ         
+			   ,FN_SINDO_INFO('NAME_KOR',MST.TEMPLE_CD,DONG.BOKWIJA_NO) BOKWI_BUD_NAME      
+			   ,BOKWI.BOKWI_KIBU_GBN  
+			   ,FN_CODE_NAME('BOKWIGBN',BOKWI.BOKWI_KIBU_GBN) BOKWI_KIBU_GBN_NM              
+			   ,BOKWI.HYO_REL        
+			   ,BOKWI.DECE_REL       
+			   ,DEATH.BON            
+			   ,FN_CODE_NAME('BON',DEATH.BON)||FN_SINDO_INFO('DEATH_SEXGBN',MST.TEMPLE_CD,DONG.DECE_BUD_NO) BON_NM 
+			   ,DONG.DECE_BUD_NO     
+			   ,FN_SINDO_INFO('NAME_KOR',MST.TEMPLE_CD,DONG.DECE_BUD_NO) DECEL_BUD_NAME 
+			   ,FN_DAEJU_INFO('BUD_NO',MST.TEMPLE_CD,MST.ACCEPT_SEQ) DAEJU_BUD_NO  
+			   ,DET.CLOSE_YN
+			   ,(CASE 
+			   		WHEN DET.CLOSE_YN = 'T' THEN '소등'
+			   		ELSE '사용중'
+			   	 END ) CLOSE_YN_NM
+		   FROM REC_MASTER MST
+		   	   ,REC_WEPAE_CHONHON_DETAIL DET
+		   	   ,REC_SUB SUB
+		   	   ,REC_WEPAE_CHONHON_MGT MGT
+		   	   ,REC_WEPAE_CHONHON_JOIN_MGT DONG
+		   	   ,SIN_DEATH_INFO DEATH
+		   	   ,SIN_DEATH_BOKWI_INFO BOKWI
+		  WHERE MST.TEMPLE_CD          = #{V_TEMPLE_CD}
+			    AND DET.TEMPLE_CD      = MST.TEMPLE_CD
+			    AND DET.ACCEPT_SEQ     = MST.ACCEPT_SEQ
+			    AND DET.DEL_YN         = 'F'
+			    AND SUB.TEMPLE_CD      = DET.TEMPLE_CD
+			    AND SUB.ACCEPT_SEQ     = DET.ACCEPT_SEQ
+			    AND SUB.SEQ            = DET.SEQ
+			    AND SUB.DEL_YN         = 'F'
+			    AND MGT.TEMPLE_CD      = DET.TEMPLE_CD
+			    AND MGT.EVENT_CD       = DET.EVENT_CD
+			    AND DONG.TEMPLE_CD     = DET.TEMPLE_CD
+			    AND DONG.ACCEPT_SEQ    = DET.ACCEPT_SEQ
+			    AND DONG.SEQ           = DET.SEQ
+			    AND DONG.EVENT_CD      = DET.EVENT_CD
+			    AND DONG.EVENT_DATE    = DET.EVENT_DATE
+			    AND DONG.WEPAECNT      = DET.WEPAECNT
+			    AND DEATH.TEMPLE_CD    = DONG.TEMPLE_CD
+			    AND DEATH.BUD_NO       = DONG.DECE_BUD_NO
+			    AND BOKWI.TEMPLE_CD    = DONG.TEMPLE_CD
+			    AND BOKWI.BUD_NO       = DONG.BOKWIJA_NO
+			    AND BOKWI.DECE_BUD_NO  = DONG.DECE_BUD_NO
+			    <if test="V_CLOSE_YN != '' and V_CLOSE_YN != null  ">
+			    	AND DET.CLOSE_YN = #{V_CLOSE_YN}
+			    </if>
+			    <if test="V_PROPOSAL_BUD_NO != '' and V_PROPOSAL_BUD_NO != null  ">
+			    	AND MST.PROPOSAL_BUD_NO LIKE SUBSTR(#{V_PROPOSAL_BUD_NO},0,10) || '%' 
+			    </if>
+			    <if test="V_DATE_GBN == 1">
+			  		AND MST.ACCEPT_DATE BETWEEN #{V_SDATE} AND #{V_EDATE} 
+			  	</if>
+			  	<if test="V_DATE_GBN == 2">
+			  		AND DET.EVENT_DATE  BETWEEN #{V_SDATE} AND #{V_EDATE}
+			  	</if>
+				<if test="V_CLASS_CD != '' and V_CLASS_CD != null and V_CLASS_CD != 0 ">
+					AND MST.PROPOSAL_BUD_NO IN (SELECT BUD_NO 
+												  FROM SIN_CLASS_INFO 
+												 WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+												   AND CLASS_CD  = #{V_CLASS_CD})
+				</if>
+				<if test="V_CODE != '' and V_CODE != null and V_CODE != 0 ">
+					AND DET.EVENT_CD = #{V_CODE}
+				</if>
+		  ORDER BY MST.PROPOSAL_BUD_NO
+				  ,MGT.EVENT_NAME||' ('||FN_FMT_DATE(DET.EVENT_DATE,'/')||')'
+				  ,FN_SINDO_INFO('NAME_KOR',MST.TEMPLE_CD,DONG.BOKWIJA_NO)
+				  ,DONG.EVENT_SEQ
+				  ,DONG.WEPAE_SEQ
+				  ,DET.ACCEPT_SEQ
+				  ,DET.SEQ
+				  ,DONG.JOIN_SEQ
+	</select>
+	
+	
+	
+</mapper>

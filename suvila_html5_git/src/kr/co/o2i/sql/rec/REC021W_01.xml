@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC021w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+	<select id="SELECT_ACC"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT AMTM.TEMPLE_CD
+			  ,AMTM.ACT_DATE
+			  ,AMTM.SEQ_NO
+			  ,AMTM.IE_GBN
+			  ,AMTM.KWAN
+			  ,AA.KWAN_NAME
+			  ,AMTM.HANG
+			  ,AA.HANG_NAME
+			  ,AMTM.MOK
+			  ,AA.MOK_NAME
+			  ,AMTM.ACCT_GBN
+			  ,AMTM.CRT_USER
+			  ,AMTM.AMOUNT
+			  ,AMTM.USER_ID
+			  ,AMTM.REMARK
+			  ,TO_CHAR(SYSDATE,'YYYYMMDD') AS TEMP_DATE
+			  ,NVL(AMTM.APPROVAL_GBN,'1') AS APPROVAL_GBN
+		  FROM ACC_MONEY_TEMP_MGT 	AMTM
+		  	  ,ACC_ACCOUNTS 		AA
+		 WHERE AMTM.TEMPLE_CD		= AA.TEMPLE_CD
+		   AND AMTM.ACCT_GBN		= AA.ACCT_GBN
+		   AND AMTM.IE_GBN			= AA.IE_GBN
+		   AND AMTM.KWAN			= AA.KWAN
+		   AND AMTM.HANG			= AA.HANG
+		   AND AMTM.MOK				= AA.MOK
+		   AND AMTM.TEMPLE_CD 		= #{V_TEMPLE_CD}
+		   AND AMTM.ACT_DATE 		= #{V_ACT_DATE}
+		   AND AMTM.CRT_USER		= #{V_USER_ID}
+		   AND AMTM.CMS_YN           = 'Y'
+	</select>
+	
+	<insert id="INSERT_ACC" parameterType="java.util.Map">
+		INSERT INTO ACC_MONEY_TEMP_MGT(
+			 TEMPLE_CD
+			,ACT_DATE
+			,SEQ_NO
+			,ACCT_GBN
+			,IE_GBN
+			,KWAN
+			,HANG
+			,MOK
+			,AMOUNT
+			,USER_ID
+			,REMARK
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+			,APPROVAL_GBN
+		) VALUES (
+		  	 #{V_TEMPLE_CD}
+		  	,#{ACT_DATE}
+		  	,(SELECT NVL(MAX(SEQ_NO),0)+1 AS SEQ 
+		  		FROM ACC_MONEY_TEMP_MGT 
+		  	   WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		  	     AND ACT_DATE  = #{ACT_DATE})
+		  	,#{ACCT_GBN}
+		  	,#{IE_GBN}
+		  	,#{KWAN}
+		  	,#{HANG}
+		  	,#{MOK}
+		  	,#{AMOUNT}
+		  	,#{USER_ID    ,jdbcType=VARCHAR}
+		  	,#{REMARK     ,jdbcType=VARCHAR}
+		  	,#{V_USER_ID }
+		  	,SYSDATE
+		  	,#{V_USER_ID}
+		  	,SYSDATE
+		  	,#{V_REMOTE}
+		  	,#{APPROVAL_GBN}
+		)
+	</insert>
+	
+	<update id="UPDATE_ACC" parameterType="java.util.Map" >
+		UPDATE ACC_MONEY_TEMP_MGT 
+		   SET KWAN         = #{KWAN}
+		      ,HANG         = #{HANG}
+		      ,MOK          = #{MOK}
+		      ,ACCT_GBN     = #{ACCT_GBN}
+		      ,AMOUNT       = #{AMOUNT}
+		      ,USER_ID      = #{USER_ID}
+		      ,REMARK       = #{REMARK ,jdbcType=VARCHAR}
+		      ,IE_GBN       = #{IE_GBN}
+		      ,UPT_USER     = #{V_USER_ID}
+		      ,UPT_DATE     = SYSDATE
+		      ,REMOTE       = #{V_REMOTE}
+		      ,APPROVAL_GBN = #{APPROVAL_GBN}
+		 WHERE TEMPLE_CD    = #{V_TEMPLE_CD}
+		   AND ACT_DATE     = #{ACT_DATE}
+   		   AND SEQ_NO       = #{SEQ_NO}
+	</update>
+	
+	<delete id="DELETE_ACC" parameterType="java.util.Map">
+		DELETE FROM ACC_MONEY_TEMP_MGT
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND ACT_DATE  = #{ACT_DATE}
+		   AND SEQ_NO    = #{SEQ_NO}
+	</delete>
+	
+	<select  id="FLAG_MGT" parameterType="kr.co.o2i.util.CommonMap" resultType="Integer">
+		SELECT COUNT(*) FROM ACC_MONEY_MGT 
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND ACT_DATE  = #{select_actdate}
+	</select>
+	
+</mapper>

@@ -1,0 +1,988 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC000w_02DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+
+	<!--  관리자 로그인 처리  -->
+	<select id="SELECT_BUDINFO" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+			SELECT
+			       CAD.TEMPLE_CD,		<!-- 사찰코드 -->
+			       CAD.BUD_NO,          <!-- 개인번호 -->
+			       CAD.BUD_CODE,        <!-- 가족코드 -->
+			       CAD.SORT_SEQ,        <!-- 정렬순서 -->
+			       DECODE(SUBSTR('${V_BUD_NO}',0,10),SUBSTR(CAD.BUD_NO,0,10),'F','T') AS BUNGA_YN,
+			       CAD.DAEJU_BUD_NO,    <!-- 대주신도번호  -->
+			       CAD.REPRESEN_REL,    <!-- 관계  -->
+			       CAD.NAME_KOR,        <!-- 성명(한글)  -->
+			       CAD.NAME_HAN,        <!-- 성명(한자)  -->
+			       CAD.SACRED_KOR,      <!-- 법명(한글)  -->
+			       CAD.SACRED_HAN,      <!-- 법명(한자)  -->
+			       CAD.JUMIN_NO,        <!-- 주민등록번호  -->
+			       CAD.ZIP_CD,          <!-- 우편번호  -->
+			       CAD.ADDR1,           <!-- 주소1  -->
+			       CAD.ADDR2,           <!-- 주소2  -->
+			       CAD.TELNO1,          <!-- 전화번호1  -->
+			       CAD.TELNO2,          <!-- 전화번호2  -->
+			       CAD.TELNO3,          <!-- 전화번호3  -->
+			       CAD.TELNO1 || CAD.TELNO2 || CAD.TELNO3 AS TELNO, <!-- 전화번호 -->
+			       CAD.MOBILE_TELNO1,   <!-- 휴대전화1 -->
+			       CAD.MOBILE_TELNO2,   <!-- 휴대전화2  -->
+			       CAD.MOBILE_TELNO3,   <!-- 휴대전화3  -->
+			       CAD.MOBILE_TELNO1 || CAD.MOBILE_TELNO2 || CAD.MOBILE_TELNO3 AS MOBILE_TELNO, <!-- 휴대전화 --> 
+			       CAD.EMAIL,           <!-- 이메일 -->
+			       CAD.LAST_SCHOLA,     <!-- 최종학력  -->
+			       CAD.INTEREST,        <!-- 취미 -->
+			       CAD.SKILL,           <!-- 특기 -->
+			       CAD.COMPANY_NAME,    <!-- 직장명 -->
+			       CAD.COMPANY_POS,     <!-- 부서및직책 -->
+			       CAD.COMPANY_TEL1,    <!-- 직장전화1 -->
+			       CAD.COMPANY_TEL2,    <!-- 직장전화2 -->
+			       CAD.COMPANY_TEL3,    <!-- 직장전화3 -->
+			       CAD.ENTRANCE_CD,     <!-- 입문동기 -->
+			       CAD.NEWS_YN,         <!-- 불교신문구독 -->
+			       CAD.QUALIFICATION,   <!-- 자격증면허 -->
+			       CAD.SACHAL_NAME,     <!-- 재적사찰 -->
+			       NVL(CAD.POST_TRANS,'F') AS POST_TRANS,      <!-- 우편발송여부 -->
+			       NVL(CAD.EMAIL_TRANS,'F') AS EMAIL_TRANS,     <!-- 이메일발송여부 -->
+			       NVL(CAD.SMS_TRANS,'F') AS SMS_TRANS,       <!-- SMS발송여부 -->
+			       CAD.MEMO,            <!-- 메모 -->
+			       CAD.SEXAGENARY,      <!-- 간지코드 -->
+				   GAN.NAME AS SEXAGENARY_NM,  <!-- 긴지명 -->
+			       CAD.LEAP_MONTH,      <!-- 윤달 -->
+			       CAD.LUNAR_SOLAR,     <!-- 음력양력 -->
+			       CAD.BIRTHTIME,       <!-- 생시생분 -->
+			       CAD.ISSUE_DATE,      <!-- 입회일자 -->
+			       CAD.BIRTHDAY,        <!-- 생년월일 -->
+			       CAD.SEX_GBN,         <!-- 성별코드 -->
+				   SEX.NAME AS SEX_NM,  <!-- 성별명 -->				   
+			       CAD.SINDO_GBN,       <!-- 신도구분 -->
+			       CAD.HWAJU_YN,        <!-- 화주보살구분 -->
+			       CAD.HWAJU_BUD_NO,    <!-- 화주보살신도번호 -->
+			       CAD.CARD_ISSUE_DATE, <!-- 신도카드발급일자 -->
+			       CAD.CARD_ISSUE_CNT,  <!-- 신도카드발급횟수 -->
+				   DECODE('${V_BUD_NO}',CAD.BUD_NO,'T','F') AS ONESELF_YN,
+			       CAD.CRT_USER,        <!-- 등록자 -->
+			       CAD.UPT_USER,        <!-- 수정자 -->
+				   TO_CHAR(CAD.CRT_DATE,'YYYYMMDD') AS CRT_DATE,	<!-- 등록일 -->
+			       TO_CHAR(CAD.UPT_DATE,'YYYYMMDD') AS UPT_DATE,	<!-- 수정일 -->
+			       CAD.REMOTE,          <!-- IP-->
+			       NVL2(GAN.NAME,GAN.NAME||'생','') AS FMLY_SEXAGENARY,	<!-- 가족들 간지 -->
+			      <choose>
+			      	<when test = 'V_TEMPLE_CD == "000008" or V_TEMPLE_CD == "000093"'>
+			      		DECODE(LENGTH(CAD.BIRTHDAY),8,DECODE(CAD.LUNAR_SOLAR,'T','음 ','양 ')||SUBSTR(CAD.BIRTHDAY,1,4)||'년'||SUBSTR(CAD.BIRTHDAY,5,2)||'월'||SUBSTR(CAD.BIRTHDAY,7,2)||'일','') AS FMLY_BIRTHDAY,
+			      	</when>
+			      	<otherwise>
+			      		DECODE(LENGTH(CAD.BIRTHDAY),8,DECODE(CAD.LUNAR_SOLAR,'T','음 ','양 ')||SUBSTR(CAD.BIRTHDAY,5,2)||'월 '||SUBSTR(CAD.BIRTHDAY,7,2)||'일','') AS FMLY_BIRTHDAY,
+			      	</otherwise>
+			      </choose>
+			      <!--
+			       	DECODE(CAD.BUD_NO,CAD.DAEJU_BUD_NO,'T','F') AS DAEJU_YN,
+			      -->
+			       TO_NUMBER(DECODE(CAD.DAEJU_BUD_NO,CAD.BUD_NO,1,0 ))AS DAEJU_YN, <!-- 대주 구분 -->
+			       'T' AS CHECK_P
+			       <if test = 'V_DAEJU_GBN == "Y"' >
+			       		,(SELECT COUNT(*) 
+			                FROM SIN_FAMILY_MEMO 
+			               WHERE TEMPLE_CD = CAD.TEMPLE_CD 
+			                 AND BUD_NO LIKE SUBSTR(CAD.BUD_NO,0,DECODE('','true',8,10)) || '%') AS MEMO_COUNT 
+			       </if>
+			       , RELIGION_CD
+			       , NVL(NATION_CD,'223') AS NATION_CD
+			       , JOB_CD
+			       , '' AS SEL_YN
+				   , CAD.BLDG_NUM
+				   , FN_ADDR_BLDG(CAD.BLDG_NUM) ADDR3
+				   , FN_SINDO_INFO('SEXGBN','${V_TEMPLE_CD}','${V_BUD_NO}') SINDO_SEX_GBN
+			  FROM SIN_CARD_MASTER CAD, ASP_CODE_MGT SEX, ASP_CODE_MGT GAN
+			 WHERE CAD.TEMPLE_CD   = '${V_TEMPLE_CD}'
+			   AND SEX.GROUP_CD(+) = 'SEXGBN'
+			   AND CAD.SEX_GBN     = SEX.CODE(+)
+			   AND GAN.GROUP_CD(+) = 'GANJI'
+			   AND CAD.SEXAGENARY  = GAN.CODE(+)
+			   AND CAD.DEL_YN      = 'F'
+			   AND CAD.BUD_NO  LIKE SUBSTR('${V_BUD_NO}',0,DECODE('${V_BUNGA}','true',8,10)) || '%'
+			   AND CAD.BUD_NO  NOT IN (SELECT BUD_NO
+			                             FROM SIN_DEATH_INFO DEA
+			                            WHERE DEA.TEMPLE_CD  = CAD.TEMPLE_CD
+			                              AND DEA.BUD_NO     = CAD.BUD_NO)
+			   <if test = 'V_DAEJU_GBN == "Y"' >
+			   	AND CAD.BUD_NO = DAEJU_BUD_NO
+			   </if>
+			ORDER BY CAD.BUD_CODE, CAD.SORT_SEQ
+		
+	</select>
+	
+	
+	<!--#신도 영가  조회# -->
+	<select id="SELECT_SPIRITINFO" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT
+			SDI.TEMPLE_CD,
+			SDI.BUD_NO,
+			SPR.NAME_KOR,
+			SDB.SORT_SEQ,
+			SDI.LUNAR_SOLAR,
+			LUN.NAME AS LUNAR_SOLAR_NM,
+			SDI.BON,
+			BON.NAME AS BON_NM,
+			SDB.BUD_NO AS BOKWIJA_NO,
+			BOK.NAME_KOR AS BOKWIJA_NM,
+			SDB.HYO_REL,
+			SDB.BOKWI_KIBU_GBN,
+			BGN.NAME AS BOKWI_KIBU_GBN_NM,
+			SDB.DECE_REL,
+			SDI.DEATH_DAY,
+			SDI.DEATH_TIME,
+			SDB.DEL_YN,
+			SDB.CRT_USER,
+			SDB.UPT_USER,
+			TO_CHAR(SDB.CRT_DATE,'YYYYMMDD') AS CRT_DATE,
+			TO_CHAR(SDB.UPT_DATE,'YYYYMMDD') AS UPT_DATE,
+			SDB.REMOTE,
+		    NVL(SDB.DEATH_YN,'1') AS DEATH_YN,
+		    ACM_YN.NAME AS DEATH_GBN_NM,
+		    BOK.BUD_NO || NVL(SDB.DEATH_YN,'1') AS PAGE_SKIP
+		FROM SIN_DEATH_BOKWI_INFO SDB, 
+			SIN_DEATH_INFO SDI, 
+			SIN_CARD_MASTER SPR, 
+			SIN_CARD_MASTER BOK,
+			ASP_CODE_MGT BGN, 
+			ASP_CODE_MGT LUN, 
+			ASP_CODE_MGT BON,
+		    ASP_CODE_MGT ACM_YN
+		WHERE SDB.TEMPLE_CD      = SDI.TEMPLE_CD
+		AND SDB.DECE_BUD_NO    = SDI.BUD_NO
+		AND SDB.TEMPLE_CD      = BOK.TEMPLE_CD
+		AND SDB.BUD_NO         = BOK.BUD_NO
+		AND SDI.TEMPLE_CD      = SPR.TEMPLE_CD
+		AND SDI.BUD_NO         = SPR.BUD_NO
+		AND BGN.GROUP_CD(+)    = 'BOKWIGBN'
+		AND SDB.BOKWI_KIBU_GBN = BGN.CODE(+)
+		AND LUN.GROUP_CD(+)    = 'LUNAR_SOLAR'
+		AND SDI.LUNAR_SOLAR    = LUN.CODE(+)
+		AND BON.GROUP_CD(+)    = 'BON'
+		AND SDI.BON            = BON.CODE(+)
+		AND ACM_YN.GROUP_CD(+) = 'DEATH_GBN'
+		AND SDB.DEATH_YN       = ACM_YN.CODE(+)
+		AND SDB.DEL_YN         = 'F'
+		AND BOK.DEL_YN		   = 'F'
+		AND SDB.BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = SDB.TEMPLE_CD)
+		AND SDB.TEMPLE_CD      = #{V_TEMPLE_CD}
+		AND SDB.BUD_NO      LIKE SUBSTR( #{V_BUD_NO} ,0,DECODE(#{V_BUNGA},'true',8,10)) || '%'
+		ORDER BY BOK.BUD_NO, SDB.DEATH_YN, SDB.SORT_SEQ
+	</select>
+	
+	
+	<!--#신도 영가  조회 - 동일영가포함 # -->
+	<select id="SELECT_SPIRITINFO_EQUAL" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT
+		  SDI.TEMPLE_CD,
+		  SDI.BUD_NO,
+		  SPR.NAME_KOR,
+		  SDB.SORT_SEQ,
+		  SDI.LUNAR_SOLAR,
+		  LUN.NAME AS LUNAR_SOLAR_NM,
+		  SDI.BON,
+		  BON.NAME AS BON_NM,
+		  SDB.BUD_NO AS BOKWIJA_NO,
+		  BOK.NAME_KOR AS BOKWIJA_NM,
+		  SDB.HYO_REL,
+		  SDB.BOKWI_KIBU_GBN,
+		  BGN.NAME AS BOKWI_KIBU_GBN_NM,
+		  SDB.DECE_REL,
+		  SDI.DEATH_DAY,
+		  SDI.DEATH_TIME,
+		  SDB.DEL_YN,
+		  SDB.CRT_USER,
+		  SDB.UPT_USER,
+		  TO_CHAR(SDB.CRT_DATE,'YYYYMMDD') AS CRT_DATE,
+		  TO_CHAR(SDB.UPT_DATE,'YYYYMMDD') AS UPT_DATE,
+		  SDB.REMOTE,
+		  NVL(SDB.DEATH_YN,'1') AS DEATH_YN,
+		  ACM_YN.NAME AS DEATH_GBN_NM,
+		  SPR.SEX_GBN,
+		  SDB.EQUAL_GBN,
+		  FN_CODE_NAME('DEATH_EQUAL',SDB.EQUAL_GBN) EQUAL_GBN_NM,
+		  SDB.SPIRITUAL_GBN,
+		  FN_CODE_NAME('SPIRITUAL_GBN',SDB.SPIRITUAL_GBN) SPIRITUAL_GBN_NM,
+		  BOK.BUD_NO || NVL(SDB.DEATH_YN,'1') AS PAGE_SKIP
+		FROM SIN_DEATH_BOKWI_INFO SDB, 
+		  SIN_DEATH_INFO SDI, 
+		  SIN_CARD_MASTER SPR, 
+		  SIN_CARD_MASTER BOK,
+		  ASP_CODE_MGT BGN, 
+		  ASP_CODE_MGT LUN, 
+		  ASP_CODE_MGT BON,
+		  ASP_CODE_MGT ACM_YN
+		WHERE SDB.TEMPLE_CD      = SDI.TEMPLE_CD
+		AND SDB.DECE_BUD_NO    = SDI.BUD_NO
+		AND SDB.TEMPLE_CD      = BOK.TEMPLE_CD
+		AND SDB.BUD_NO         = BOK.BUD_NO
+		AND SDI.TEMPLE_CD      = SPR.TEMPLE_CD
+		AND SDI.BUD_NO         = SPR.BUD_NO
+		AND BGN.GROUP_CD(+)    = 'BOKWIGBN'
+		AND SDB.BOKWI_KIBU_GBN = BGN.CODE(+)
+		AND LUN.GROUP_CD(+)    = 'LUNAR_SOLAR'
+		AND SDI.LUNAR_SOLAR    = LUN.CODE(+)
+		AND BON.GROUP_CD(+)    = 'BON'
+		AND SDI.BON            = BON.CODE(+)
+		AND ACM_YN.GROUP_CD(+) = 'DEATH_GBN'
+		AND SDB.DEATH_YN       = ACM_YN.CODE(+)
+		AND SDB.DEL_YN         = 'F'
+		AND BOK.DEL_YN       = 'F'
+		AND SDB.BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = SDB.TEMPLE_CD)
+		AND SDB.TEMPLE_CD      = #{V_TEMPLE_CD}
+		AND SDB.BUD_NO      LIKE SUBSTR(#{V_BUD_NO},0,DECODE(#{V_BUNGA},'true',8,10)) || '%'
+		ORDER BY BOK.BUD_NO
+			   ,SDB.DEATH_YN
+			   ,SDB.SORT_SEQ
+	</select>
+
+
+	<!-- #접수 정보# -->
+	<select id="SELECT_REC_MASTER" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT												
+			MST.TEMPLE_CD,										
+			MST.ACCEPT_SEQ,										
+			MST.ACCEPT_DATE,									
+			SUB.SEQ,											
+			SUB.ACCEPT_GBN,										
+			COD.NAME AS ACCEPT_NAME,							
+			MST.PROPOSAL_BUD_NO,								
+			CAD.NAME_KOR AS PROPOSAL_BUD_NM,					
+			DET.PROD_CODE,										
+			NVL(DET.PROD_NAME,COD.NAME) AS PROD_NAME,			
+			NVL(DET.PROD_NAME_ORI,COD.NAME) AS PROD_NAME_ORI,			
+			DET.PAYMENT_PLAN_AMT,								
+			SUM(HIS.AMOUNT) AS PAYMENT_AMT,						
+			DECODE(DET.LIMIT_YN,'F',0,DET.PAYMENT_PLAN_AMT - SUM(HIS.AMOUNT)) AS MISU_AMT,  
+			MST.WHAJUBOSAL, 									
+			WHA.NAME_KOR AS WHAJUBOSAL_NM,						
+			MST.KWONSUN_NO, 									
+			MST.PAYMENT_GBN, 									
+			(CASE WHEN MST.APPROVAL_GBN > 2	 THEN PAY.NAME 		
+			ELSE '' END) AS PAYMENT_GBN_NM,						
+			MST.TOT_PAYMENT_PLAN_AMT, 							
+			MST.SMS_YN, 										
+			MST.APPROVAL_GBN,									
+			APP.NAME AS APPROVAL_GBN_NM,						
+			(													
+				SELECT											
+					CMS_PAYMENT_DAY								
+				FROM SIN_CMS_INFO								
+				WHERE TEMPLE_CD = MST.TEMPLE_CD					
+				AND CMS_TRADE_CD = MST.CMS_TRADE_CD				
+				AND BUD_NO = MST.PROPOSAL_BUD_NO				
+				AND IF_PAYMENT_BANK_CD = MST.BANK_NO			
+				AND IF_PAYMENT_ACCOUNT = MST.ACCOUNT_NUMBER		
+				AND ACCOUNT_SEQ = MST.ACCOUNT_SEQ				
+			)AS BUNNAB_DAY,										
+			MST.BANK_NO,										
+			BNK.NAME AS BANK_NM,								
+			MST.ACCOUNT_NUMBER, 								
+			MST.VIRTUAL_BANK_NO, 								
+			BNK.NAME AS VIRTUAL_BANK_NM,						
+			MST.VIRTUAL_ACCOUNT_NUMBER, 						
+			MST.JUMIN_NO, 										
+			MST.CLOSE_YN, 										
+			MST.CLOSE_DATE, 									
+			MST.CLOSE_USER, 									
+			MST.DEL_YN, 										
+			MST.CRT_USER, 										
+			TO_CHAR(MST.CRT_DATE,'YYYYMMDD') AS CRT_DATE, 		
+			TO_CHAR(MST.UPT_DATE,'YYYYMMDD') AS UPT_DATE, 		
+			MST.UPT_USER, 										
+			MST.REMOTE, 										
+			MST.MEMO,											
+			DET.REMARK,											
+			DET.PRAY_GBN,										
+			DET.FDATE,											
+			DET.JUNGAK_CD,										
+			DET.LIGHT_NO,										
+			DET.ACPT_FDATE,										
+			DET.BULSA_SEQ,										
+			DET.EVENT_CD,										
+			DET.EVENT_DATE,										
+			DET.WEPAECNT,										
+			CAD.BUD_CODE,										
+			CAD.MOBILE_TELNO1,									
+			CAD.MOBILE_TELNO2,									
+			CAD.MOBILE_TELNO3,									
+			DET.LIMIT_YN,										
+			DET.BASE_AMT,										
+			MST.ACCOUNT_SEQ,									
+			MST.CMS_TRADE_CD,									
+			DET.END_YN,
+			<choose>
+				<when test ='V_GIBU ==  "Y"'>
+					(  SELECT								
+							COUNT(*)						
+						FROM SIN_DONATION_BILL_DETAIL		
+						WHERE TEMPLE_CD = MST.TEMPLE_CD		
+						AND ACCEPT_SEQ = MST.ACCEPT_SEQ		
+						AND SEQ = SUB.SEQ 					
+					) AS GIBU_CNT							
+				</when>
+				<otherwise>
+					0 AS GIBU_CNT	
+				</otherwise>
+			</choose>
+										
+			FROM REC_MASTER MST,		
+				REC_SUB SUB,			
+				REC_PAYMENT_HIS HIS,	
+				SIN_CARD_MASTER CAD,	
+				SIN_CARD_MASTER WHA,	
+				ASP_CODE_MGT COD,		
+				ASP_CODE_MGT PAY,		
+				ASP_CODE_MGT APP,		
+				ASP_CODE_MGT BNK,		
+				ASP_CODE_MGT VNK,		
+			(	
+				<!-- 기도접수 -->
+				<if test = "V_ACCEPT_GBN == 1 or V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null or V_ACCEPT_GBN == 0" >						
+					SELECT										
+						DET.TEMPLE_CD,							
+						DET.ACCEPT_SEQ,							
+						DET.SEQ,								
+						TO_CHAR(DET.PRAY_CODE) AS PROD_CODE,	
+						MGT.PRAY_NM AS PROD_NAME,				
+						MGT.PRAY_NM AS PROD_NAME_ORI,				
+						DET.PAYMENT_PLAN_AMT,					
+						DET.REMARK,								
+						DET.PRAY_GBN,							
+						DET.FDATE,								
+						0 AS ACCEPT_GBN,						
+						0 AS JUNGAK_CD,							
+						0 AS LIGHT_NO,							
+						MGT.RDATE AS ACPT_FDATE,		
+						0 AS BULSA_SEQ,							
+						0 AS EVENT_CD,							
+						'' AS EVENT_DATE,						
+						0 AS WEPAECNT,							
+						'T' AS LIMIT_YN,						
+						0 AS BASE_AMT,							
+						'F' AS END_YN							
+					FROM REC_PRAY_DETAIL DET,   				
+						REC_PRAY_MGT MGT,						
+						REC_MASTER MST,							
+						REC_SUB SUB								
+					WHERE DET.TEMPLE_CD  = MGT.TEMPLE_CD		
+					AND DET.PRAY_GBN   = MGT.PRAY_GBN			
+					AND DET.PRAY_CODE  = MGT.PRAY_CODE			
+					AND DET.FDATE      = MGT.FDATE				
+					AND DET.TEMPLE_CD  = SUB.TEMPLE_CD			
+					AND DET.ACCEPT_SEQ = SUB.ACCEPT_SEQ			
+					AND DET.SEQ        = SUB.SEQ				
+					AND DET.DEL_YN     = 'F'					
+					AND SUB.TEMPLE_CD  = MST.TEMPLE_CD			
+					AND SUB.ACCEPT_SEQ = MST.ACCEPT_SEQ			
+					AND DET.TEMPLE_CD  = '${V_TEMPLE_CD}'		
+					AND MST.PROPOSAL_BUD_NO LIKE SUBSTR('${V_BUD_NO}',0,DECODE(#{V_BUNGA},'true',8,10)) || '%'
+				</if>
+				<!-- 인등접수-->
+				<if test = "V_ACCEPT_GBN == &quot;2&quot; or V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null  or  V_ACCEPT_GBN == 0" >
+					<if test = "V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null or  V_ACCEPT_GBN == 0" >
+						UNION ALL
+					</if>	
+					SELECT									
+						DET.TEMPLE_CD,						
+						DET.ACCEPT_SEQ,						
+						DET.SEQ,							
+						DET.INDEUNG_GBN AS PROD_CODE,
+						<![CDATA[		
+						MGT.LIGHT_NM||'<'|| AJM.JUNGAK_NM||'>' || '(' || DET.INDEUNG_PERIOD || '개월)' AS PROD_NAME,							
+						MGT.LIGHT_NM||'<'|| AJM.JUNGAK_NM||'>' || '(' || DET.INDEUNG_PERIOD || '개월)' AS PROD_NAME_ORI,
+						]]>							
+						DET.PAYMENT_PLAN_AMT,				
+						DET.REMARK,							
+						'' AS PRAY_GBN,						
+						'' AS FDATE,						
+						DET.ACCEPT_GBN,						
+						DET.JUNGAK_CD,						
+						DET.LIGHT_NO,						
+						'' AS ACPT_FDATE,					
+						0 AS BULSA_SEQ,						
+						0 AS EVENT_CD,						
+						'' AS EVENT_DATE,					
+						0 AS WEPAECNT,						
+						NVL(DET.LIMIT_YN,'T') AS LIMIT_YN,	
+						0 AS BASE_AMT,						
+						DET.CLOSE_YN AS END_YN							
+					FROM REC_INDEUNG_DETAIL DET,			
+						REC_DEUNG_CLASS_MGT MGT,			
+						REC_MASTER MST,						
+						REC_SUB SUB,							
+						ASP_JUNGAK_MGT AJM						
+					WHERE MST.TEMPLE_CD  = SUB.TEMPLE_CD	
+					AND MST.TEMPLE_CD  = DET.TEMPLE_CD		
+					AND SUB.TEMPLE_CD  = DET.TEMPLE_CD		
+					AND MST.TEMPLE_CD  = AJM.TEMPLE_CD		
+					AND DET.TEMPLE_CD  = DET.TEMPLE_CD		
+					AND MST.TEMPLE_CD  = MGT.TEMPLE_CD		
+					AND AJM.TEMPLE_CD  = MGT.TEMPLE_CD		
+					AND DET.INDEUNG_GBN= MGT.LIGHT_CODE		
+					AND DET.ACCEPT_GBN = MGT.ACCEPT_GBN		
+					AND DET.ACCEPT_SEQ = SUB.ACCEPT_SEQ		
+					AND DET.SEQ        = SUB.SEQ			
+					AND AJM.JUNGAK_CD  = DET.JUNGAK_CD		
+					AND AJM.ACCEPT_GBN  = '2'		
+					AND DET.DEL_YN     = 'F'				
+					AND SUB.ACCEPT_SEQ = MST.ACCEPT_SEQ		
+					AND DET.TEMPLE_CD  = '${V_TEMPLE_CD}'	
+					AND MST.PROPOSAL_BUD_NO LIKE SUBSTR('${V_BUD_NO}',0,DECODE(#{V_BUNGA},'true',8,10)) || '%'
+				</if>	
+				<!-- 연등접수-->
+				<if test = "V_ACCEPT_GBN == &quot;4&quot; or V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null  or  V_ACCEPT_GBN == 0" >
+					<if test = "V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null or  V_ACCEPT_GBN == 0" >
+						UNION ALL
+					</if>
+					SELECT									
+						DET.TEMPLE_CD,						
+						DET.ACCEPT_SEQ,						
+						DET.SEQ,							
+						DET.YEONDEUNG_GBN AS PROD_CODE,		
+						MGT.LIGHT_NM AS PROD_NAME,			
+						MGT.LIGHT_NM AS PROD_NAME_ORI,			
+						DET.PAYMENT_PLAN_AMT,				
+						DET.REMARK,							
+						'' AS PRAY_GBN,						
+						'' AS FDATE,						
+						DET.ACCEPT_GBN,						
+						DET.JUNGAK_CD,						
+						DET.LIGHT_NO,						
+						'' AS ACPT_FDATE,					
+						0 AS BULSA_SEQ,						
+						0 AS EVENT_CD,						
+						'' AS EVENT_DATE,					
+						YEONDEUNG_PERIOD AS WEPAECNT,		
+						'T' AS LIMIT_YN,					
+						0 AS BASE_AMT,						
+						DET.CLOSE_YN AS END_YN							
+					FROM  REC_MASTER MST,					
+						REC_SUB SUB,						
+						REC_YEONDEUNG_DETAIL DET,			
+						REC_DEUNG_CLASS_MGT MGT				
+					WHERE MST.TEMPLE_CD = SUB.TEMPLE_CD		
+					AND	MST.ACCEPT_SEQ = SUB.ACCEPT_SEQ		
+					AND	SUB.TEMPLE_CD = DET.TEMPLE_CD		
+					AND	SUB.ACCEPT_SEQ = DET.ACCEPT_SEQ		
+					AND	SUB.SEQ = DET.SEQ					
+					AND DET.TEMPLE_CD  = MGT.TEMPLE_CD		
+					AND DET.YEONDEUNG_GBN= MGT.LIGHT_CODE	
+					AND DET.ACCEPT_GBN = MGT.ACCEPT_GBN		
+					AND DET.DEL_YN     = 'F'				
+					AND DET.TEMPLE_CD  = '${V_TEMPLE_CD}'	
+					AND MST.PROPOSAL_BUD_NO LIKE SUBSTR('${V_BUD_NO}',0,DECODE(#{V_BUNGA},'true',8,10)) || '%'
+				</if>
+				<!-- 불사접수 -->
+				<if test = "V_ACCEPT_GBN == &quot;3&quot; or V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null  or  V_ACCEPT_GBN == 0" >
+					<if test = "V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null or  V_ACCEPT_GBN == 0" >
+						UNION ALL
+					</if>
+					SELECT									
+						DET.TEMPLE_CD,						
+						DET.ACCEPT_SEQ,						
+						DET.SEQ,							
+						TO_CHAR(DET.BULSA_CD) AS PROD_CODE,	
+						RBM.BULSA_NM || ' - ' || RBDM.BULSA_DETAIL || ' (' || FN_GET_DATE_FORMAT(DET.ACPT_FDATE) ||')'  AS PROD_NAME,
+						RBM.BULSA_NM || ' - ' || RBDM.BULSA_DETAIL || ' (' || FN_GET_DATE_FORMAT(DET.ACPT_FDATE) ||')'  AS PROD_NAME_ORI,
+						DET.PAYMENT_PLAN_AMT,				
+						DET.REMARK,							
+						'' AS PRAY_GBN,						
+						'' AS FDATE,						
+						0 AS ACCEPT_GBN,					
+						0 AS JUNGAK_CD,						
+						0 AS LIGHT_NO,						
+						DET.ACPT_FDATE,						
+						DET.BULSA_SEQ,						
+						0 AS EVENT_CD,						
+						'' AS EVENT_DATE,					
+						0 AS WEPAECNT,						
+						'T' AS LIMIT_YN,					
+						0 AS BASE_AMT,						
+						'F' AS END_YN							
+					FROM REC_MASTER MST,					
+						REC_SUB SUB,						
+						REC_BULSA_DETAIL DET,				
+						REC_BULSA_DETAIL_MGT RBDM,			
+						REC_BULSA_MGT RBM					
+					WHERE MST.TEMPLE_CD = SUB.TEMPLE_CD		
+					AND MST.ACCEPT_SEQ = SUB.ACCEPT_SEQ		
+					AND SUB.TEMPLE_CD = DET.TEMPLE_CD		
+					AND SUB.ACCEPT_SEQ = DET.ACCEPT_SEQ		
+					AND SUB.SEQ = DET.SEQ					
+					AND DET.TEMPLE_CD = RBDM.TEMPLE_CD		
+					AND DET.BULSA_CD = RBDM.BULSA_CD		
+					AND DET.BULSA_SEQ = RBDM.BULSA_SEQ		
+					AND RBDM.TEMPLE_CD = RBM.TEMPLE_CD		
+					AND RBDM.BULSA_CD = RBM.BULSA_CD		
+					AND RBM.ACPT_FDATE = '-1'				
+					AND DET.DEL_YN = 'F'					
+					AND DET.TEMPLE_CD  = '${V_TEMPLE_CD}'	
+					AND MST.PROPOSAL_BUD_NO LIKE SUBSTR('${V_BUD_NO}',0,DECODE(#{V_BUNGA},'true',8,10)) || '%'
+				</if>	
+				<!-- 49 -->
+				<if test = "V_ACCEPT_GBN == &quot;5&quot; or V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null  or  V_ACCEPT_GBN == 0" >
+					<if test = "V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null or  V_ACCEPT_GBN == 0" >
+						UNION ALL
+					</if>
+					SELECT						
+						DET.TEMPLE_CD,			
+						DET.ACCEPT_SEQ,			
+						DET.SEQ,				
+						'' AS PROD_CODE,		
+						'' AS PROD_NAME,		
+						'' AS PROD_NAME_ORI,		
+						DET.PAYMENT_PLAN_AMT,	
+						DET.REMARK,				
+						'' AS PRAY_GBN,			
+						'' AS FDATE,			
+						0 AS ACCEPT_GBN,		
+						0 AS JUNGAK_CD,			
+						0 AS LIGHT_NO,			
+						'' AS ACPT_FDATE,		
+						0 AS BULSA_SEQ,			
+						0 AS EVENT_CD,			
+						'' AS EVENT_DATE,		
+						0 AS WEPAECNT,			
+						'T' AS LIMIT_YN,		
+						0 AS BASE_AMT,			
+						'F' AS END_YN							
+					FROM REC_FORTY_NINE_DETAIL DET,			
+						REC_MASTER MST,						
+						REC_SUB SUB							
+					WHERE DET.TEMPLE_CD  = SUB.TEMPLE_CD	
+					AND DET.ACCEPT_SEQ = SUB.ACCEPT_SEQ		
+					AND DET.SEQ        = SUB.SEQ			
+					AND DET.DEL_YN     = 'F'				
+					AND SUB.TEMPLE_CD  = MST.TEMPLE_CD		
+					AND SUB.ACCEPT_SEQ = MST.ACCEPT_SEQ		
+					AND DET.TEMPLE_CD  = '${V_TEMPLE_CD}'	
+					AND MST.PROPOSAL_BUD_NO LIKE SUBSTR('${V_BUD_NO}',0,DECODE(#{V_BUNGA},'true',8,10)) || '%'
+				</if>
+				<!-- 기제 -->
+				<if test = "V_ACCEPT_GBN == &quot;6&quot; or V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null  or  V_ACCEPT_GBN == 0" >
+					<if test = "V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null or  V_ACCEPT_GBN == 0" >
+						UNION ALL
+					</if>
+					SELECT						
+						DET.TEMPLE_CD,			
+						DET.ACCEPT_SEQ,			
+						DET.SEQ,				
+						'' AS PROD_CODE,		
+						'' AS PROD_NAME,		
+						'' AS PROD_NAME_ORI,		
+						DET.PAYMENT_PLAN_AMT,	
+						DET.REMARK,				
+						'' AS PRAY_GBN,			
+						'' AS FDATE,			
+						0 AS ACCEPT_GBN,		
+						0 AS JUNGAK_CD,			
+						0 AS LIGHT_NO,			
+						'' AS ACPT_FDATE,		
+						0 AS BULSA_SEQ,			
+						0 AS EVENT_CD,			
+						'' AS EVENT_DATE,		
+						0 AS WEPAECNT,			
+						'T' AS LIMIT_YN,		
+						0 AS BASE_AMT,			
+						'F' AS END_YN							
+					FROM REC_GIJE_DETAIL DET,				
+						REC_MASTER MST,						
+						REC_SUB SUB							
+					WHERE DET.TEMPLE_CD  = SUB.TEMPLE_CD	
+					AND DET.ACCEPT_SEQ = SUB.ACCEPT_SEQ		
+					AND DET.SEQ        = SUB.SEQ			
+					AND DET.DEL_YN     = 'F'				
+					AND SUB.TEMPLE_CD  = MST.TEMPLE_CD
+					AND SUB.ACCEPT_SEQ = MST.ACCEPT_SEQ
+					AND DET.TEMPLE_CD  = '${V_TEMPLE_CD}'
+					AND MST.PROPOSAL_BUD_NO LIKE SUBSTR('${V_BUD_NO}',0,DECODE(#{V_BUNGA},'true',8,10)) || '%'
+				</if>		
+				<!-- 천도제 -->
+				<if test = "V_ACCEPT_GBN == &quot;7&quot; or V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null  or  V_ACCEPT_GBN == 0" >
+					<if test = "V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null or  V_ACCEPT_GBN == 0" >
+						UNION ALL
+					</if>
+					SELECT						
+						DET.TEMPLE_CD,			
+						DET.ACCEPT_SEQ,			
+						DET.SEQ,				
+						'' AS PROD_CODE,		
+						'' AS PROD_NAME,		
+						'' AS PROD_NAME_ORI,		
+						DET.PAYMENT_PLAN_AMT,	
+						DET.REMARK,				
+						'' AS PRAY_GBN,			
+						'' AS FDATE,			
+						0 AS ACCEPT_GBN,		
+						0 AS JUNGAK_CD,			
+						0 AS LIGHT_NO,			
+						'' AS ACPT_FDATE,		
+						0 AS BULSA_SEQ,			
+						0 AS EVENT_CD,			
+						'' AS EVENT_DATE,		
+						0 AS WEPAECNT,			
+						'T' AS LIMIT_YN,		
+						0 AS BASE_AMT,			
+						'F' AS END_YN							
+					FROM REC_CHONDOJE_DETAIL DET,			
+						REC_MASTER MST,						
+						REC_SUB SUB							
+					WHERE DET.TEMPLE_CD  = SUB.TEMPLE_CD	
+					AND DET.ACCEPT_SEQ = SUB.ACCEPT_SEQ		
+					AND DET.SEQ        = SUB.SEQ			
+					AND DET.DEL_YN     = 'F'				
+					AND SUB.TEMPLE_CD  = MST.TEMPLE_CD
+					AND SUB.ACCEPT_SEQ = MST.ACCEPT_SEQ
+					AND DET.TEMPLE_CD  = '${V_TEMPLE_CD}'	
+					AND MST.PROPOSAL_BUD_NO LIKE SUBSTR('${V_BUD_NO}',0,DECODE(#{V_BUNGA},'true',8,10)) || '%'
+				</if>
+				<!-- 위패접수 -->
+				<if test = "V_ACCEPT_GBN == &quot;8&quot; or V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null  or  V_ACCEPT_GBN == 0" >
+					<if test = "V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null or  V_ACCEPT_GBN == 0" >
+						UNION ALL
+					</if>
+					SELECT									
+						DET.TEMPLE_CD,						
+						DET.ACCEPT_SEQ,						
+						DET.SEQ,							
+						TO_CHAR(DET.EVENT_CD) AS PROD_CODE,	
+						MGT.EVENT_NAME || ' (' || FN_GET_DATE_FORMAT(DET.EVENT_DATE) || ')' AS PROD_NAME,
+						MGT.EVENT_NAME  AS PROD_NAME_ORI,
+						DET.PAYMENT_PLAN_AMT,				
+						DET.MEMO AS REMARK,					
+						'' AS PRAY_GBN,						
+						'' AS FDATE,						
+						0 AS ACCEPT_GBN,					
+						0 AS JUNGAK_CD,						
+						0 AS LIGHT_NO,						
+						'' AS ACPT_FDATE,					
+						0 AS BULSA_SEQ,						
+						DET.EVENT_CD,						
+						DET.EVENT_DATE,						
+						DET.WEPAECNT,						
+						'T' AS LIMIT_YN,					
+						0 AS BASE_AMT,						
+						DET.CLOSE_YN AS END_YN		
+					FROM REC_WEPAE_CHONHON_DETAIL DET,		
+						REC_WEPAE_CHONHON_MGT MGT,			
+						REC_MASTER MST,						
+						REC_SUB SUB							
+					WHERE DET.TEMPLE_CD  = MGT.TEMPLE_CD	
+					AND DET.EVENT_CD   = MGT.EVENT_CD		
+					AND DET.TEMPLE_CD  = SUB.TEMPLE_CD		
+					AND DET.ACCEPT_SEQ = SUB.ACCEPT_SEQ		
+					AND DET.SEQ        = SUB.SEQ			
+					AND DET.DEL_YN     = 'F'				
+					AND SUB.TEMPLE_CD  = MST.TEMPLE_CD		
+					AND SUB.ACCEPT_SEQ = MST.ACCEPT_SEQ		
+					AND DET.TEMPLE_CD  = '${V_TEMPLE_CD}'	
+					AND MST.PROPOSAL_BUD_NO LIKE SUBSTR('${V_BUD_NO}',0,DECODE(#{V_BUNGA},'true',8,10)) || '%'
+				</if>
+				<!-- 후원접수 -->
+				<if test = "V_ACCEPT_GBN == &quot;9&quot; or V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null  or  V_ACCEPT_GBN == 0" >
+					<if test = "V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null or  V_ACCEPT_GBN == 0" >
+						UNION ALL
+					</if>
+					SELECT										
+						DET.TEMPLE_CD,							
+						DET.ACCEPT_SEQ,							
+						DET.SEQ,								
+						TO_CHAR(DET.SUPPORT_CODE) AS PROD_CODE,	
+						MGT.SUPPORT_NM || ' - ' ||FN_GET_NM ('BUD', DET.TEMPLE_CD, DET.DONGCHAM_BUD_NO) AS PROD_NAME,	
+						MGT.SUPPORT_NM || ' - ' ||FN_GET_NM ('BUD', DET.TEMPLE_CD, DET.DONGCHAM_BUD_NO) AS PROD_NAME_ORI,	
+						DET.RECEIPT_AMT AS PAYMENT_PLAN_AMT,	
+						DET.REMARK,								
+						'' AS PRAY_GBN,							
+						'' AS FDATE,							
+						0  AS ACCEPT_GBN,						
+						0  AS JUNGAK_CD,						
+						0  AS LIGHT_NO,							
+						'' AS ACPT_FDATE,						
+						0  AS BULSA_SEQ,						
+						0  AS EVENT_CD,							
+						'' AS EVENT_DATE,						
+						0  AS WEPAECNT,							
+					  DECODE(NVL(DET.SUPPORT_PERIOD,0),0,'F','T') AS LIMIT_YN,  
+						DET.PAYMENT_AMT AS BASE_AMT,				
+						SUPPORT_END_YN AS END_YN							
+					FROM REC_SUPPORT_DETAIL DET,				
+						REC_SUPPORT_MGT MGT,					
+						REC_MASTER MST,							
+						REC_SUB SUB								
+					WHERE DET.TEMPLE_CD    = MGT.TEMPLE_CD		
+					AND DET.SUPPORT_CODE = MGT.SUPPORT_CODE		
+					AND DET.TEMPLE_CD  = SUB.TEMPLE_CD			
+					AND DET.ACCEPT_SEQ = SUB.ACCEPT_SEQ			
+					AND DET.SEQ        = SUB.SEQ				
+					AND DET.DEL_YN     = 'F'					
+					AND SUB.TEMPLE_CD  = MST.TEMPLE_CD			
+					AND SUB.ACCEPT_SEQ = MST.ACCEPT_SEQ			
+					AND DET.TEMPLE_CD  = '${V_TEMPLE_CD}'		
+					AND MST.PROPOSAL_BUD_NO LIKE SUBSTR('${V_BUD_NO}',0,DECODE(#{V_BUNGA},'true',8,10)) || '%'
+				</if>
+				<!-- 템플수련 -->
+				<if test = "V_ACCEPT_GBN == &quot;11&quot; or V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null  or  V_ACCEPT_GBN == 0" >
+					<if test = "V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null or  V_ACCEPT_GBN == 0" >
+						UNION ALL
+					</if>
+					SELECT											
+						DET.TEMPLE_CD,								
+						DET.ACCEPT_SEQ,								
+						DET.SEQ,									
+						TO_CHAR(DET.TEMPLE_STAY_CD) AS PROD_CODE,	
+						MGT.TEMPLE_STAY_NM || ' (' || FN_GET_DATE_FORMAT(DET.FDATE) || ')' AS PROD_NAME,
+						MGT.TEMPLE_STAY_NM || ' (' || FN_GET_DATE_FORMAT(DET.FDATE) || ')' AS PROD_NAME_ORI,
+						DET.PAYMENT_PLAN_AMT,						
+						DET.REMARK,									
+						'' AS PRAY_GBN,								
+						DET.FDATE,									
+						0 AS ACCEPT_GBN,							
+						0 AS JUNGAK_CD,								
+						0 AS LIGHT_NO,								
+						'' AS ACPT_FDATE,							
+						0 AS BULSA_SEQ,								
+						0 AS EVENT_CD,								
+						'' AS EVENT_DATE,							
+						0 AS WEPAECNT,								
+						'T' AS LIMIT_YN,							
+						0 AS BASE_AMT,								
+						'F' AS END_YN							
+					FROM REC_TEMPLE_STAY_DETAIL DET,				
+						REC_MASTER MST,								
+						REC_SUB SUB,								
+						REC_TEMPLE_STAY_MGT MGT						
+					WHERE DET.TEMPLE_CD  = MGT.TEMPLE_CD			
+					AND DET.TEMPLE_STAY_CD   = MGT.TEMPLE_STAY_CD	
+					AND DET.FDATE = MGT.FDATE						
+					AND DET.TEMPLE_CD  = SUB.TEMPLE_CD				
+					AND DET.ACCEPT_SEQ = SUB.ACCEPT_SEQ				
+					AND DET.SEQ        = SUB.SEQ					
+					AND DET.DEL_YN     = 'F'						
+					AND SUB.TEMPLE_CD  = MST.TEMPLE_CD				
+					AND SUB.ACCEPT_SEQ = MST.ACCEPT_SEQ				
+					AND DET.TEMPLE_CD  = '${V_TEMPLE_CD}'				
+					AND MST.PROPOSAL_BUD_NO LIKE SUBSTR('${V_BUD_NO}'	,0,DECODE(#{V_BUNGA},'true',8,10)) || '%'
+				</if>
+				<!-- 원불조회 -->
+				<if test = "V_ACCEPT_GBN == &quot;12&quot; or V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null  or  V_ACCEPT_GBN == 0" >
+					<if test = "V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null or  V_ACCEPT_GBN == 0" >
+						UNION ALL
+					</if>
+					SELECT								
+						DET.TEMPLE_CD,					
+						DET.ACCEPT_SEQ,					
+						DET.SEQ,						
+						DET.WONBUL_GBN AS PROD_CODE,	
+						MGT.LIGHT_NM AS PROD_NAME,		
+						MGT.LIGHT_NM AS PROD_NAME_ORI,		
+						DET.PAYMENT_PLAN_AMT,			
+						DET.REMARK,						
+						'' AS PRAY_GBN,					
+						'' AS FDATE,					
+						DET.ACCEPT_GBN,					
+						DET.JUNGAK_CD,					
+						DET.LIGHT_NO,					
+						'' AS ACPT_FDATE,				
+						0 AS BULSA_SEQ,					
+						0 AS EVENT_CD,					
+						'' AS EVENT_DATE,				
+						0 AS WEPAECNT,					
+						'T' AS LIMIT_YN,				
+						0 AS BASE_AMT,					
+						'F' AS END_YN							
+					FROM REC_WONBUL_DETAIL DET,			
+						REC_DEUNG_CLASS_MGT MGT,		
+						REC_MASTER MST,					
+						REC_SUB SUB						
+					WHERE DET.TEMPLE_CD  = MGT.TEMPLE_CD	
+					AND DET.WONBUL_GBN= MGT.LIGHT_CODE		
+					AND DET.ACCEPT_GBN = MGT.ACCEPT_GBN		
+					AND DET.TEMPLE_CD  = SUB.TEMPLE_CD		
+					AND DET.ACCEPT_SEQ = SUB.ACCEPT_SEQ		
+					AND DET.SEQ        = SUB.SEQ			
+					AND DET.DEL_YN     = 'F'				
+					AND SUB.TEMPLE_CD  = MST.TEMPLE_CD		
+					AND SUB.ACCEPT_SEQ = MST.ACCEPT_SEQ		
+					AND DET.TEMPLE_CD  = '${V_TEMPLE_CD}'	
+					AND MST.PROPOSAL_BUD_NO LIKE SUBSTR('${V_BUD_NO}',0,DECODE(#{V_BUNGA},'true',8,10)) || '%'
+				</if>
+				<if test = "V_ACCEPT_GBN == &quot;13&quot; or V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null  or  V_ACCEPT_GBN == 0" >
+					<if test = "V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null or  V_ACCEPT_GBN == 0" >
+						UNION ALL
+					</if>
+					SELECT										
+						DET.TEMPLE_CD,							
+						DET.ACCEPT_SEQ,							
+						DET.SEQ,								
+						TO_CHAR(DET.PRAY_CODE) AS PROD_CODE,	
+						MGT.PRAY_NM AS PROD_NAME,				
+						MGT.PRAY_NM AS PROD_NAME_ORI,
+						(CASE 
+							WHEN DET.BASE_AMT = 0 THEN MGT.AMOUNT
+							ELSE NVL(DET.BASE_AMT , MGT.AMOUNT)
+						END ) as PAYMENT_PLAN_AMT,										
+						DET.REMARK,								
+						'' AS PRAY_GBN,							
+						'' AS FDATE,							
+						0 AS ACCEPT_GBN,						
+						0 AS JUNGAK_CD,							
+						0 AS LIGHT_NO,							
+						'' AS ACPT_FDATE,						
+						0 AS BULSA_SEQ,							
+						0 AS EVENT_CD,							
+						'' AS EVENT_DATE,						
+						0 AS WEPAECNT,							
+						'F' AS LIMIT_YN,						
+						0 AS BASE_AMT,							
+						DET.END_YN							
+					FROM REC_ALWAYS_PRAY_DETAIL DET,			
+						REC_ALWAYS_PRAY_MGT MGT,				
+						REC_MASTER MST,							
+						REC_SUB SUB								
+					WHERE DET.TEMPLE_CD  = MGT.TEMPLE_CD		
+					AND DET.PRAY_CODE  = MGT.PRAY_CODE			
+					AND DET.TEMPLE_CD  = SUB.TEMPLE_CD			
+					AND DET.ACCEPT_SEQ = SUB.ACCEPT_SEQ			
+					AND DET.SEQ        = SUB.SEQ				
+					AND DET.DEL_YN     = 'F'														
+					AND SUB.TEMPLE_CD  = MST.TEMPLE_CD			
+					AND SUB.ACCEPT_SEQ = MST.ACCEPT_SEQ			
+					AND DET.TEMPLE_CD  = '${V_TEMPLE_CD}'	
+					AND MST.PROPOSAL_BUD_NO LIKE SUBSTR('${V_BUD_NO}',0,DECODE(#{V_BUNGA},'true',8,10)) || '%'	
+				</if>	
+				<!-- 영탑 -->
+				<if test = "V_ACCEPT_GBN == &quot;14&quot; or V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null  or  V_ACCEPT_GBN == 0" >
+					<if test = "V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null or  V_ACCEPT_GBN == 0" >
+						UNION ALL
+					</if>
+					SELECT                  
+					  DET.TEMPLE_CD,            
+					  DET.ACCEPT_SEQ,           
+					  DET.SEQ,              
+					  TO_CHAR(DET.JUNGAK_CD) AS PROD_CODE,   
+					  MGT.LIGHT_NM||' ('||JUN.JUNGAK_NM||'-'||DET.LIGHT_NO||')' AS PROD_NAME,      
+					  MGT.LIGHT_NM||' ('||JUN.JUNGAK_NM||'-'||DET.LIGHT_NO||')' AS PROD_NAME_ORI,      
+					  DET.PAYMENT_PLAN_AMT,       
+					  DET.REMARK,             
+					  '' AS PRAY_GBN,           
+					  '' AS FDATE,            
+					  DET.ACCEPT_GBN,           
+					  DET.JUNGAK_CD,            
+					  DET.LIGHT_NO,           
+					  '' AS ACPT_FDATE,         
+					  0 AS BULSA_SEQ,           
+					  0 AS EVENT_CD,            
+					  '' AS EVENT_DATE,         
+					  0 AS WEPAECNT,   
+					  'T' AS LIMIT_YN,          
+					  0 AS BASE_AMT,           
+						DET.CLOSE_YN AS END_YN										
+					FROM  REC_MASTER MST,         
+					  REC_SUB SUB,            
+					  REC_YOUNGTOP_DETAIL DET,     
+					  REC_DEUNG_CLASS_MGT MGT,    
+					  ASP_JUNGAK_MGT JUN     
+					WHERE MST.TEMPLE_CD = SUB.TEMPLE_CD   
+					AND MST.ACCEPT_SEQ = SUB.ACCEPT_SEQ   
+					AND SUB.TEMPLE_CD = DET.TEMPLE_CD   
+					AND SUB.ACCEPT_SEQ = DET.ACCEPT_SEQ   
+					AND SUB.SEQ = DET.SEQ         
+					AND MGT.TEMPLE_CD = DET.TEMPLE_CD   
+					AND MGT.ACCEPT_GBN = DET.ACCEPT_GBN   
+					AND JUN.TEMPLE_CD = DET.TEMPLE_CD   
+					AND JUN.ACCEPT_GBN = DET.ACCEPT_GBN   
+					AND JUN.JUNGAK_CD = DET.JUNGAK_CD   
+					AND DET.DEL_YN     = 'F'        
+					AND DET.TEMPLE_CD  = '${V_TEMPLE_CD}'  
+					AND MST.PROPOSAL_BUD_NO LIKE SUBSTR(#{V_BUD_NO},0,DECODE(#{V_BUNGA},'true',8,10)) || '%'  
+				</if>
+				<!-- 영탑 -->
+				<if test = "V_ACCEPT_GBN == &quot;15&quot; or V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null  or  V_ACCEPT_GBN == 0" >
+					<if test = "V_ACCEPT_GBN == '' or V_ACCEPT_GBN == null or V_ACCEPT_GBN == 0" >
+						UNION ALL
+					</if>
+					SELECT										
+						DET.TEMPLE_CD,							
+						DET.ACCEPT_SEQ,							
+						DET.SEQ,								
+						TO_CHAR(DET.MANAGE_CODE) AS PROD_CODE,	
+						MGT.MANAGE_NM  AS PROD_NAME,	
+						MGT.MANAGE_NM  AS PROD_NAME_ORI,	
+						DET.RECEIPT_AMT AS PAYMENT_PLAN_AMT,	
+						DET.REMARK,								
+						'' AS PRAY_GBN,							
+						'' AS FDATE,							
+						0  AS ACCEPT_GBN,						
+						0  AS JUNGAK_CD,						
+						0  AS LIGHT_NO,							
+						'' AS ACPT_FDATE,						
+						0  AS BULSA_SEQ,						
+						0  AS EVENT_CD,							
+						'' AS EVENT_DATE,						
+						0  AS WEPAECNT,							
+					  DECODE(NVL(DET.MANAGE_PERIOD,0),0,'F','T') AS LIMIT_YN,  
+						DET.PAYMENT_AMT AS BASE_AMT,				
+						DET.MANAGE_END_YN AS END_YN							
+					FROM REC_MANAGE_DETAIL DET,				
+						REC_MANAGE_MGT MGT,					
+						REC_MASTER MST,							
+						REC_SUB SUB								
+					WHERE DET.TEMPLE_CD = MGT.TEMPLE_CD		
+					AND DET.MANAGE_CODE = MGT.MANAGE_CODE		
+					AND DET.TEMPLE_CD   = SUB.TEMPLE_CD			
+					AND DET.ACCEPT_SEQ  = SUB.ACCEPT_SEQ			
+					AND DET.SEQ         = SUB.SEQ				
+					AND DET.DEL_YN      = 'F'					
+					AND SUB.TEMPLE_CD   = MST.TEMPLE_CD			
+					AND SUB.ACCEPT_SEQ  = MST.ACCEPT_SEQ			
+					AND DET.TEMPLE_CD   = '${V_TEMPLE_CD}' 		
+					AND MST.PROPOSAL_BUD_NO LIKE SUBSTR('${V_BUD_NO}',0,DECODE(#{V_BUNGA},'true',8,10)) || '%'
+				</if>
+				
+				) DET	
+				WHERE MST.TEMPLE_CD     = SUB.TEMPLE_CD		
+				AND MST.ACCEPT_SEQ      = SUB.ACCEPT_SEQ	
+				AND MST.TEMPLE_CD       = CAD.TEMPLE_CD(+)	
+				AND MST.PROPOSAL_BUD_NO = CAD.BUD_NO(+)		
+				AND MST.TEMPLE_CD       = WHA.TEMPLE_CD(+)	
+				AND MST.WHAJUBOSAL      = WHA.BUD_NO(+)		
+				AND SUB.TEMPLE_CD       = HIS.TEMPLE_CD		
+				AND SUB.ACCEPT_SEQ      = HIS.ACCEPT_SEQ	
+				AND SUB.SEQ             = HIS.SEQ			
+				AND SUB.TEMPLE_CD       = DET.TEMPLE_CD		
+				AND SUB.ACCEPT_SEQ      = DET.ACCEPT_SEQ	
+				AND SUB.SEQ             = DET.SEQ			
+				AND SUB.DEL_YN          = 'F'				
+				AND COD.GROUP_CD(+)     = 'REC'				
+				AND SUB.ACCEPT_GBN      = COD.CODE(+)		
+				AND PAY.GROUP_CD(+)     = 'PAYGBN'			
+				AND MST.PAYMENT_GBN     = PAY.CODE(+)		
+				AND APP.GROUP_CD(+)     = 'APPROV'			
+				AND MST.APPROVAL_GBN    = APP.CODE(+)		
+				AND BNK.GROUP_CD(+)     = 'BANK'			
+				AND MST.BANK_NO         = BNK.CODE(+)		
+				AND VNK.GROUP_CD(+)     = 'BANK'			
+				AND MST.VIRTUAL_BANK_NO = VNK.CODE(+)		
+			GROUP BY MST.TEMPLE_CD, MST.ACCEPT_SEQ, MST.ACCEPT_DATE, SUB.SEQ, SUB.ACCEPT_GBN, COD.NAME,						
+				MST.PROPOSAL_BUD_NO, CAD.NAME_KOR, PROD_CODE, PROD_NAME, PROD_NAME_ORI, PAYMENT_PLAN_AMT,									
+				MST.WHAJUBOSAL, WHA.NAME_KOR, MST.KWONSUN_NO, MST.PAYMENT_GBN, PAY.NAME, MST.TOT_PAYMENT_PLAN_AMT,			
+				MST.SMS_YN, MST.APPROVAL_GBN, APP.NAME, MST.BANK_NO, BNK.NAME, MST.ACCOUNT_NUMBER,							
+				MST.VIRTUAL_BANK_NO, MST.VIRTUAL_ACCOUNT_NUMBER, VNK.NAME, MST.JUMIN_NO, MST.CLOSE_YN,						
+				MST.CLOSE_DATE, MST.CLOSE_USER, MST.DEL_YN, MST.CRT_USER, MST.CRT_DATE, MST.UPT_DATE,						
+				MST.UPT_USER, MST.REMOTE, MST.MEMO, DET.REMARK, DET.PRAY_GBN, DET.FDATE, DET.JUNGAK_CD, DET.LIGHT_NO,		
+				DET.ACPT_FDATE, DET.BULSA_SEQ, DET.EVENT_CD, DET.EVENT_DATE, DET.WEPAECNT, CAD.BUD_CODE, CAD.MOBILE_TELNO1,	
+				CAD.MOBILE_TELNO2, CAD.MOBILE_TELNO3, DET.LIMIT_YN, DET.BASE_AMT, MST.ACCOUNT_SEQ, MST.CMS_TRADE_CD, END_YN			
+			ORDER BY MST.ACCEPT_SEQ DESC, SUB.SEQ
+	</select>
+	
+	
+	
+
+</mapper>

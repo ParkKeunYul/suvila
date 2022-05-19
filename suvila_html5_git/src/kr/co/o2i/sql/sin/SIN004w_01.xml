@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SIN004W_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="CHECK_P" column="CHECK_P"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+
+	
+	
+	<select id="SELECT_SIN_BUDDHISM_INFO" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT A.TEMPLE_CD
+			  ,A.BUD_NO
+			  ,B.NAME_KOR
+			  ,B.SACRED_KOR
+			  ,B.SACRED_HAN
+			  ,B.SACRED_KOR AS SACRED_KOR_ORG
+			  ,B.SACRED_HAN AS SACRED_HAN_ORG
+			  ,A.CONF_CODE
+			  ,A.PREC_DATE
+			  ,A.GAESA
+			  ,A.MEMO
+			  ,A.CRT_USER
+			  ,A.CRT_DATE
+			  ,A.UPT_DATE
+			  ,A.UPT_USER
+			  ,A.REMOTE
+		  FROM SIN_BUDDHISM_INFO A
+		  	  ,SIN_CARD_MASTER B
+		 WHERE A.TEMPLE_CD  = B.TEMPLE_CD
+		   AND A.BUD_NO     = B.BUD_NO
+		   AND A.TEMPLE_CD  = #{V_TEMPLE_CD}
+		<if test='V_BUD_NO != "" and V_BUD_NO != null  '>
+		   AND A.BUD_NO = #{V_BUD_NO}
+		</if>
+		<if test='V_CONF_CODE != "" and V_CONF_CODE != null  and V_CONF_CODE != 0'>
+		  AND  A.CONF_CODE = #{V_CONF_CODE}
+		</if>                  
+	</select>
+	
+	
+	<insert id="INSERT_SIN_BUDDHISM_INFO" parameterType="java.util.Map">
+		INSERT INTO SIN_BUDDHISM_INFO(
+			 TEMPLE_CD
+			,BUD_NO
+			,CONF_CODE
+			,PREC_DATE
+			,GAESA
+			,MEMO
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+		) VALUES (
+			 #{V_TEMPLE_CD}
+			,#{BUD_NO}
+			,#{CONF_CODE}
+			,#{PREC_DATE}
+			,#{GAESA   ,jdbcType=VARCHAR}
+			,#{MEMO    ,jdbcType=VARCHAR}
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_REMOTE}
+		)
+	</insert>
+	
+	<update id="UPDATE_SIN_BUDDHISM_INFO" parameterType="java.util.Map">
+		UPDATE SIN_BUDDHISM_INFO
+		   SET CONF_CODE = #{CONF_CODE}
+		   	  ,PREC_DATE = #{PREC_DATE}
+		   	  ,GAESA     = #{GAESA}
+		   	  ,MEMO      = #{MEMO}
+		   	  ,UPT_USER  = #{V_USER_ID}
+		   	  ,UPT_DATE  = SYSDATE
+		   	  ,REMOTE    = #{V_REMOTE}
+		WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		  AND BUD_NO    = #{BUD_NO}
+		  AND CONF_CODE = #{CONF_CODE}
+	</update>
+	
+	<delete id="DELETE_SIN_BUDDHISM_INFO"  parameterType="java.util.Map">
+		DELETE FROM SIN_BUDDHISM_INFO
+	     WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND BUD_NO    = #{BUD_NO}
+		   AND CONF_CODE = #{CONF_CODE}
+	</delete>
+	
+	<update id="UPDATE_SIN_CARD_MASTER" parameterType="java.util.Map">
+		UPDATE SIN_CARD_MASTER
+		   SET SACRED_KOR = #{SACRED_KOR}
+		   	  ,SACRED_HAN = #{SACRED_HAN}
+		   	  ,UPT_USER   = #{V_USER_ID}
+		   	  ,UPT_DATE   = SYSDATE
+		   	  ,REMOTE     = #{V_REMOTE}
+		 WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND BUD_NO     = #{BUD_NO}
+	</update>
+	
+</mapper>

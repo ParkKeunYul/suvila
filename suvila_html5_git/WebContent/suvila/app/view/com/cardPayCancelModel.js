@@ -1,0 +1,53 @@
+Ext.define('ExFrm.view.com.cardPayCancelModel', {
+    extend:'Ext.app.ViewModel', 
+    alias: 'viewmodel.cardPayCancel', 
+    stores:{ 
+        ds_main:{
+        	fields:['field1'],
+            proxy:{
+                type:'ajax',
+                url:'/asp/PgCard/selectCardAuth.suvila',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list',
+                }				
+            }			
+            ,autoLoad:false      
+        },
+        ds_acceptGbn:{
+        	fields:['field1'],
+            proxy:{
+                type:'ajax',
+                url:'/asp/CodeSearch/ComCodeAll.suvila?group_cd=REC',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list',
+                }				
+            }			
+            ,autoLoad:false      
+        },
+        ds_card_detail :{
+        	fields:['field1'],
+        	proxy:{
+                type:'ajax',
+                url:'/asp/PgCard/selectCardDetail.suvila',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'                    
+                }
+            },
+            autoLoad:false
+        },
+        ds_recAmt :{
+        	fields:['field1'],
+        	proxy:{
+        		 type:'ajax',
+                 reader:{
+                     type:'json',
+                     rootProperty:'data.list'                    
+                 }
+            },
+            autoLoad:false
+        },
+    }
+});

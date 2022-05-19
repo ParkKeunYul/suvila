@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SIN011W_02DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="CONTENT"    column="CONTENT"  javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		 <result  property="SEL_YN" column="SEL_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+	</resultMap>
+
+		
+	
+	<insert id="INSERT_CARD_SMS_PAY" parameterType="java.util.Map">
+		INSERT INTO CARDPAY_SMS_HIS(
+			 TEMPLE_CD
+			,BUD_NO
+			,PRAY_NM
+			,AMOUNT
+			,MOID
+			,SID
+			,TRDTM
+			,GUBUN
+			,REQDT
+			,AUTHCL
+			,REQID
+			,USRID
+			,MID
+			,ENCKEY
+			,TYPE
+			,ORDNM
+			,ORDEMAIL
+			,ORDHPNO
+			,SRCNM
+			,PAYSTATUS
+			,SENDDT
+			,PAYDT
+			,TID
+			,DATACNT
+			,CRT_USER
+		) VALUES (
+			 #{TEMPLE_CD}
+			,#{BUD_NO}
+			,#{V_PRAY_NM}
+			,#{V_AMOUNT}
+			,#{V_MOID}
+			,#{V_SID}
+			,#{V_TRDTM}
+			,'S'
+			,#{V_REQDT}
+			,#{V_AUTHCL}
+			,#{V_REQID}
+			,#{V_USRID}
+			,#{V_MID}
+			,#{V_ENCKEY}
+			,'0'
+			,#{NAME_KOR}
+			,#{V_ORDEMAIL}
+			,#{MOBILE_TELNO_M}
+			,''
+			,'미완료'
+			,''
+			,''
+			,''
+			,#{V_DATACNT}
+			,#{V_USER_ID}
+		)
+	</insert>
+	
+	
+</mapper>

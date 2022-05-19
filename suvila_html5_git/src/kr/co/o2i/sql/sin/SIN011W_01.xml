@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SIN011W_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="CONTENT"    column="CONTENT"  javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		 <result  property="SEL_YN" column="SEL_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+	</resultMap>
+
+	<select id="SELECT_INFO"  parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT 'F' AS SEL_YN
+			  ,MST.TEMPLE_CD
+			  ,MST.BUD_NO
+			  ,MST.BUD_CODE
+			  ,SUBSTR(MST.BUD_CODE,4,5) AS FAM_CODE
+			  ,MST.DAEJU_BUD_NO
+			  ,FN_GET_NM('BUD',MST.TEMPLE_CD,MST.DAEJU_BUD_NO) AS DAEJU_NAME_KOR
+			  ,MST.SORT_SEQ
+			  ,MST.NAME_KOR
+			  ,MST.SACRED_KOR
+			  ,MST.SACRED_HAN
+			  ,MST.SINDO_GBN
+			  ,MST.TELNO1
+			  ,MST.TELNO2
+			  ,MST.TELNO3
+			  ,MST.TELNO1 || MST.TELNO2 || MST.TELNO3 AS TELNO
+			  ,MST.TELNO1 || DECODE(MST.TELNO1,'','','-') || MST.TELNO2 || DECODE(MST.TELNO2,'','','-') || MST.TELNO3 AS TELNO_M
+			  ,MST.MOBILE_TELNO1
+			  ,MST.MOBILE_TELNO2
+			  ,MST.MOBILE_TELNO3
+			  ,MST.MOBILE_TELNO1 || MST.MOBILE_TELNO2 || MST.MOBILE_TELNO3 AS MOBILE_TELNO
+			  ,MST.MOBILE_TELNO1 || DECODE(MST.MOBILE_TELNO1,'','','-') || MST.MOBILE_TELNO2 || DECODE(MST.MOBILE_TELNO2,'','','-') || MST.MOBILE_TELNO3 AS MOBILE_TELNO_M
+			  ,MST.ZIP_CD
+			  ,MST.ADDR1
+			  ,MST.ADDR2
+			  ,MST.ADDR1 || ADDR2 AS ADDR
+		  FROM SIN_CARD_MASTER MST
+		 WHERE MST.TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND MST.DEL_YN 			= 'F'		 
+		   AND MST.BUD_NO NOT IN (SELECT BUD_NO 
+		   							FROM SIN_DEATH_INFO 
+		   						   WHERE TEMPLE_CD = #{V_TEMPLE_CD})
+		   <if test='V_ORG_CD == "0" and V_CLASS_CD == "0"'>
+		   		AND MST.SMS_GROUP_TRANS  = 'T'
+		   </if>
+		   <if test='V_SEARCH_WORD != "" and V_SEARCH_WORD != null  '>
+		   	   <choose>
+			   		<when test='V_SEARCH_GBN == "BUD_NO"'>
+			   			AND BUD_NO LIKE '%'||#{V_SEARCH_WORD}||'%'
+			   		</when>
+			   		<when test='V_SEARCH_GBN == "NAME_KOR"'>
+			   			AND NAME_KOR LIKE '%'||#{V_SEARCH_WORD}||'%'
+			   		</when>
+			   		<when test='V_SEARCH_GBN == "SACRED_KOR"'>
+			   			AND SACRED_KOR LIKE '%'||#{V_SEARCH_WORD}||'%'
+			   		</when>
+			   		<when test='V_SEARCH_GBN == "MOBILE_TELNO"'>
+			   			AND MOBILE_TELNO1 || MOBILE_TELNO2 || MOBILE_TELNO3 LIKE '%'||REPLACE(#{V_SEARCH_WORD},'-','')||'%'
+			   		</when>
+			   		<when test='V_SEARCH_GBN == "TELNO"'>
+			   			AND TELNO1 || TELNO2 || TELNO3 LIKE '%'||REPLACE(#{V_SEARCH_WORD},'-','')||'%'
+			   		</when>
+			   </choose>
+		   </if>
+		   <if test='V_CLASS_CD != "" and V_CLASS_CD != null and V_CLASS_CD !="0" '>
+		   		AND BUD_NO IN (SELECT BUD_NO FROM SIN_CLASS_INFO WHERE TEMPLE_CD = #{V_TEMPLE_CD} AND CLASS_CD = #{V_CLASS_CD})
+		   </if>
+		   <if test='V_ORG_CD != "" and V_ORG_CD != null and V_ORG_CD !="0" '>
+		   		AND BUD_NO IN (SELECT BUD_NO FROM SIN_GROUP_HIS WHERE TEMPLE_CD = #{V_TEMPLE_CD} AND ORG_CD = #{V_ORG_CD})
+		   </if>
+		   
+		   <if test='V_BUD_NO != "" and V_BUD_NO != null  '>
+		   		AND ( BUD_NO IN ( ${V_BUD_NO} ) 
+		   </if>
+		   
+		   <if test='V_BUD_NO2 != "" and V_BUD_NO2 != null  '>
+		   		OR BUD_NO IN ( ${V_BUD_NO2} ) 
+		   </if>
+		   
+		   <if test='V_BUD_NO3 != "" and V_BUD_NO3 != null  '>
+		   		OR BUD_NO IN ( ${V_BUD_NO3} ) 
+		   </if>
+		   
+		   <if test='V_BUD_NO4 != "" and V_BUD_NO4 != null  '>
+		   		OR BUD_NO IN ( ${V_BUD_NO4} ) 
+		   </if>
+		   
+		   <if test='V_BUD_NO5 != "" and V_BUD_NO5 != null  '>
+		   		OR BUD_NO IN ( ${V_BUD_NO5} ) 
+		   </if>
+		   
+		   <if test='V_BUD_NO != "" and V_BUD_NO != null  '>
+		   		)
+		   </if>
+		ORDER BY BUD_NO
+	</select>
+
+	<select id="SELECT_SMS_DOC"  parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		 SELECT TEMPLE_CD
+		       ,DOC_NO
+		       ,DOC_TEXT
+		       ,CRT_USER
+		       ,CRT_DATE
+		       ,UPT_USER
+		       ,UPT_DATE
+		  FROM ASP_TEMPLE_SMS_DOC
+		 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		 ORDER BY DOC_NO DESC
+	</select>
+	
+	<insert id="INSERT_SMS_DOC" parameterType="java.util.Map">
+		INSERT INTO ASP_TEMPLE_SMS_DOC(
+			 TEMPLE_CD
+			,DOC_NO
+			,DOC_TEXT
+			,CRT_USER
+			,CRT_DATE
+		) VALUES (
+			 #{TEMPLE_CD}
+			,(SELECT NVL(MAX(DOC_NO)+1,1) 
+				FROM ASP_TEMPLE_SMS_DOC 
+			   WHERE TEMPLE_CD = #{TEMPLE_CD})
+			,#{DOC_TEXT}
+			,#{CRT_USER}
+			,SYSDATE
+		)
+	</insert>
+	
+	<update id="UPDATE_SMS_DOC"  parameterType="java.util.Map">
+		UPDATE ASP_TEMPLE_SMS_DOC
+		   SET DOC_TEXT  = #{DOC_TEXT}
+		      ,UPT_USER  = #{UPT_USER}
+		      ,UPT_DATE  = SYSDATE
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND DOC_NO    = #{DOC_NO}
+	</update>
+	
+	<delete id="DELETE_SMS_DOC" parameterType="java.util.Map">
+		DELETE ASP_TEMPLE_SMS_DOC
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND DOC_NO    = #{DOC_NO}
+	</delete>
+	
+	<insert id="LMS" parameterType="java.util.Map">
+		INSERT INTO SMSKT.SDK_MMS_SEND ( 
+            MSG_ID
+          , NOW_DATE
+          , USER_ID
+          , CDR_ID
+          , SCHEDULE_TYPE
+          , MMS_MSG
+          , CALLBACK
+          , RESERVED1
+          , RESERVED2
+          , RESERVED3
+          , RESERVED4
+          , RESERVED5
+          , RESERVED6
+          , DEST_INFO
+          , SEND_DATE 
+          , SUBJECT) 
+       (SELECT SMSKT.SDK_MMS_SEQ.nextval
+       	      ,TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS')
+       	      ,#{SMS_USER_ID}
+       	      ,#{GROUPSMS}
+       	      ,#{V_TR_MSGTYPE}
+       	      ,REPLACE(REPLACE(#{V_TR_MESSAGE},'{사찰명}',#{V_TEMPLE_NM}),'{이름}',NAME_KOR)
+       	      ,#{V_TR_CALLBACK}
+       	      ,TEMPLE_CD
+       	      ,BUD_NO
+       	      ,#{RESERVED3}
+       	      ,#{RESERVED4}
+       	      ,#{V_USER_ID}
+       	      ,''
+       	      ,NVL(NAME_KOR,' ')||'^'||MOBILE_TELNO1||MOBILE_TELNO2||MOBILE_TELNO3
+       	      ,DECODE(#{V_TR_MSGTYPE},'1',#{V_TR_SENDDATE}||#{V_TR_SENDTIME}||'00',TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS')) 
+       	      ,#{V_TEMPLE_NM}   
+         FROM SIN_CARD_MASTER                           
+        WHERE TEMPLE_CD     =  #{V_TEMPLE_CD}                      
+          AND MOBILE_TELNO1   IS NOT NULL                     
+          AND MOBILE_TELNO2   IS NOT NULL                     
+          AND MOBILE_TELNO3   IS NOT NULL                     
+          AND BUD_NO    IN ( ${V_BUD_NO_LIST} )           
+        )                 
+	</insert>
+	
+	
+	<insert id="SMS" parameterType="java.util.Map">
+		INSERT INTO SMSKT.SDK_SMS_SEND ( 
+            MSG_ID
+          , NOW_DATE
+          , USER_ID
+          , CDR_ID
+          , SCHEDULE_TYPE
+          , SMS_MSG
+          , CALLBACK
+          , RESERVED1
+          , RESERVED2
+          , RESERVED3
+          , RESERVED4
+          , RESERVED5
+          , RESERVED6
+          , DEST_INFO
+          , SEND_DATE 
+       ) 
+       (SELECT SMSKT.SDK_SMS_SEQ.nextval
+       	      ,TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS')
+       	      ,#{SMS_USER_ID}
+       	      ,#{GROUPSMS}
+       	      ,#{V_TR_MSGTYPE}
+       	      ,REPLACE(REPLACE(#{V_TR_MESSAGE},'[사찰명]',#{V_TEMPLE_NM}),'[이름]',NAME_KOR)
+       	      ,#{V_TR_CALLBACK}
+       	      ,TEMPLE_CD
+       	      ,BUD_NO
+       	      ,#{RESERVED3}
+       	      ,#{RESERVED4}
+       	      ,#{V_USER_ID}
+       	      ,''
+       	      ,NVL(NAME_KOR,' ')||'^'||MOBILE_TELNO1||MOBILE_TELNO2||MOBILE_TELNO3
+       	      ,DECODE(#{V_TR_MSGTYPE},'1',#{V_TR_SENDDATE ,jdbcType=VARCHAR}||#{V_TR_SENDTIME ,jdbcType=VARCHAR}||'00',TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS')) 
+         FROM SIN_CARD_MASTER                           
+        WHERE TEMPLE_CD     =  #{V_TEMPLE_CD}                      
+          AND MOBILE_TELNO1   IS NOT NULL                     
+          AND MOBILE_TELNO2   IS NOT NULL                     
+          AND MOBILE_TELNO3   IS NOT NULL                     
+          AND BUD_NO    IN ( ${V_BUD_NO_LIST} )
+       )
+	</insert>
+	
+</mapper>

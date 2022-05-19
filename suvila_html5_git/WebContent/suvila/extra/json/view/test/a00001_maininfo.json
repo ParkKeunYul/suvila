@@ -1,0 +1,18 @@
+{
+   "success":true,
+   "data":{
+       "list":[
+        {"custNo":"A","custName":"홍길동","point1":1,"point2":0.0001,"point3":1 },
+        {"custNo":"A","custName":"이순신","point1":2345,"point2":100.234,"point3":234 },
+        {"custNo":"C","custName":"임걱정","point1":34567,"point2":1200.345,"point3":34567 },
+        {"custNo":"C","custName":"임경업","point1":4567,"point2":300.34,"point3":456789 },
+        {"custNo":"C","custName":"유관순","point1":567891,"point2":15.0,"point3":567 },
+        {"custNo":"F","custName":"전우치","point1":6789123,"point2":30.678,"point3":67891 },
+        {"custNo":"G","custName":"정중부","point1":7891,"point2":40.456,"point3":789 },
+        {"custNo":"H","custName":"이성계","point1":8912,"point2":500.000001,"point3":89128 },
+        {"custNo":"I","custName":"안중근","point1":9123,"point2":5000.876,"point3":99 },
+        {"custNo":"J","custName":"김구","point1":12349,"point2":5000.3,"point3":1234569 }],
+       "listTotalSize":10,
+   },
+   "msg":""
+}

@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SER009w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+
+	<select id="SELECT_SY_MENU" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT ATM.TEMPLE_CD
+		      ,#{V_AUTH_GROUP} AS AUTH_GROUP
+		      ,ATM.PGM_ID
+		      ,CASE 
+					WHEN MENU_GBN = 'M' AND MENU_LVL = 1 THEN '&lt;'||MENU_NM||'>'
+					WHEN MENU_GBN = 'P' AND MENU_LVL = 2 THEN LPAD('┗', POWER(MENU_LVL,2)+2, ' ')||MENU_NM              
+					WHEN MENU_GBN = 'M' AND MENU_LVL = 2 THEN LPAD('&lt;', POWER(MENU_LVL,2)+2, ' ')||MENU_NM||'>'
+					WHEN MENU_GBN = 'P' AND MENU_LVL = 3 THEN LPAD('┗', POWER(MENU_LVL,2)+2, ' ')||MENU_NM              
+					WHEN MENU_GBN = 'M' AND MENU_LVL = 3 THEN LPAD('&lt;', POWER(MENU_LVL,2)+2, ' ')||MENU_NM||'>'
+					WHEN MENU_GBN = 'P' AND MENU_LVL = 4 THEN LPAD('┗', POWER(MENU_LVL,2), ' ')||MENU_NM        
+				END AS MENU_NM
+			  ,MENU.MENU_GBN
+			  ,MENU.MENU_SEQ
+			  ,MENU.SERVICE_GBN
+		 FROM ASP_MENU        MENU
+		     ,ASP_TEMPLE_MENU ATM
+		WHERE ATM.PGM_ID 	    = MENU.PGM_ID
+		  AND ATM.TEMPLE_CD    	= #{V_TEMPLE_CD}
+	  	  AND MENU.SERVICE_GBN  = #{V_SERVICE_GBN} 
+		  AND MENU.RE_USE_YN     = 'Y'
+		  AND MENU.MENU_GBN		= 'M'
+		UNION
+		SELECT ATM.TEMPLE_CD
+		      ,#{V_AUTH_GROUP} AS AUTH_GROUP
+		      ,ATM.PGM_ID
+		      ,CASE 
+				  WHEN MENU_GBN = 'M' AND MENU_LVL = 1 THEN '&lt;'||MENU_NM||'>'
+				  WHEN MENU_GBN = 'P' AND MENU_LVL = 2 THEN LPAD('┗', POWER(MENU_LVL,2)+2, ' ')||MENU_NM
+				  WHEN MENU_GBN = 'M' AND MENU_LVL = 2 THEN LPAD('&lt;', POWER(MENU_LVL,2)+2, ' ')||MENU_NM||'>'
+				  WHEN MENU_GBN = 'P' AND MENU_LVL = 3 THEN LPAD('┗', POWER(MENU_LVL,2)+2, ' ')||MENU_NM
+				  WHEN MENU_GBN = 'M' AND MENU_LVL = 3 THEN LPAD('&lt;', POWER(MENU_LVL,2)+2, ' ')||MENU_NM||'>'
+				  WHEN MENU_GBN = 'P' AND MENU_LVL = 4 THEN LPAD('┗', POWER(MENU_LVL,2), ' ')||MENU_NM
+			   END AS MENU_NM
+			  ,MENU.MENU_GBN
+			  ,MENU.MENU_SEQ
+			  ,MENU.SERVICE_GBN
+		FROM ASP_MENU 	     MENU
+		    ,ASP_TEMPLE_MENU ATM
+	   WHERE ATM.PGM_ID 	   = MENU.PGM_ID
+		 AND ATM.TEMPLE_CD     = #{V_TEMPLE_CD}
+		 AND MENU.SERVICE_GBN  = #{V_SERVICE_GBN} 
+		 AND MENU.RE_USE_YN    = 'Y'
+		 AND MENU.MENU_GBN	   = 'P'
+		 AND ATM.PGM_ID NOT IN (
+		 						SELECT PGM_ID
+								  FROM   ASP_AUTH_MENU
+								 WHERE   TEMPLE_CD	= #{V_TEMPLE_CD}
+								   AND   AUTH_GROUP = #{V_AUTH_GROUP}
+								)
+	   ORDER BY SERVICE_GBN
+		       ,MENU_SEQ
+	</select>
+
+
+	<select id="SELECT_SY_AUTHMENU" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT AUTH.TEMPLE_CD
+		      ,AUTH.AUTH_GROUP
+		      ,AUTH.PGM_ID
+		      ,CASE 
+				  WHEN MENU_GBN = 'M' AND MENU_LVL = 1 THEN '&lt;'||MENU_NM||'>'
+				  WHEN MENU_GBN = 'P' AND MENU_LVL = 2 THEN LPAD('┗', POWER(MENU_LVL,2)+2, ' ')||MENU_NM
+				  WHEN MENU_GBN = 'M' AND MENU_LVL = 2 THEN LPAD('&lt;', POWER(MENU_LVL,2)+2, ' ')||MENU_NM||'>'
+				  WHEN MENU_GBN = 'P' AND MENU_LVL = 3 THEN LPAD('┗', POWER(MENU_LVL,2)+2, ' ')||MENU_NM
+				  WHEN MENU_GBN = 'M' AND MENU_LVL = 3 THEN LPAD('&lt;', POWER(MENU_LVL,2)+2, ' ')||MENU_NM||'>'
+				  WHEN MENU_GBN = 'P' AND MENU_LVL = 4 THEN LPAD('┗', POWER(MENU_LVL,2), ' ')||MENU_NM
+			   END AS MENU_NM
+			 ,MENU.MENU_GBN
+			 ,MENU.MENU_SEQ
+			 ,MENU.SERVICE_GBN
+			 ,'S' as SQL_MODE
+		FROM ASP_MENU 	     MENU
+		    ,ASP_TEMPLE_MENU ATM
+		    ,ASP_AUTH_MENU   AUTH
+	   WHERE ATM.PGM_ID = MENU.PGM_ID
+		 AND ATM.TEMPLE_CD 	    = AUTH.TEMPLE_CD
+		 AND ATM.PGM_ID		    = AUTH.PGM_ID
+		 AND AUTH.TEMPLE_CD     = #{V_TEMPLE_CD}
+		 AND AUTH.AUTH_GROUP    = #{V_AUTH_GROUP}
+		 AND MENU.SERVICE_GBN   = #{V_SERVICE_GBN} 
+	   ORDER BY SERVICE_GBN
+	           ,MENU_SEQ
+	</select>
+	
+	<insert id="INSERT_SY_AUTHMENU" parameterType="java.util.Map">
+		INSERT INTO   ASP_AUTH_MENU (
+			 TEMPLE_CD
+			,AUTH_GROUP
+			,PGM_ID
+			,CRT_USER
+			,UPT_USER
+			,CRT_DATE
+			,UPT_DATE
+			,REMOTE
+		) VALUES (
+			 #{TEMPLE_CD}
+			,#{AUTH_GROUP}
+			,#{PGM_ID}
+			,#{V_USER_ID}
+			,#{V_USER_ID}
+			,SYSDATE
+			,SYSDATE
+			,#{V_REMOTE}
+		)
+	</insert>
+	
+	<insert id="INSERT_SY_PERSONMENU" parameterType="java.util.Map">
+		INSERT INTO ASP_PERSON_MENU (
+		        TEMPLE_CD
+		       ,USER_ID
+		       ,PGM_ID
+		       ,AUTH_GRADE
+		       ,CRT_USER
+		       ,UPT_USER
+		       ,CRT_DATE
+		       ,UPT_DATE
+		       ,REMOTE
+	    )SELECT TEMPLE_CD
+	           ,USER_ID
+	           ,#{PGM_ID}       AS PGM_ID
+	           ,UPPER('S')      AS AUTH_GRADE
+	           ,#{V_USER_ID}    AS CRT_USER
+	           ,#{V_USER_ID}    AS UPT_USER
+	           ,SYSDATE         AS CRT_DATE
+	           ,SYSDATE         AS UPT_DATE
+	           ,#{V_REMOTE}     AS REMOTE
+		   FROM ASP_TEMPLE_USER
+		  WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		    AND AUTH_GROUP = #{AUTH_GROUP}
+	</insert>
+	
+	
+	<update id="UPDATE_SY_AUTHMENU" parameterType="java.util.Map">
+		UPDATE ASP_AUTH_MENU 
+		   SET TEMPLE_CD  = #{TEMPLE_CD}
+		      ,AUTH_GROUP = #{AUTH_GROUP}
+		      ,PGM_ID     = #{PGM_ID}
+	     WHERE TEMPLE_CD  = #{TEMPLE_CD}
+  		   AND AUTH_GROUP = #{AUTH_GROUP}
+  		   AND PGM_ID     = #{PGM_ID}
+	</update>
+	
+	<delete id="DELETE_SY_AUTHMENU" parameterType="java.util.Map">
+		DELETE FROM   ASP_AUTH_MENU
+ 	     WHERE TEMPLE_CD     = #{TEMPLE_CD}
+   		   AND AUTH_GROUP    = #{AUTH_GROUP}
+   		   AND PGM_ID        = #{PGM_ID}
+	</delete>
+	
+	<delete id="DELETE_SY_PERSONMENU" parameterType="java.util.Map">
+		DELETE FROM ASP_PERSON_MENU
+ 		 WHERE TEMPLE_CD  = #{TEMPLE_CD}
+   		   AND PGM_ID     = #{PGM_ID}
+   		   AND USER_ID   IN (SELECT USER_ID
+                               FROM ASP_TEMPLE_USER
+                              WHERE TEMPLE_CD  = #{TEMPLE_CD}
+                                AND AUTH_GROUP = #{AUTH_GROUP} )
+	</delete>
+</mapper>

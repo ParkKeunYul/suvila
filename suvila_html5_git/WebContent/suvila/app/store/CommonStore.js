@@ -1,0 +1,14 @@
+Ext.define('ExFrm.store.CommonStore',{ 
+	extend:'Ext.data.Store',
+	config:{
+		proxy:{
+			model:'ExFrm.model.CommonModel',
+			type:'ajax',
+			url:'./extra/json/common/common.json',
+			reader:{
+				type:'json',
+				rootProperty:'data.list'
+			}
+		}
+	}
+});

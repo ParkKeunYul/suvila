@@ -1,0 +1,562 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SIN001w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+	
+	
+	<select id="SELECT_SIN_CARD_MASTER" parameterType="kr.co.o2i.util.CommonMap" resultType="java.util.Map">
+		SELECT
+			 TEMPLE_CD
+			,BUD_NO
+			,BUD_CODE
+			,SUBSTR (BUD_NO,1,2) AS GBN_CODE
+			,SUBSTR (BUD_CODE,10,1) AS BRANCH_CODE
+			,SORT_SEQ
+			,DAEJU_BUD_NO
+			,TO_NUMBER(DECODE(DAEJU_BUD_NO,BUD_NO,1,0 ))AS DAEJU_YN
+			,REPRESEN_REL
+			,NAME_KOR
+			,NAME_HAN
+			,SACRED_KOR
+			,SACRED_HAN
+			,JUMIN_NO
+			,ZIP_CD
+			,ADDR1
+			,ADDR2
+			,TELNO1
+			,TELNO2
+			,TELNO3
+			,MOBILE_TELNO1
+			,MOBILE_TELNO2
+			,MOBILE_TELNO3
+			,replace(MOBILE_TELNO1 || '-'|| MOBILE_TELNO2 || '-' || MOBILE_TELNO3 , '--' , '') as MOBILE_TELNO
+			,EMAIL
+			,SUBSTR(EMAIL,1,INSTR(EMAIL,'@')-1) AS EMAIL1
+			,SUBSTR(EMAIL,INSTR(EMAIL,'@')+1)  AS EMAIL2
+			,LAST_SCHOLA
+			,INTEREST
+			,SKILL
+			,COMPANY_NAME
+			,COMPANY_POS
+			,COMPANY_TEL1
+			,COMPANY_TEL2
+			,COMPANY_TEL3
+			,ENTRANCE_CD
+			,TO_NUMBER(DECODE(NEWS_YN,'T',1,'F',0)) AS NEWS_YN
+			,QUALIFICATION
+			,SACHAL_NAME
+			,TO_NUMBER(DECODE(POST_TRANS,'T',1,'F',0)) AS POST_TRANS
+			,TO_NUMBER(DECODE(EMAIL_TRANS,'T',1,'F',0)) AS EMAIL_TRANS 
+			,TO_NUMBER(DECODE(SMS_TRANS,'T',1,'F',0)) AS SMS_TRANS 
+			,MEMO
+			,SEXAGENARY
+			,LEAP_MONTH
+			,LUNAR_SOLAR
+			,BIRTHTIME
+			,ISSUE_DATE
+			,BIRTHDAY
+			,SEX_GBN
+			,SINDO_GBN
+			,TO_NUMBER(DECODE(HWAJU_YN,'T',1,'F',0)) AS HWAJU_YN
+			,HWAJU_BUD_NO
+			,FN_GET_NM('BUD',TEMPLE_CD,HWAJU_BUD_NO)AS HWAJU_BUD_NAME
+			,CARD_ISSUE_DATE
+			,CARD_ISSUE_CNT
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+			,'F' AS CHECK_P
+			,BLDG_NUM
+			,FN_ADDR_BLDG2(BLDG_NUM) ADDR3
+			,TO_NUMBER(DECODE(SMS_BIRTH_TRANS,'T',1,'F',0)) AS SMS_BIRTH_TRANS 
+			,TO_NUMBER(DECODE(SMS_GROUP_TRANS,'T',1,'F',0)) AS SMS_GROUP_TRANS 
+			,(SELECT count(temple_cd)  
+			    FROM SIN_CMS_INFO 
+			   WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+			     AND DEL_YN    = 'F' 
+			     AND BUD_NO    = A.BUD_NO) CMS_CNT
+		FROM SIN_CARD_MASTER A
+		WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+		  AND BUD_NO LIKE #{V_BUD_CODE} || '%'
+		  AND DEL_YN = 'F'
+		  AND BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = A.TEMPLE_CD)
+		ORDER BY SORT_SEQ
+	</select>
+	
+	
+	<select id="SELECT_BUNGA" parameterType="kr.co.o2i.util.CommonMap" resultType="java.util.Map">
+		SELECT TEMPLE_CD
+			  ,BUD_NO
+			  ,BUD_CODE
+			  ,SUBSTR (BUD_NO,1,2) AS GBN_CODE
+			  ,SUBSTR (BUD_CODE,10,1) AS BRANCH_CODE
+			  ,SORT_SEQ
+			  ,DAEJU_BUD_NO
+			  ,TO_NUMBER(DECODE(DAEJU_BUD_NO,BUD_NO,1,0 ))AS DAEJU_YN
+			  ,REPRESEN_REL
+			  ,NAME_KOR
+			  ,NAME_HAN
+			  ,SACRED_KOR
+			  ,SACRED_HAN
+			  ,JUMIN_NO
+			  ,ZIP_CD
+			  ,ADDR1
+			  ,ADDR2
+			  ,TELNO1
+			  ,TELNO2
+			  ,TELNO3
+			  ,MOBILE_TELNO1
+			  ,MOBILE_TELNO2
+			  ,MOBILE_TELNO3
+			  ,EMAIL
+			  ,SUBSTR(EMAIL,1,INSTR(EMAIL,'@')-1) AS EMAIL1
+			  ,SUBSTR(EMAIL,INSTR(EMAIL,'@')+1)  AS EMAIL2
+			  ,LAST_SCHOLA
+			  ,INTEREST
+			  ,SKILL
+			  ,COMPANY_NAME
+			  ,COMPANY_POS
+			  ,COMPANY_TEL1
+			  ,COMPANY_TEL2
+			  ,COMPANY_TEL3
+			  ,ENTRANCE_CD
+			  ,TO_NUMBER(DECODE(NEWS_YN,'T',1,'F',0)) AS NEWS_YN
+			  ,QUALIFICATION
+			  ,SACHAL_NAME
+			  ,TO_NUMBER(DECODE(POST_TRANS,'T',1,'F',0)) AS POST_TRANS
+			  ,TO_NUMBER(DECODE(EMAIL_TRANS,'T',1,'F',0)) AS EMAIL_TRANS 
+			  ,TO_NUMBER(DECODE(SMS_TRANS,'T',1,'F',0)) AS SMS_TRANS 
+			  ,MEMO
+			  ,SEXAGENARY
+			  ,LEAP_MONTH
+			  ,LUNAR_SOLAR
+			  ,BIRTHTIME
+			  ,ISSUE_DATE
+			  ,BIRTHDAY
+			  ,SEX_GBN
+			  ,SINDO_GBN
+			  ,TO_NUMBER(DECODE(HWAJU_YN,'T',1,'F',0)) AS HWAJU_YN
+			  ,HWAJU_BUD_NO
+			  ,FN_GET_NM('BUD',TEMPLE_CD,DAEJU_BUD_NO)AS HWAJU_BUD_NAME
+			  ,CARD_ISSUE_DATE
+			  ,CARD_ISSUE_CNT
+			  ,CRT_USER
+			  ,CRT_DATE
+			  ,UPT_USER
+			  ,UPT_DATE
+			  ,REMOTE
+			  ,'F' AS CHECK_P
+			  ,BLDG_NUM
+			  ,FN_ADDR_BLDG(BLDG_NUM) ADDR3
+			  ,(SELECT count(temple_cd)  FROM SIN_CMS_INFO WHERE TEMPLE_CD = #{V_TEMPLE_CD} AND DEL_YN = 'F' AND BUD_NO = A.BUD_NO) CMS_CNT
+			FROM SIN_CARD_MASTER A
+			WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+			AND BUD_NO LIKE SUBSTR(#{V_BUD_CODE},1,8) || '%'
+			AND DEL_YN = 'F'
+			AND BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = A.TEMPLE_CD)
+			ORDER BY BUD_CODE,SORT_SEQ
+	</select>
+	
+	<select id="SELECT_SIN_CARD_MASTER_NAME_EXIST" parameterType="kr.co.o2i.util.CommonMap" resultType="java.util.Map">
+		SELECT A.BUD_CODE
+		      ,A.NAME_KOR
+		      ,A.ZIP_CD
+		      ,A.REPRESEN_REL
+		  FROM SIN_CARD_MASTER A
+		 WHERE A.TEMPLE_CD    = #{V_TEMPLE_CD}
+		   AND A.DEL_YN       = 'F'
+		   AND A.REPRESEN_REL = #{V_REPRESEN_REL}
+		   AND A.NAME_KOR     = #{V_NAME_KOR}
+		   AND A.ZIP_CD       = #{V_ZIP_CD}
+		   AND A.BUD_NO NOT IN (SELECT BUD_NO FROM SIN_DEATH_INFO WHERE TEMPLE_CD = A.TEMPLE_CD)
+	</select>
+	
+	
+	<insert id="ADD_SIN_CARD_MASTER" parameterType="java.util.Map">
+		INSERT INTO SIN_CARD_MASTER(
+			TEMPLE_CD
+			,BUD_NO
+			,BUD_CODE
+			,SORT_SEQ
+			,DAEJU_BUD_NO
+			,REPRESEN_REL
+			,NAME_KOR
+			,NAME_HAN
+			,SACRED_KOR
+			,SACRED_HAN
+			,JUMIN_NO
+			,ZIP_CD
+			,ADDR1
+			,ADDR2
+			,TELNO1
+			,TELNO2
+			,TELNO3
+			,MOBILE_TELNO1
+			,MOBILE_TELNO2
+			,MOBILE_TELNO3
+			,EMAIL
+			,LAST_SCHOLA
+			,INTEREST
+			,SKILL
+			,COMPANY_NAME
+			,COMPANY_POS
+			,COMPANY_TEL1
+			,COMPANY_TEL2
+			,COMPANY_TEL3
+			,ENTRANCE_CD
+			,NEWS_YN
+			,QUALIFICATION
+			,SACHAL_NAME
+			,POST_TRANS
+			,EMAIL_TRANS
+			,SMS_TRANS
+			,MEMO
+			,SEXAGENARY
+			,LEAP_MONTH
+			,LUNAR_SOLAR
+			,BIRTHTIME
+			,ISSUE_DATE
+			,BIRTHDAY
+			,SEX_GBN
+			,SINDO_GBN
+			,HWAJU_YN
+			,HWAJU_BUD_NO
+			,CARD_ISSUE_DATE
+			,CARD_ISSUE_CNT
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+			,DEL_YN
+			,BLDG_NUM
+			,SMS_BIRTH_TRANS
+			,SMS_GROUP_TRANS
+		) VALUES (
+			 #{V_TEMPLE_CD}
+			,(
+			  	SELECT  #{BUD_CODE}  ||'-'||  LPAD(TO_CHAR(NVL(MAX(SUBSTR(BUD_NO,12)),0)+1),2,'0') AS SORT_SEQ		    
+				FROM SIN_CARD_MASTER                              			
+				WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+				AND BUD_CODE    = #{BUD_CODE}
+			 )
+			,#{BUD_CODE}
+			,#{SORT_SEQ,jdbcType=VARCHAR}
+			,DECODE(#{DAEJU_YN},'1','1',#{DAEJU_BUD_NO})
+			,#{REPRESEN_REL ,jdbcType=VARCHAR}
+			,#{NAME_KOR ,jdbcType=VARCHAR}
+			,#{NAME_HAN ,jdbcType=VARCHAR}
+			,#{SACRED_KOR ,jdbcType=VARCHAR}
+			,#{SACRED_HAN ,jdbcType=VARCHAR}
+			,#{JUMIN_NO ,jdbcType=VARCHAR}
+			,#{ZIP_CD ,jdbcType=VARCHAR}
+			,#{ADDR1 ,jdbcType=VARCHAR}
+			,#{ADDR2 ,jdbcType=VARCHAR}
+			,#{TELNO1 ,jdbcType=VARCHAR}
+			,SUBSTR(#{TELNO2 ,jdbcType=VARCHAR},0 , 4)
+			,SUBSTR(#{TELNO3 ,jdbcType=VARCHAR},0 , 4)
+			,#{MOBILE_TELNO1 ,jdbcType=VARCHAR}
+			,SUBSTR(#{MOBILE_TELNO2 ,jdbcType=VARCHAR},0 , 4)
+			,SUBSTR(#{MOBILE_TELNO3 ,jdbcType=VARCHAR},0 , 4)
+			,#{EMAIL1 ,jdbcType=VARCHAR} || '@' ||#{EMAIL2 ,jdbcType=VARCHAR}
+			,#{LAST_SCHOLA ,jdbcType=VARCHAR}
+			,#{INTEREST ,jdbcType=VARCHAR}
+			,#{SKILL ,jdbcType=VARCHAR}
+			,#{COMPANY_NAME ,jdbcType=VARCHAR}
+			,#{COMPANY_POS ,jdbcType=VARCHAR}
+			,#{COMPANY_TEL1 ,jdbcType=VARCHAR}
+			,#{COMPANY_TEL2 ,jdbcType=VARCHAR}
+			,#{COMPANY_TEL3 ,jdbcType=VARCHAR}
+			,#{ENTRANCE_CD ,jdbcType=VARCHAR}
+			,DECODE(#{NEWS_YN ,jdbcType=VARCHAR},'1','T','F')
+			,#{QUALIFICATION ,jdbcType=VARCHAR}
+			,#{SACHAL_NAME ,jdbcType=VARCHAR}
+			,DECODE(#{POST_TRANS ,jdbcType=VARCHAR},'1','T','F')
+			,DECODE(#{EMAIL_TRANS ,jdbcType=VARCHAR},'1','T','F')
+			,DECODE(#{SMS_TRANS ,jdbcType=VARCHAR},'1','T','F')
+			,#{MEMO ,jdbcType=VARCHAR}
+			,#{SEXAGENARY ,jdbcType=VARCHAR}
+			,#{LEAP_MONTH ,jdbcType=VARCHAR}
+			,#{LUNAR_SOLAR ,jdbcType=VARCHAR}
+			,#{BIRTHTIME ,jdbcType=VARCHAR}
+			,DECODE(#{ISSUE_DATE ,jdbcType=VARCHAR},'',TO_CHAR(SYSDATE,'YYYYMMDD'),#{ISSUE_DATE ,jdbcType=VARCHAR})
+			,#{BIRTHDAY ,jdbcType=VARCHAR}
+			,#{SEX_GBN ,jdbcType=VARCHAR}
+			,#{SINDO_GBN ,jdbcType=VARCHAR}
+			,DECODE(#{HWAJU_YN ,jdbcType=VARCHAR},'1','T','F')
+			,#{HWAJU_BUD_NO ,jdbcType=VARCHAR}
+			,#{CARD_ISSUE_DATE ,jdbcType=VARCHAR}
+			,#{CARD_ISSUE_CNT ,jdbcType=VARCHAR}
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_REMOTE ,jdbcType=VARCHAR}
+			,'F'
+			,#{BLDG_NUM ,jdbcType=VARCHAR}
+			,DECODE(#{SMS_BIRTH_TRANS ,jdbcType=VARCHAR},'1','T','F')
+			,DECODE(#{SMS_GROUP_TRANS ,jdbcType=VARCHAR},'1','T','F')
+		)
+	</insert>
+	
+	<update id="UPDATE_SIN_CARD_MASTER" parameterType="java.util.Map">
+		UPDATE SIN_CARD_MASTER
+		   SET SORT_SEQ		   = #{SORT_SEQ     ,jdbcType=VARCHAR} 
+		      ,DAEJU_BUD_NO	   = #{DAEJU_BUD_NO}
+			  ,REPRESEN_REL    = #{REPRESEN_REL ,jdbcType=VARCHAR}
+			  ,NAME_KOR        = #{NAME_KOR}
+			  ,NAME_HAN        = #{NAME_HAN      ,jdbcType=VARCHAR}
+			  ,SACRED_KOR      = #{SACRED_KOR    ,jdbcType=VARCHAR}
+			  ,SACRED_HAN      = #{SACRED_HAN    ,jdbcType=VARCHAR}
+			  ,JUMIN_NO        = #{JUMIN_NO      ,jdbcType=VARCHAR}
+			  ,ZIP_CD          = replace(#{ZIP_CD        ,jdbcType=VARCHAR}, '-', '')
+			  ,ADDR1           = #{ADDR1         ,jdbcType=VARCHAR}
+			  ,ADDR2           = #{ADDR2         ,jdbcType=VARCHAR}
+			  ,TELNO1          = #{TELNO1        ,jdbcType=VARCHAR}
+			  ,TELNO2   	   = SUBSTR(#{TELNO2 ,jdbcType=VARCHAR}  ,0 , 4)
+			  ,TELNO3          = SUBSTR(#{TELNO3 ,jdbcType=VARCHAR}  ,0 , 4)
+			  ,MOBILE_TELNO1   = #{MOBILE_TELNO1 ,jdbcType=VARCHAR}
+			  ,MOBILE_TELNO2   = SUBSTR(#{MOBILE_TELNO2 ,jdbcType=VARCHAR} ,0 , 4)
+			  ,MOBILE_TELNO3   = SUBSTR(#{MOBILE_TELNO3 ,jdbcType=VARCHAR} ,0 , 4)
+			  ,EMAIL           = #{EMAIL1        ,jdbcType=VARCHAR} || '@' ||#{EMAIL2 ,jdbcType=VARCHAR}
+			  ,LAST_SCHOLA     = #{LAST_SCHOLA   ,jdbcType=VARCHAR}
+			  ,INTEREST        = #{INTEREST      ,jdbcType=VARCHAR}
+			  ,SKILL           = #{SKILL         ,jdbcType=VARCHAR}
+			  ,COMPANY_NAME    = #{COMPANY_NAME  ,jdbcType=VARCHAR}
+			  ,COMPANY_POS     = #{COMPANY_POS   ,jdbcType=VARCHAR}
+			  ,COMPANY_TEL1    = #{COMPANY_TEL1  ,jdbcType=VARCHAR}
+			  ,COMPANY_TEL2    = #{COMPANY_TEL2  ,jdbcType=VARCHAR}
+			  ,COMPANY_TEL3    = #{COMPANY_TEL3  ,jdbcType=VARCHAR}
+			  ,ENTRANCE_CD     = #{ENTRANCE_CD   ,jdbcType=VARCHAR}
+			  ,NEWS_YN         = DECODE(#{NEWS_YN ,jdbcType=VARCHAR},'1','T','F')
+			  ,QUALIFICATION   = #{QUALIFICATION ,jdbcType=VARCHAR}
+			  ,SACHAL_NAME     = #{SACHAL_NAME    ,jdbcType=VARCHAR}
+			  ,POST_TRANS      = DECODE(#{POST_TRANS      ,jdbcType=VARCHAR},'1','T','F')
+			  ,EMAIL_TRANS     = DECODE(#{EMAIL_TRANS     ,jdbcType=VARCHAR},'1','T','F')
+			  ,SMS_TRANS       = DECODE(#{SMS_TRANS       ,jdbcType=VARCHAR},'1','T','F')
+			  ,SMS_GROUP_TRANS = DECODE(#{SMS_GROUP_TRANS ,jdbcType=VARCHAR},'1','T','F')
+			  ,SMS_BIRTH_TRANS = DECODE(#{SMS_BIRTH_TRANS ,jdbcType=VARCHAR},'1','T','F')
+			  ,MEMO            = #{MEMO                   ,jdbcType=VARCHAR}
+			  ,SEXAGENARY      = #{SEXAGENARY             ,jdbcType=VARCHAR}
+			  ,LEAP_MONTH      = #{LEAP_MONTH             ,jdbcType=VARCHAR}
+			  ,LUNAR_SOLAR     = #{LUNAR_SOLAR            ,jdbcType=VARCHAR}
+			  ,BIRTHTIME       = #{BIRTHTIME              ,jdbcType=VARCHAR}
+			  ,BIRTHDAY        = #{BIRTHDAY               ,jdbcType=VARCHAR}
+			  ,ISSUE_DATE 	   = #{ISSUE_DATE             ,jdbcType=VARCHAR}
+			  ,SEX_GBN         = #{SEX_GBN                ,jdbcType=VARCHAR}
+			  ,SINDO_GBN       = #{SINDO_GBN              ,jdbcType=VARCHAR}
+			  ,HWAJU_YN        = DECODE(#{HWAJU_YN ,jdbcType=VARCHAR},'1','T','F')
+			  ,HWAJU_BUD_NO    = #{HWAJU_BUD_NO           ,jdbcType=VARCHAR}
+			  ,CARD_ISSUE_DATE = #{CARD_ISSUE_DATE        ,jdbcType=VARCHAR}
+			  ,CARD_ISSUE_CNT  = #{CARD_ISSUE_CNT         ,jdbcType=VARCHAR}
+			  ,UPT_USER 	   = #{V_USER_ID}
+			  ,UPT_DATE 	   = SYSDATE
+			  ,REMOTE 		   = #{V_REMOTE}
+			  ,BLDG_NUM 	   = #{BLDG_NUM               ,jdbcType=VARCHAR}
+		 WHERE TEMPLE_CD 	   = #{V_TEMPLE_CD}
+		   AND BUD_NO 		   = #{BUD_NO}
+	
+	</update>
+	
+	<delete id="DELETE_SIN_CARD_MASTER" parameterType="java.util.Map">
+		UPDATE SIN_CARD_MASTER
+		   SET DEL_YN      = 'T'
+		      ,UPT_USER    = #{V_USER_ID}
+		      ,UPT_DATE    = SYSDATE
+		      ,REMOTE      = #{V_REMOTE}
+		 WHERE TEMPLE_CD   = #{V_TEMPLE_CD}
+		   AND BUD_NO      = #{BUD_NO}
+	</delete>
+	
+	<select id="SELECT_NEXT_BUDCD" parameterType="kr.co.o2i.util.CommonMap" resultType="String">
+		SELECT LPAD(NVL(MAX(SUBSTR(BUD_NO,4,5)),0)+1,5,'0') AS BUD_CODE	 
+		  FROM SIN_CARD_MASTER                                           
+		 WHERE TEMPLE_CD    = #{V_TEMPLE_CD}        
+		   AND BUD_NO LIKE  #{V_GBN_CODE} || '%'       
+	</select>
+	
+	<insert id="INSERT_SIN_CARD_MASTER" parameterType="java.util.Map">
+		INSERT INTO SIN_CARD_MASTER(
+			 TEMPLE_CD
+			,BUD_NO
+			,BUD_CODE
+			,SORT_SEQ
+			,DAEJU_BUD_NO
+			,REPRESEN_REL
+			,NAME_KOR
+			,NAME_HAN
+			,SACRED_KOR
+			,SACRED_HAN
+			,JUMIN_NO
+			,ZIP_CD
+			,ADDR1
+			,ADDR2
+			,TELNO1
+			,TELNO2
+			,TELNO3
+			,MOBILE_TELNO1
+			,MOBILE_TELNO2
+			,MOBILE_TELNO3
+			,EMAIL
+			,LAST_SCHOLA
+			,INTEREST
+			,SKILL
+			,COMPANY_NAME
+			,COMPANY_POS
+			,COMPANY_TEL1
+			,COMPANY_TEL2
+			,COMPANY_TEL3
+			,ENTRANCE_CD
+			,NEWS_YN
+			,QUALIFICATION
+			,SACHAL_NAME
+			,POST_TRANS
+			,EMAIL_TRANS
+			,SMS_TRANS
+			,SMS_BIRTH_TRANS
+			,SMS_GROUP_TRANS
+			,MEMO
+			,SEXAGENARY
+			,LEAP_MONTH
+			,LUNAR_SOLAR
+			,BIRTHTIME
+			,ISSUE_DATE
+			,BIRTHDAY
+			,SEX_GBN
+			,SINDO_GBN
+			,HWAJU_YN
+			,HWAJU_BUD_NO
+			,CARD_ISSUE_DATE
+			,CARD_ISSUE_CNT
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+			,DEL_YN
+			,BLDG_NUM
+		) VALUES (
+			 #{V_TEMPLE_CD}
+			,(SELECT #{GBN_CODE} || '-' || #{V_BUD_CODE} || '-'|| #{BRANCH_CODE} ||'-'|| LPAD(NVL(MAX(SORT_SEQ),0)+1,2,'0') AS BUD_NO 
+				FROM SIN_CARD_MASTER
+			   WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+				 AND BUD_CODE  = #{GBN_CODE} || '-' || #{V_BUD_CODE} || '-' || #{BRANCH_CODE}
+			  ) 
+			,	#{GBN_CODE} || '-' || #{V_BUD_CODE} || '-' || #{BRANCH_CODE}
+			,(
+					SELECT NVL(MAX(SORT_SEQ),0)+1 AS SORT_SEQ
+					  FROM SIN_CARD_MASTER
+					 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+				 	   AND BUD_CODE  = #{GBN_CODE} || '-' || #{V_BUD_CODE} || '-' || #{BRANCH_CODE}
+			  )				
+			,#{DAEJU_YN           ,jdbcType=VARCHAR}
+			,#{REPRESEN_REL       ,jdbcType=VARCHAR}
+			,#{NAME_KOR           ,jdbcType=VARCHAR}
+			,#{NAME_HAN           ,jdbcType=VARCHAR}
+			,#{SACRED_KOR         ,jdbcType=VARCHAR}
+			,#{SACRED_HAN         ,jdbcType=VARCHAR}
+			,#{JUMIN_NO           ,jdbcType=VARCHAR}
+			,#{ZIP_CD             ,jdbcType=VARCHAR}
+			,#{ADDR1              ,jdbcType=VARCHAR}
+			,#{ADDR2              ,jdbcType=VARCHAR}
+			,#{TELNO1             ,jdbcType=VARCHAR}
+			,#{TELNO2             ,jdbcType=VARCHAR}
+			,#{TELNO3             ,jdbcType=VARCHAR}
+			,#{MOBILE_TELNO1      ,jdbcType=VARCHAR}
+			,#{MOBILE_TELNO2      ,jdbcType=VARCHAR}
+			,#{MOBILE_TELNO3      ,jdbcType=VARCHAR}
+			,#{EMAIL1             ,jdbcType=VARCHAR} || '@' ||#{EMAIL2 ,jdbcType=VARCHAR}
+			,#{LAST_SCHOLA        ,jdbcType=VARCHAR}
+			,#{INTEREST           ,jdbcType=VARCHAR}
+			,#{SKILL ,jdbcType=VARCHAR}
+			,#{COMPANY_NAME ,jdbcType=VARCHAR}
+			,#{COMPANY_POS ,jdbcType=VARCHAR}
+			,#{COMPANY_TEL1 ,jdbcType=VARCHAR}
+			,#{COMPANY_TEL2 ,jdbcType=VARCHAR}
+			,#{COMPANY_TEL3 ,jdbcType=VARCHAR}
+			,#{ENTRANCE_CD ,jdbcType=VARCHAR}
+			,DECODE(#{NEWS_YN ,jdbcType=VARCHAR},'1','T','F')
+			,#{QUALIFICATION ,jdbcType=VARCHAR}
+			,#{SACHAL_NAME ,jdbcType=VARCHAR}
+			,DECODE(#{POST_TRANS ,jdbcType=VARCHAR},'1','T','F')
+			,DECODE(#{EMAIL_TRANS ,jdbcType=VARCHAR},'1','T','F')
+			,DECODE(#{SMS_TRANS ,jdbcType=VARCHAR},'1','T','F')
+			,DECODE(#{SMS_BIRTH_TRANS ,jdbcType=VARCHAR},'1','T','F')
+			,DECODE(#{SMS_GROUP_TRANS ,jdbcType=VARCHAR},'1','T','F')
+			,#{MEMO ,jdbcType=VARCHAR}
+			,#{SEXAGENARY ,jdbcType=VARCHAR}
+			,#{LEAP_MONTH ,jdbcType=VARCHAR}
+			,#{LUNAR_SOLAR ,jdbcType=VARCHAR}
+			,#{BIRTHTIME ,jdbcType=VARCHAR}
+			,DECODE(#{ISSUE_DATE ,jdbcType=VARCHAR},'',TO_CHAR(SYSDATE,'YYYYMMDD'),#{ISSUE_DATE ,jdbcType=VARCHAR})
+			,#{BIRTHDAY ,jdbcType=VARCHAR}
+			,#{SEX_GBN ,jdbcType=VARCHAR}
+			,#{SINDO_GBN ,jdbcType=VARCHAR}
+			,DECODE(#{HWAJU_YN ,jdbcType=VARCHAR},'1','T','F')
+			,#{HWAJU_BUD_NO ,jdbcType=VARCHAR}
+			,#{CARD_ISSUE_DATE ,jdbcType=VARCHAR}
+			,#{CARD_ISSUE_CNT ,jdbcType=VARCHAR}
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_REMOTE}
+			,'F'
+			,#{BLDG_NUM ,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<select id="SELECT_DAEJU_NO" parameterType="kr.co.o2i.util.CommonMap" resultType="String">
+		SELECT BUD_NO	 
+		  FROM SIN_CARD_MASTER                                             
+		 WHERE TEMPLE_CD    = #{V_TEMPLE_CD}         
+		   AND BUD_CODE     = #{V_GBN_CODE} ||'-' || #{V_BUD_CODE} || '-'|| #{V_BRANCH_CODE} 
+		   AND DAEJU_BUD_NO = '1'                                           
+	</select>
+	
+	<update id="UPDATE_NEW_DAEJU_NO" parameterType="kr.co.o2i.util.CommonMap">
+		UPDATE SIN_CARD_MASTER
+		   SET DAEJU_BUD_NO = #{V_DAEJU_BUD_NO}
+		 WHERE TEMPLE_CD    = #{V_TEMPLE_CD}
+		   AND BUD_CODE     = #{V_GBN_CODE} ||'-' || #{V_BUD_CODE} || '-'|| #{V_BRANCH_CODE}
+	</update>
+	
+	<update id="UPDATE_DAEJU_NO" parameterType="kr.co.o2i.util.CommonMap">
+		UPDATE SIN_CARD_MASTER
+		   SET DAEJU_BUD_NO = #{V_DAEJU_BUD_NO}
+		 WHERE TEMPLE_CD    = #{V_TEMPLE_CD}
+		   AND BUD_CODE     = #{BUD_CODE}
+	</update>
+	
+	
+	
+	<select id="SELECT_SIN_DEATH_INFO" parameterType="kr.co.o2i.util.CommonMap" resultType="java.util.Map">
+		SELECT SDBI.TEMPLE_CD
+		      ,SDBI.BUD_NO AS BOKWI_BUD_NO
+		      ,SDBI.DECE_BUD_NO
+		      ,SDBI.SORT_SEQ		  
+		      ,SIN.BUD_NO
+		 FROM SIN_DEATH_BOKWI_INFO SDBI
+		     ,SIN_CARD_MASTER      SIN
+		WHERE SDBI.TEMPLE_CD 		= SIN.TEMPLE_CD	     
+		  AND SDBI.DEL_YN 			= 'F'
+		  AND SIN.DEL_YN 			= 'F'
+		  AND SDBI.TEMPLE_CD 		=  #{V_TEMPLE_CD}
+		  AND SIN.TEMPLE_CD 		=  #{V_TEMPLE_CD}
+		  AND SDBI.BUD_NO    		=  #{V_BOKWI_BUD_NO}		  
+		  AND SIN.BUD_NO    		=  #{V_BOKWI_BUD_NO}
+		  <if test='V_DEATH_GBN != "" and V_DEATH_GBN != null'>
+		  	AND SDBI.DEATH_YN = #{V_DEATH_GBN}
+		  </if>
+	</select>
+	
+	
+	
+</mapper>

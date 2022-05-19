@@ -1,0 +1,1015 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC001w_06DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="CHECK_P" column="CHECK_P"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+
+	
+	<select id="SELECT_IDREC_PRINT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+	    SELECT RID.TEMPLE_CD
+	    	  ,RM.ACCEPT_DATE
+	    	  ,RID.ACCEPT_SEQ
+	    	  ,RID.SEQ
+	    	  ,RM.PROPOSAL_BUD_NO
+	    	  ,PRO_SIN.NAME_KOR AS PRO_NAME_KOR
+	    	  ,RIJM.DONGCHAM_BUD_NO
+	    	  ,SIN.NAME_KOR
+	    	  ,NVL2(ACM.NAME,ACM.NAME||'생','') AS SEXAGENARY_NM
+	    	  ,RID.INDEUNG_GBN
+	    	  ,RDCM.LIGHT_CODE
+	    	  ,DECODE(RDCM.FAMILY_YN,'T','가족','개인')AS FAMILY_GBN
+	    	  ,RID.INDEUNG_YEAR
+	    	  ,RID.INDEUNG_MONTH
+	    	  ,RID.INDEUNG_PERIOD
+	    	  ,RID.JUNGAK_CD
+	    	  ,AJM.JUNGAK_NM
+	    	  ,RDCM.LIGHT_NM
+	    	  ,RID.LIGHT_NO
+	    	  ,RID.CLOSE_YN
+	    	  ,RID.ACCEPT_SEQ || RID.SEQ AS PAGE_SKIP
+	    	  ,'T' AS CHECK_P
+	    	  ,replace(RM.MEMO, '\r\n' , '') as MEMO
+		 FROM REC_INDEUNG_DETAIL    RID
+		 	 ,ASP_JUNGAK_MGT        AJM
+		 	 ,REC_DEUNG_CLASS_MGT   RDCM
+		 	 ,REC_INDEUNG_JOIN_MGT  RIJM
+		 	 ,REC_MASTER            RM
+		 	 ,SIN_CARD_MASTER       PRO_SIN
+		 	 ,SIN_CARD_MASTER       SIN
+		 	 ,ASP_CODE_MGT          ACM
+		WHERE RID.TEMPLE_CD          = AJM.TEMPLE_CD
+	      AND RID.ACCEPT_GBN         = AJM.ACCEPT_GBN
+	      AND RID.JUNGAK_CD          = AJM.JUNGAK_CD
+	      AND RID.TEMPLE_CD          = RDCM.TEMPLE_CD
+	      AND RID.ACCEPT_GBN         = RDCM.ACCEPT_GBN
+	      AND RID.INDEUNG_GBN        = RDCM.LIGHT_CODE
+	      AND RID.TEMPLE_CD          = RIJM.TEMPLE_CD
+	      AND RID.ACCEPT_GBN         = RIJM.ACCEPT_GBN
+	      AND RID.ACCEPT_SEQ         = RIJM.ACCEPT_SEQ
+	      AND RID.SEQ                = RIJM.SEQ
+	      AND RID.JUNGAK_CD          = RIJM.JUNGAK_CD
+	      AND RID.LIGHT_NO           = RIJM.LIGHT_NO
+	      AND RIJM.SORT_SEQ          = '1'
+	      AND RID.TEMPLE_CD          = RM.TEMPLE_CD
+	      AND RID.ACCEPT_SEQ         = RM.ACCEPT_SEQ
+	      AND RID.TEMPLE_CD(+)       = PRO_SIN.TEMPLE_CD
+	      AND RM.PROPOSAL_BUD_NO(+)  = PRO_SIN.BUD_NO
+	      AND RID.TEMPLE_CD          = SIN.TEMPLE_CD
+	      AND RIJM.DONGCHAM_BUD_NO   = SIN.BUD_NO
+	      AND ACM.GROUP_CD(+)        = 'GANJI'
+	      AND ACM.CODE(+)            = SIN.SEXAGENARY
+	      AND RDCM.FAMILY_YN         = #{V_FAM_GBN}
+	      AND RID.DEL_YN             = 'F'
+	      AND SIN.DEL_YN             = 'F'
+	      AND RID.TEMPLE_CD          = #{V_TEMPLE_CD}
+	      AND RM.ACCEPT_DATE     &gt;= #{V_ACCEPT_SDATE}
+	      AND RM.ACCEPT_DATE     &lt;= #{V_ACCEPT_EDATE}
+	      <if test='V_PROPOSAL_BUD_NO != null and  V_PROPOSAL_BUD_NO != "" '>
+   		   	AND RM.PROPOSAL_BUD_NO LIKE #{V_PROPOSAL_BUD_NO} || '%'
+   		  </if>
+   		  <if test='VV_USER_ID != null and  VV_USER_ID != "" '>
+   		   	AND RID.CRT_USER = #{VV_USER_ID} 
+   		  </if>
+   		  <if test='V_JUNGAK_CD != null and  V_JUNGAK_CD != ""  and  V_JUNGAK_CD != "0"'>
+   		  	AND RID.JUNGAK_CD = #{V_JUNGAK_CD} 
+   		  </if>
+   		  <if test='V_CODE != null and  V_CODE != ""  and  V_CODE != "0"'>
+   		  	AND RID.INDEUNG_GBN = #{V_CODE} 
+   		  </if>
+   		  <if test='V_CLOSE_YN != null and  V_CLOSE_YN != "" '>
+   		  	AND RID.CLOSE_YN = #{V_CLOSE_YN}
+   		  </if>
+		  ORDER BY ACCEPT_SEQ
+		  		  ,SEQ
+   		   
+	</select>
+	
+	
+	<select id="SELECT_ID_CH_REC" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT RID.TEMPLE_CD
+			  ,RM.ACCEPT_DATE
+			  ,RID.ACCEPT_SEQ
+			  ,RID.SEQ
+			  ,RM.PROPOSAL_BUD_NO
+			  ,PRO_SIN.NAME_KOR AS PRO_NAME_KOR
+			  ,RIJM.DONGCHAM_BUD_NO
+			  ,SIN.NAME_KOR
+			  ,RID.INDEUNG_GBN
+			  ,RDCM.LIGHT_CODE
+			  ,DECODE(RDCM.FAMILY_YN,'T','가족','개인')AS FAMILY_GBN
+			  ,RID.INDEUNG_YEAR
+			  ,RID.INDEUNG_MONTH
+			  ,RID.INDEUNG_PERIOD
+			  ,RID.JUNGAK_CD
+			  ,AJM.JUNGAK_NM
+			  ,RDCM.LIGHT_NM
+			  ,RID.LIGHT_NO
+			  ,RID.CLOSE_YN
+			  ,RID.ACCEPT_SEQ || RID.SEQ AS PAGE_SKIP
+			  ,'T' AS CHECK_P
+			  ,replace(RM.MEMO, '\r\n' , '') as MEMO
+		 FROM REC_INDEUNG_DETAIL    RID
+		 	 ,ASP_JUNGAK_MGT        AJM
+		 	 ,REC_DEUNG_CLASS_MGT   RDCM
+		 	 ,REC_INDEUNG_JOIN_MGT  RIJM
+		 	 ,REC_MASTER            RM
+		 	 ,SIN_CARD_MASTER       PRO_SIN
+		 	 ,SIN_CARD_MASTER       SIN
+		 	 ,ASP_CODE_MGT          ACM
+		WHERE RID.TEMPLE_CD        = AJM.TEMPLE_CD 
+		  AND RID.ACCEPT_GBN       = AJM.ACCEPT_GBN 
+		  AND RID.JUNGAK_CD        = AJM.JUNGAK_CD 
+		  AND RID.TEMPLE_CD        = RDCM.TEMPLE_CD 
+		  AND RID.ACCEPT_GBN       = RDCM.ACCEPT_GBN 
+		  AND RID.INDEUNG_GBN      = RDCM.LIGHT_CODE 
+		  AND RID.TEMPLE_CD        = RIJM.TEMPLE_CD 
+		  AND RID.ACCEPT_GBN       = RIJM.ACCEPT_GBN 
+		  AND RID.ACCEPT_SEQ       = RIJM.ACCEPT_SEQ 
+		  AND RID.SEQ              = RIJM.SEQ 
+		  AND RID.JUNGAK_CD        = RIJM.JUNGAK_CD 
+		  AND RID.LIGHT_NO         = RIJM.LIGHT_NO 
+		  AND RIJM.SORT_SEQ        = '1' 
+		  AND RID.TEMPLE_CD        = RM.TEMPLE_CD 
+		  AND RID.ACCEPT_SEQ       = RM.ACCEPT_SEQ 
+		  AND RID.TEMPLE_CD        = PRO_SIN.TEMPLE_CD 
+		  AND RM.PROPOSAL_BUD_NO   = PRO_SIN.BUD_NO 
+		  AND RID.TEMPLE_CD        = SIN.TEMPLE_CD 
+		  AND RIJM.DONGCHAM_BUD_NO = SIN.BUD_NO 
+		  AND RID.DEL_YN           = 'F' 
+		  AND RID.CLOSE_YN         ='F'
+		  AND SIN.DEL_YN           = 'F'
+		  AND ACM.GROUP_CD(+)      = 'GANJI' 
+		  AND ACM.CODE(+)          = SIN.SEXAGENARY
+		  AND RID.TEMPLE_CD        = #{V_TEMPLE_CD}
+		  AND RDCM.FAMILY_YN       = #{V_FAM_GBN}
+		  AND RDCM.DEATH_YN        = #{V_DEATH_GBN}
+		  <if test='V_PROPOSAL_BUD_NO != null and  V_PROPOSAL_BUD_NO != "" '>
+		  	AND RM.PROPOSAL_BUD_NO LIKE #{V_PROPOSAL_BUD_NO} || '%'
+		  </if>
+		  <if test='VV_USER_ID != null and  VV_USER_ID != "" '>
+		  	AND RID.CRT_USER = #{VV_USER_ID} 
+		  </if>
+		  <if test='V_JUNGAK_CD != null and  V_JUNGAK_CD != ""  and V_JUNGAK_CD !="0"'>
+		  	AND RID.JUNGAK_CD = #{V_JUNGAK_CD}
+		  </if>
+		  <if test='V_CODE != null and  V_CODE != ""  and V_CODE !="0"'>
+		  	AND RID.INDEUNG_GBN = #{V_CODE} 
+		  </if>
+		ORDER BY ACCEPT_SEQ
+				,SEQ
+	</select>
+	
+	<select id="SELECT_ID_CH_PRINT_01" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT RID.TEMPLE_CD
+			  ,RM.ACCEPT_DATE
+			  ,RID.ACCEPT_SEQ
+			  ,RID.SEQ
+			  ,RIJM.SORT_SEQ
+			  ,RM.PROPOSAL_BUD_NO
+			  ,PRO_SIN.NAME_KOR AS PRO_NAME_KOR
+			  ,RIJM.DONGCHAM_BUD_NO
+			  ,SIN.NAME_KOR
+			  ,NVL2(ACM.NAME,ACM.NAME||'생','') AS SEXAGENARY_NM
+			  ,RID.INDEUNG_GBN
+			  ,RDCM.LIGHT_CODE
+			  ,DECODE(RDCM.FAMILY_YN,'T','가족','개인')AS FAMILY_GBN
+			  ,RID.INDEUNG_YEAR
+			  ,RID.INDEUNG_MONTH
+			  ,RID.INDEUNG_PERIOD
+			  ,RID.JUNGAK_CD
+			  ,AJM.JUNGAK_NM
+			  ,RDCM.LIGHT_NM
+			  ,RID.LIGHT_NO
+			  ,RID.CLOSE_YN
+			  ,RID.ACCEPT_SEQ || RID.SEQ AS PAGE_SKIP
+			  ,DAE.ADDR1
+			  ,DAE.ADDR2
+			  ,DAE.ZIP_CD
+			  ,'(' || DAE.TELNO1 || ') ' || DAE.TELNO2 || '-' || DAE.TELNO3 AS TELNO 			  
+			  ,CM_LS.NAME AS LUNAR_SOLAR_NM
+			  <choose>
+			  	<when test='V_TEMPLE_CD == "000008" or V_TEMPLE_CD == "000093"'>
+			  		,DECODE(LENGTH(SIN.BIRTHDAY),8,SUBSTR(NVL(CM_LS.NAME,' '),1,1)|| NVL2(SIN.BIRTHDAY,' '|| SUBSTR(SIN.BIRTHDAY,0,4) ||'년' || SUBSTR(SIN.BIRTHDAY,5,2) ||'월'||SUBSTR(SIN.BIRTHDAY,7,2) || '일',''),'')  AS BIRTHDAY
+			  	</when>
+			  	<otherwise>	
+			  		,DECODE(LENGTH(SIN.BIRTHDAY),8,SUBSTR(NVL(CM_LS.NAME,' '),1,1)|| NVL2(SIN.BIRTHDAY,' ' || SUBSTR(SIN.BIRTHDAY,5,2) ||'월 '||SUBSTR(SIN.BIRTHDAY,7,2) || '일',''),'')  AS BIRTHDAY
+			  	</otherwise>
+			  </choose>			 
+			  ,'' AS TEMPLE_NM
+			  ,SIN.REPRESEN_REL
+			  ,SIN.BUD_CODE
+			  ,CASE WHEN FN_FMT_NUMBER(SIN.BIRTHDAY)>1000 AND FN_TEMPLE_INFO(SIN.TEMPLE_CD,'PRINT_AGE_YN') = 'T' THEN (1+TO_CHAR(SYSDATE,'YYYY')-SUBSTR(SIN.BIRTHDAY,1,4))||'세' ELSE '' END AGE
+			  ,DAE.ADDR1 || ' ' || DAE.ADDR2 || ' ' || FN_ADDR_BLDG2(DAE.BLDG_NUM) as ADDR_ALL
+		  FROM REC_INDEUNG_DETAIL    RID
+		  	  ,ASP_JUNGAK_MGT        AJM
+		  	  ,REC_DEUNG_CLASS_MGT   RDCM
+		  	  ,REC_INDEUNG_JOIN_MGT  RIJM
+		  	  ,REC_MASTER            RM
+		  	  ,SIN_CARD_MASTER       PRO_SIN
+		  	  ,SIN_CARD_MASTER       SIN
+		  	  ,SIN_CARD_MASTER       DAE
+		  	  ,ASP_CODE_MGT          CM_LS
+		  	  ,ASP_CODE_MGT          ACM 
+		 WHERE RID.TEMPLE_CD        = AJM.TEMPLE_CD 
+		   AND RID.ACCEPT_GBN       = AJM.ACCEPT_GBN 
+		   AND RID.JUNGAK_CD        = AJM.JUNGAK_CD 
+		   AND RID.TEMPLE_CD        = RDCM.TEMPLE_CD 
+		   AND RID.ACCEPT_GBN       = RDCM.ACCEPT_GBN 
+		   AND RID.INDEUNG_GBN      = RDCM.LIGHT_CODE 
+		   AND RID.TEMPLE_CD        = RIJM.TEMPLE_CD 
+		   AND RID.ACCEPT_GBN       = RIJM.ACCEPT_GBN 
+		   AND RID.ACCEPT_SEQ       = RIJM.ACCEPT_SEQ 
+		   AND RID.SEQ              = RIJM.SEQ 
+		   AND RID.JUNGAK_CD        = RIJM.JUNGAK_CD 
+		   AND RID.LIGHT_NO         = RIJM.LIGHT_NO 
+		   AND RID.TEMPLE_CD        = RM.TEMPLE_CD 
+		   AND RID.ACCEPT_SEQ       = RM.ACCEPT_SEQ 
+		   AND RID.TEMPLE_CD        = PRO_SIN.TEMPLE_CD 
+		   AND RM.PROPOSAL_BUD_NO   = PRO_SIN.BUD_NO 
+		   AND RID.TEMPLE_CD        = SIN.TEMPLE_CD 
+		   AND RIJM.DONGCHAM_BUD_NO = SIN.BUD_NO 
+		   AND RID.TEMPLE_CD        = DAE.TEMPLE_CD 
+		   AND DAE.BUD_NO           = PRO_SIN.DAEJU_BUD_NO 
+		   AND RID.DEL_YN           = 'F' 
+		   AND RID.CLOSE_YN         ='F'
+		   AND SIN.DEL_YN           = 'F'
+		   AND ACM.GROUP_CD(+)      = 'GANJI' 
+		   AND ACM.CODE(+)          = SIN.SEXAGENARY 
+		   AND CM_LS.GROUP_CD(+)    = 'LUNAR_SOLAR' 
+		   AND SIN.LUNAR_SOLAR      = CM_LS.CODE(+)
+		   AND RID.TEMPLE_CD        = #{V_TEMPLE_CD} 
+		   AND RDCM.FAMILY_YN       = #{V_FAM_GBN}
+		   AND SIN.BUD_NO IN (SELECT BUD_NO 
+		   					    FROM SIN_CARD_MASTER 
+		   					   WHERE TEMPLE_CD = RID.TEMPLE_CD 
+		   					   MINUS 
+		   					  SELECT BUD_NO 
+		   					    FROM SIN_DEATH_INFO 
+		   					   WHERE TEMPLE_CD = RID.TEMPLE_CD)
+		   <if test='V_PROPOSAL_BUD_NO != null and  V_PROPOSAL_BUD_NO != "" '>
+		   		AND RM.PROPOSAL_BUD_NO LIKE #{V_PROPOSAL_BUD_NO} || '%'
+		   </if>
+		   <if test='VV_USER_ID != null and  VV_USER_ID != "" '>
+		   		AND RID.CRT_USER = #{VV_USER_ID}
+		   </if>
+		   <if test='V_JUNGAK_CD != null and  V_JUNGAK_CD != ""  and V_JUNGAK_CD !="0"'>
+		   		AND RID.JUNGAK_CD = #{V_JUNGAK_CD} 
+		   </if>
+		   <if test='V_CODE != null and  V_CODE != ""  and V_CODE !="0"'>
+		   		AND RID.INDEUNG_GBN = #{V_CODE}
+		   </if>
+			ORDER BY ACCEPT_SEQ
+					,SEQ
+					,RIJM.SORT_SEQ
+	</select>
+	
+	
+	<select id="SELECT_ID_CH_PRINT_02_2" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT RID.TEMPLE_CD
+			  ,RM.ACCEPT_DATE
+			  ,RID.ACCEPT_SEQ
+			  ,RID.SEQ
+			  ,RM.PROPOSAL_BUD_NO
+			  ,PRO_SIN.NAME_KOR AS PRO_NAME_KOR
+			  ,RIJM.DONGCHAM_BUD_NO
+			  ,SIN.NAME_KOR
+			  ,RID.ACCEPT_SEQ || RID.SEQ AS PAGE_SKIP
+			  ,'亡' || SDBI.DECE_REL AS DECE_REL
+			  ,SDBI.HYO_REL AS HYO_REL
+			  ,CM_BON.NAME || CM_DS.NAME AS BON_NM
+			  ,'영가' AS DEATH_KOR
+			  ,DAE_SIN.BUD_CODE
+			  ,DAE_SIN.ADDR1
+			  ,DAE_SIN.ADDR2
+			  ,DAE_SIN.ZIP_CD
+			  ,'(' || DAE_SIN.TELNO1 || ') ' || DAE_SIN.TELNO2 || '-' || DAE_SIN.TELNO3 AS TELNO
+			  ,RIJM.SORT_SEQ 
+			  ,BOK_SIN.NAME_KOR AS BOK_NAME_KOR
+			  ,CM_BOK.NAME AS BOKWI_NM
+			  ,DAE_SIN.ADDR1 || ' ' || DAE_SIN.ADDR2 || ' ' || FN_ADDR_BLDG2(DAE_SIN.BLDG_NUM) as ADDR_ALL
+		 FROM REC_INDEUNG_DETAIL    RID
+		     ,ASP_JUNGAK_MGT        AJM
+		     ,REC_DEUNG_CLASS_MGT   RDCM
+		     ,REC_INDEUNG_JOIN_MGT  RIJM
+		     ,REC_MASTER            RM
+		     ,SIN_CARD_MASTER       PRO_SIN
+		     ,SIN_CARD_MASTER       SIN
+		     ,SIN_CARD_MASTER       DAE_SIN
+		     ,SIN_CARD_MASTER       BOK_SIN
+		     ,ASP_CODE_MGT          ACM
+		     ,ASP_CODE_MGT          CM_BON
+		     ,ASP_CODE_MGT          CM_DS
+		     ,ASP_CODE_MGT          CM_BOK
+		     ,SIN_DEATH_INFO        SDI
+		     ,SIN_DEATH_BOKWI_INFO  SDBI 
+		WHERE RID.TEMPLE_CD          = AJM.TEMPLE_CD 
+		  AND RID.ACCEPT_GBN         = AJM.ACCEPT_GBN 
+		  AND RID.JUNGAK_CD          = AJM.JUNGAK_CD 
+		  AND RID.TEMPLE_CD          = RDCM.TEMPLE_CD 
+		  AND RID.ACCEPT_GBN         = RDCM.ACCEPT_GBN 
+		  AND RID.INDEUNG_GBN        = RDCM.LIGHT_CODE 
+		  AND RID.TEMPLE_CD          = RIJM.TEMPLE_CD 
+		  AND RID.ACCEPT_GBN         = RIJM.ACCEPT_GBN 
+		  AND RID.ACCEPT_SEQ         = RIJM.ACCEPT_SEQ 
+		  AND RID.SEQ                = RIJM.SEQ 
+		  AND RID.JUNGAK_CD          = RIJM.JUNGAK_CD 
+		  AND RID.LIGHT_NO           = RIJM.LIGHT_NO 
+		  AND RID.TEMPLE_CD          = RM.TEMPLE_CD 
+		  AND RID.ACCEPT_SEQ         = RM.ACCEPT_SEQ 
+		  AND RID.TEMPLE_CD          = PRO_SIN.TEMPLE_CD 
+		  AND RM.PROPOSAL_BUD_NO     = PRO_SIN.BUD_NO
+		  AND PRO_SIN.TEMPLE_CD      = DAE_SIN.TEMPLE_CD
+		  AND PRO_SIN.DAEJU_BUD_NO   = DAE_SIN.BUD_NO
+		  AND RIJM.TEMPLE_CD         = SDBI.TEMPLE_CD
+		  AND RIJM.BOKWIJA_NO        = SDBI.BUD_NO
+		  AND RIJM.DONGCHAM_BUD_NO   = SDBI.DECE_BUD_NO
+		  AND SDBI.TEMPLE_CD         = SDI.TEMPLE_CD
+		  AND SDBI.DECE_BUD_NO       = SDI.BUD_NO
+		  AND SDI.TEMPLE_CD          = SIN.TEMPLE_CD 
+		  AND SDI.BUD_NO             = SIN.BUD_NO 
+		  AND RID.TEMPLE_CD          = SDI.TEMPLE_CD 
+		  AND SIN.BUD_NO             = SDI.BUD_NO 
+		  AND SDBI.TEMPLE_CD         = BOK_SIN.TEMPLE_CD
+		  AND SDBI.BUD_NO            = BOK_SIN.BUD_NO
+		  AND RID.DEL_YN             = 'F' 
+		  AND RID.CLOSE_YN           = 'F' 
+		  AND SIN.DEL_YN             = 'F'
+		  AND ACM.GROUP_CD(+)        = 'GANJI' 
+		  AND ACM.CODE(+)            = SIN.SEXAGENARY 
+		  AND CM_BON.GROUP_CD(+)     = 'BON' 
+		  AND CM_BON.CODE(+)         = SDI.BON 
+		  AND CM_DS.GROUP_CD(+)      = 'DEATH_SEXGBN' 
+		  AND CM_DS.CODE(+)          = SIN.SEX_GBN
+		  AND CM_BOK.GROUP_CD(+)     = 'BOKWIGBN' 
+		  AND CM_BOK.CODE(+)         = SDBI.BOKWI_KIBU_GBN
+		  AND RID.TEMPLE_CD          = #{V_TEMPLE_CD}
+		  AND RDCM.FAMILY_YN         = #{V_FAM_GBN}
+		  <if test='V_PROPOSAL_BUD_NO != null and  V_PROPOSAL_BUD_NO != "" '>
+		  	AND RM.PROPOSAL_BUD_NO LIKE #{V_PROPOSAL_BUD_NO} || '%'
+		  </if>
+		  <if test='VV_USER_ID != null and  VV_USER_ID != "" '>
+		  	AND RID.CRT_USER = #{VV_USER_ID}
+		  </if>
+		  <if test='V_JUNGAK_CD != null and  V_JUNGAK_CD != "" and V_JUNGAK_CD !="0"'>
+		  	AND RID.JUNGAK_CD = #{VV_JUNGAK_CD}
+		  </if>
+		  <if test='V_CODE != null and  V_CODE != "" and V_CODE !="0"'>
+		  	AND RID.INDEUNG_GBN = #{V_CODE}
+		  </if>		
+		ORDER BY ACCEPT_SEQ
+			    ,SEQ
+			    ,SORT_SEQ
+	</select>
+	
+	
+	<select id="SELECT_YD_REC_PRINT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT RYD.TEMPLE_CD
+			  ,RYD.ACCEPT_SEQ
+			  ,RYD.SEQ
+			  ,RM.PROPOSAL_BUD_NO
+			  ,PRO_SIN.NAME_KOR AS PRO_NAME_KOR
+			  ,RYD.JUNGAK_CD
+			  ,AJM.JUNGAK_NM
+			  ,RYJM.DONGCHAM_BUD_NO
+			  ,SIN.NAME_KOR
+			  ,RYD.LIGHT_NO
+			  ,RDCM.LIGHT_NM
+			  ,RYD.YEONDEUNG_YEAR
+			  ,RYD.ACCEPT_SEQ || RYD.SEQ AS PAGE_SKIP
+			  ,'T' AS CHECK_P
+			  ,replace(RM.MEMO, '\r\n' , '') as MEMO
+		  FROM REC_YEONDEUNG_DETAIL        RYD
+		      ,REC_YEONDEUNG_JOIN_MGT      RYJM
+		      ,REC_MASTER                  RM
+		      ,ASP_JUNGAK_MGT              AJM
+		      ,REC_DEUNG_CLASS_MGT         RDCM
+		      ,SIN_CARD_MASTER             PRO_SIN
+		      ,SIN_CARD_MASTER             SIN
+		 WHERE RYD.TEMPLE_CD         = RYJM.TEMPLE_CD
+		   AND RYD.SEQ               = RYJM.SEQ
+		   AND RYD.ACCEPT_GBN        = RYJM.ACCEPT_GBN
+		   AND RYD.JUNGAK_CD         = RYJM.JUNGAK_CD
+		   AND RYD.ACCEPT_SEQ        = RYJM.ACCEPT_SEQ
+		   AND RYD.LIGHT_NO          = RYJM.LIGHT_NO
+		   AND RYD.TEMPLE_CD         = RM.TEMPLE_CD
+		   AND RYD.ACCEPT_SEQ        = RM.ACCEPT_SEQ
+		   AND RYD.TEMPLE_CD         = AJM.TEMPLE_CD
+		   AND RYD.JUNGAK_CD         = AJM.JUNGAK_CD
+		   AND RYD.ACCEPT_GBN        = AJM.ACCEPT_GBN
+		   AND RYD.TEMPLE_CD         = RDCM.TEMPLE_CD
+		   AND RYD.ACCEPT_GBN        = RDCM.ACCEPT_GBN
+		   AND RYD.YEONDEUNG_GBN     = RDCM.LIGHT_CODE
+		   AND RM.TEMPLE_CD          = PRO_SIN.TEMPLE_CD
+		   AND RM.PROPOSAL_BUD_NO    = PRO_SIN.BUD_NO
+		   AND PRO_SIN.TEMPLE_CD     = SIN.TEMPLE_CD
+		   AND RYJM.DONGCHAM_BUD_NO  = SIN.BUD_NO    
+		   AND RYD.DEL_YN            = 'F'
+		   AND RYJM.SORT_SEQ         = '1'
+		   AND RDCM.DEATH_YN         = #{V_DEATH_GBN}    
+		   AND RYD.TEMPLE_CD         = #{V_TEMPLE_CD}
+		   AND RM.ACCEPT_DATE    &gt;= #{V_ACCEPT_SDATE}
+		   AND RM.ACCEPT_DATE    &lt;= #{V_ACCEPT_EDATE}
+		   <if test='V_FAM_GBN != null and  V_FAM_GBN != "" '>
+		   	AND RDCM.FAMILY_YN  = #{V_FAM_GBN}
+		   </if>
+		   <if test='V_PROPOSAL_BUD_NO != null and  V_PROPOSAL_BUD_NO != "" '>
+		   	AND RM.PROPOSAL_BUD_NO LIKE #{V_PROPOSAL_BUD_NO} || '%'
+		   </if>
+		   <if test='VV_USER_ID != null and  VV_USER_ID != "" '>
+		   	AND RYD.CRT_USER = #{VV_USER_ID}
+		   </if>
+		   <if test='V_JUNGAK_CD != null and  V_JUNGAK_CD != "" and V_JUNGAK_CD !="0" '>
+		   	AND RYD.JUNGAK_CD = #{V_JUNGAK_CD}
+		   </if>
+		   <if test='V_CODE != null and  V_CODE != "" and V_CODE !="0" '>
+		   	AND RYD.YEONDEUNG_GBN = #{V_CODE}
+		   </if>
+		   <if test='V_CLOSE_YN != null and  V_CLOSE_YN != "" '>
+		   	AND RYD.CLOSE_YN = #{V_CLOSE_YN}
+		   </if>
+		  ORDER BY  RYD.ACCEPT_SEQ
+		  	       ,RYD.SEQ
+		  	       ,RYJM.SORT_SEQ
+	</select>
+	
+	
+	<select id="SELECT_YD_REC_PRINT_01" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT RYD.TEMPLE_CD
+			  ,RYD.ACCEPT_SEQ
+			  ,RYD.SEQ
+			  ,RYJM.SORT_SEQ
+			  ,RM.PROPOSAL_BUD_NO
+			  ,PRO_SIN.NAME_KOR AS PRO_NAME_KOR
+			  ,RYD.JUNGAK_CD
+			  ,AJM.JUNGAK_NM
+			  ,RYJM.DONGCHAM_BUD_NO
+			  ,SIN.NAME_KOR
+			  ,RYD.LIGHT_NO
+			  ,RDCM.LIGHT_NM
+			  ,RYD.YEONDEUNG_YEAR
+			  ,RYD.ACCEPT_SEQ || RYD.SEQ AS PAGE_SKIP
+			  ,DAE_SIN.ZIP_CD
+			  ,SIN.SEXAGENARY
+			  ,NVL2(ACM.NAME,ACM.NAME||'생','') AS SEXAGENARY_NM
+			  ,'(' || DAE_SIN.TELNO1 || ') ' || DAE_SIN.TELNO2 || '-' || DAE_SIN.TELNO3 AS TELNO 
+			  ,DECODE(LENGTH(SIN.BIRTHDAY),8,SUBSTR(NVL(CM_LS.NAME,' '),1,1)|| NVL2(SIN.BIRTHDAY,' ' || SUBSTR(SIN.BIRTHDAY,5,2) ||'월 '||SUBSTR(SIN.BIRTHDAY,7,2) || '일',''),'')  AS BIRTHDAY
+			  ,SIN.BIRTHDAY AS BIRTHDAY2
+			  ,DECODE(FN_TEMPLE_INFO(RYD.TEMPLE_CD,'PRINT_YEONDEUNG_YN'),'T',FN_TEMPLE_NAME(RYD.TEMPLE_CD,'FULL_NAME'),'') TEMPLE_NM
+			  ,SIN.REPRESEN_REL
+			  ,DAE_SIN.BUD_CODE
+			  ,(SELECT COUNT(R.DONGCHAM_BUD_NO) 
+			     FROM REC_YEONDEUNG_JOIN_MGT R
+			          ,SIN_CARD_MASTER  S 
+			     WHERE R.TEMPLE_CD = S.TEMPLE_CD
+			       AND S.BUD_NO = R.DONGCHAM_BUD_NO   
+			       AND R.TEMPLE_CD    = RYD.TEMPLE_CD 
+			       AND R.ACCEPT_SEQ   = RYD.ACCEPT_SEQ   
+			       AND R.SEQ          = RYD.SEQ 
+			       AND R.ACCEPT_GBN   = RYD.ACCEPT_GBN 
+			       AND R.JUNGAK_CD    = RYD.JUNGAK_CD 
+			       AND R.LIGHT_NO     = RYD.LIGHT_NO 
+			   ) AS CNT
+			  ,(CASE 
+			  		WHEN 
+			  			FN_FMT_NUMBER(SIN.BIRTHDAY)>1000 AND FN_TEMPLE_INFO(SIN.TEMPLE_CD,'PRINT_AGE_YN') = 'T' 
+			  		THEN 
+			  			(1+TO_CHAR(SYSDATE,'YYYY')-SUBSTR(SIN.BIRTHDAY,1,4))||'세' 
+			  		ELSE 
+			  			'' 
+			  	END) AGE
+			  ,SUVILA.FN_TEMPLE_INFO(#{V_TEMPLE_CD},'PRINT_FORM_YN') PRINT_FORM_YN
+			  ,'../com/img/bg/report_chonhon_bg.gif' BACK_IMAGE
+			  ,DAE_SIN.DAEJU_BUD_NO
+			  ,FN_SINDO_INFO('ADDR1',RYD.TEMPLE_CD,DAE_SIN.DAEJU_BUD_NO) AS ADDR1
+			  ,FN_SINDO_INFO('ADDR2',RYD.TEMPLE_CD,DAE_SIN.DAEJU_BUD_NO) AS ADDR2
+			  ,FN_SINDO_INFO('ADDR1',RYD.TEMPLE_CD,DAE_SIN.DAEJU_BUD_NO) || ' ' || FN_SINDO_INFO('ADDR2',RYD.TEMPLE_CD,DAE_SIN.DAEJU_BUD_NO) || ' ' || FN_ADDR_BLDG2(DAE_SIN.BLDG_NUM) as ADDR_ALL
+		  FROM REC_YEONDEUNG_DETAIL     RYD
+		  	  ,REC_YEONDEUNG_JOIN_MGT   RYJM
+		  	  ,REC_MASTER            	RM
+		  	  ,ASP_JUNGAK_MGT           AJM
+		  	  ,REC_DEUNG_CLASS_MGT      RDCM
+		  	  ,SIN_CARD_MASTER          PRO_SIN
+		  	  ,SIN_CARD_MASTER          DAE_SIN
+		  	  ,SIN_CARD_MASTER          SIN
+		  	  ,ASP_CODE_MGT          	ACM
+		  	  ,ASP_CODE_MGT             CM_LS
+		 WHERE RYD.TEMPLE_CD       = RYJM.TEMPLE_CD
+		   AND RYD.SEQ             = RYJM.SEQ
+		   AND RYD.ACCEPT_GBN      = RYJM.ACCEPT_GBN
+		   AND RYD.JUNGAK_CD       = RYJM.JUNGAK_CD
+		   AND RYD.ACCEPT_SEQ      = RYJM.ACCEPT_SEQ
+		   AND RYD.LIGHT_NO        = RYJM.LIGHT_NO
+		   AND RYD.TEMPLE_CD       = RM.TEMPLE_CD
+		   AND RYD.ACCEPT_SEQ      = RM.ACCEPT_SEQ
+		   AND RYD.TEMPLE_CD       = AJM.TEMPLE_CD
+		   AND RYD.JUNGAK_CD       = AJM.JUNGAK_CD
+		   AND RYD.ACCEPT_GBN      = AJM.ACCEPT_GBN
+		   AND RYD.TEMPLE_CD       = RDCM.TEMPLE_CD
+		   AND RYD.ACCEPT_GBN      = RDCM.ACCEPT_GBN
+		   AND RYD.YEONDEUNG_GBN   = RDCM.LIGHT_CODE
+		   AND RM.TEMPLE_CD        = PRO_SIN.TEMPLE_CD
+		   AND RM.PROPOSAL_BUD_NO  = PRO_SIN.BUD_NO    
+		   AND PRO_SIN.TEMPLE_CD   = DAE_SIN.TEMPLE_CD
+		   AND PRO_SIN.DAEJU_BUD_NO= DAE_SIN.BUD_NO
+		   AND PRO_SIN.TEMPLE_CD   = SIN.TEMPLE_CD
+		   AND RYJM.DONGCHAM_BUD_NO= SIN.BUD_NO
+		   AND RYD.DEL_YN          = 'F'
+		   AND ACM.GROUP_CD(+)     = 'GANJI' 
+		   AND ACM.CODE(+)         = SIN.SEXAGENARY 
+		   AND CM_LS.GROUP_CD(+)   = 'LUNAR_SOLAR' 
+		   AND SIN.LUNAR_SOLAR     = CM_LS.CODE(+) 
+		   AND RDCM.DEATH_YN       = #{V_DEATH_GBN}
+		   AND RYD.TEMPLE_CD       = #{V_TEMPLE_CD}
+		   AND RM.ACCEPT_DATE  &gt;= #{V_ACCEPT_SDATE}
+		   AND RM.ACCEPT_DATE  &lt;= #{V_ACCEPT_EDATE}
+		   <if test='V_FAM_GBN != null and  V_FAM_GBN != "" '>
+		   	AND RDCM.FAMILY_YN  = #{V_FAM_GBN}
+		   </if>
+		   <if test='V_PROPOSAL_BUD_NO != null and  V_PROPOSAL_BUD_NO != "" '>
+		   	AND RM.PROPOSAL_BUD_NO LIKE #{V_PROPOSAL_BUD_NO} || '%'
+		   </if>
+		   <if test='VV_USER_ID != null and  VV_USER_ID != "" '>
+		   	AND RYD.CRT_USER = #{VV_USER_ID}
+		   </if>
+		   <if test='V_JUNGAK_CD != null and  V_JUNGAK_CD != "" and V_JUNGAK_CD !="0" '>
+		   	AND RYD.JUNGAK_CD = #{V_JUNGAK_CD}
+		   </if>
+		   <if test='V_CODE != null and  V_CODE != "" and V_CODE !="0" '>
+		   	AND RYD.YEONDEUNG_GBN = #{V_CODE}
+		   </if>
+		   <if test='V_CLOSE_YN != null and  V_CLOSE_YN != "" '>
+		   	AND RYD.CLOSE_YN = #{V_CLOSE_YN}
+		   </if>
+		ORDER BY RYD.ACCEPT_SEQ
+		        ,RYD.SEQ
+		        <choose>
+		        	<when test='V_DEATH_TYPE == "2"'>
+		        		,RYJM.SORT_SEQ
+		        	</when>
+		        	<when test='V_SORT_SEQ == "1"'>
+		        		,(CASE WHEN DAE_SIN.DAEJU_BUD_NO = RYJM.DONGCHAM_BUD_NO THEN 0 ELSE RYJM.SORT_SEQ END )
+		        	</when>
+		        	<otherwise>
+		        		,RYJM.SORT_SEQ
+		        	</otherwise>
+		        </choose>
+	</select>
+	
+	<select id="SELECT_YD_REC_PRINT_02" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT RYD.TEMPLE_CD
+			  ,RYD.ACCEPT_SEQ
+			  ,RYD.SEQ
+			  ,RYJM.SORT_SEQ
+			  ,RM.PROPOSAL_BUD_NO
+			  ,PRO_SIN.NAME_KOR AS PRO_NAME_KOR
+			  ,RYD.JUNGAK_CD
+			  ,AJM.JUNGAK_NM
+			  ,RYJM.DONGCHAM_BUD_NO
+			  ,SIN.NAME_KOR
+			  ,RYD.LIGHT_NO
+			  ,RDCM.LIGHT_NM
+			  ,RYD.YEONDEUNG_YEAR
+			  ,'亡' || DEATH_BOK.DECE_REL AS DECE_REL
+			  ,NVL(BON_ACM.NAME,'  ') || SEX_ACM.NAME AS BON_SEX_NM
+			  ,BOKWI.NAME_KOR || BOK_ACM.ETC1 AS BOK_NAME_KOR
+			  ,BOKWI.ADDR1
+			  ,BOKWI.ADDR2
+			  ,DEATH_BOK.HYO_REL
+			  ,'영가' AS YOUNGGA
+			  ,RYD.ACCEPT_SEQ || RYD.SEQ AS PAGE_SKIP
+			  ,(SELECT COUNT(*) 
+			      FROM REC_YEONDEUNG_JOIN_MGT 
+			     WHERE TEMPLE_CD   = RYD.TEMPLE_CD
+			       AND ACCEPT_SEQ  = RYD.ACCEPT_SEQ
+			       AND  SEQ        = RYD.SEQ
+			       AND ACCEPT_GBN  = RYD.ACCEPT_GBN
+			       AND JUNGAK_CD   = RYD.JUNGAK_CD
+			       AND ACCEPT_SEQ  = RYD.ACCEPT_SEQ
+			       AND LIGHT_NO    = RYD.LIGHT_NO
+			   ) AS CNT
+			  ,DECODE(FN_TEMPLE_INFO(RYD.TEMPLE_CD,'PRINT_YEONDEUNG_YN'),'T',FN_TEMPLE_NAME(RYD.TEMPLE_CD,'FULL_NAME'),'') TEMPLE_NM
+			  ,NVL(BON_ACM.NAME,'') as BON
+			  ,SEX_ACM.NAME as SEX_NM  
+		  FROM REC_YEONDEUNG_DETAIL     RYD
+		  	  ,REC_YEONDEUNG_JOIN_MGT   RYJM
+		  	  ,REC_MASTER            	RM
+		  	  ,ASP_JUNGAK_MGT           AJM
+		  	  ,REC_DEUNG_CLASS_MGT      RDCM
+		  	  ,SIN_CARD_MASTER          PRO_SIN
+		  	  ,SIN_CARD_MASTER          SIN
+		  	  ,SIN_DEATH_INFO           DEATH
+		  	  ,SIN_DEATH_BOKWI_INFO     DEATH_BOK
+		  	  ,SIN_CARD_MASTER          BOKWI
+		  	  ,ASP_CODE_MGT          	BON_ACM
+		  	  ,ASP_CODE_MGT          	SEX_ACM
+		  	  ,ASP_CODE_MGT          	BOK_ACM
+		 WHERE RYD.TEMPLE_CD             = RYJM.TEMPLE_CD 
+		   AND RYD.SEQ             = RYJM.SEQ 
+		   AND RYD.ACCEPT_GBN          = RYJM.ACCEPT_GBN 
+		   AND RYD.JUNGAK_CD           = RYJM.JUNGAK_CD 
+		   AND RYD.ACCEPT_SEQ          = RYJM.ACCEPT_SEQ 
+		   AND RYD.LIGHT_NO            = RYJM.LIGHT_NO 
+		   AND RYD.TEMPLE_CD           = RM.TEMPLE_CD 
+		   AND RYD.ACCEPT_SEQ          = RM.ACCEPT_SEQ 
+		   AND RYD.TEMPLE_CD           = AJM.TEMPLE_CD 
+		   AND RYD.JUNGAK_CD           = AJM.JUNGAK_CD 
+		   AND RYD.ACCEPT_GBN          = AJM.ACCEPT_GBN 
+		   AND RYD.TEMPLE_CD           = RDCM.TEMPLE_CD 
+		   AND RYD.ACCEPT_GBN          = RDCM.ACCEPT_GBN 
+		   AND RYD.YEONDEUNG_GBN       = RDCM.LIGHT_CODE 
+		   AND RM.TEMPLE_CD            = PRO_SIN.TEMPLE_CD 
+		   AND RM.PROPOSAL_BUD_NO      = PRO_SIN.BUD_NO    
+		   AND RYJM.TEMPLE_CD          = DEATH_BOK.TEMPLE_CD
+		   AND RYJM.BOKWIJA_NO         = DEATH_BOK.BUD_NO
+		   AND RYJM.DONGCHAM_BUD_NO    = DEATH_BOK.DECE_BUD_NO
+		   AND DEATH_BOK.TEMPLE_CD     = DEATH.TEMPLE_CD
+		   AND DEATH_BOK.DECE_BUD_NO   = DEATH.BUD_NO
+		   AND DEATH.TEMPLE_CD         = SIN.TEMPLE_CD 
+		   AND DEATH.BUD_NO            = SIN.BUD_NO
+		   AND DEATH.TEMPLE_CD         = SIN.TEMPLE_CD
+		   AND DEATH.BUD_NO            = SIN.BUD_NO
+		   AND BOKWI.TEMPLE_CD         = DEATH_BOK.TEMPLE_CD
+		   AND BOKWI.BUD_NO            = DEATH_BOK.BUD_NO
+		   AND BON_ACM.GROUP_CD(+)     = 'BON' 
+		   AND BON_ACM.CODE(+)         = DEATH.BON 
+		   AND SEX_ACM.GROUP_CD(+)     = 'DEATH_SEXGBN' 
+		   AND SEX_ACM.CODE(+)         = SIN.SEX_GBN
+		   AND BOK_ACM.GROUP_CD(+)     = 'BOKWIGBN' 
+		   AND BOK_ACM.CODE(+)         = DEATH_BOK.BOKWI_KIBU_GBN
+		   AND RYD.DEL_YN              = 'F' 
+		   AND SIN.DEL_YN              = 'F'
+		   AND RYD.TEMPLE_CD           = #{V_TEMPLE_CD}     
+		   AND RDCM.FAMILY_YN          = #{V_FAM_GBN}
+		   AND RDCM.DEATH_YN           = #{V_DEATH_GBN}     
+		   AND RM.ACCEPT_DATE      &gt;= #{V_ACCEPT_SDATE}
+		   AND RM.ACCEPT_DATE      &lt;= #{V_ACCEPT_EDATE}
+		   <if test='V_PROPOSAL_BUD_NO != null and  V_PROPOSAL_BUD_NO != "" '>
+		   		AND RM.PROPOSAL_BUD_NO LIKE #{V_PROPOSAL_BUD_NO} || '%'
+		   </if>
+		   <if test='VV_USER_ID != null and  VV_USER_ID != "" '>
+		   		AND RYD.CRT_USER = #{VV_USER_ID} 
+		   </if>
+		   <if test='V_JUNGAK_CD != null and  V_JUNGAK_CD != ""  and V_JUNGAK_CD !="0" '>
+		   		AND RYD.JUNGAK_CD = #{V_JUNGAK_CD}
+		   </if>
+		   <if test='V_CODE != null and  V_CODE != ""  and V_CODE !="0" '>
+		   		AND RYD.YEONDEUNG_GBN = #{V_CODE}
+		   </if>
+		   <if test='V_CLOSE_YN != null and  V_CLOSE_YN != "" '>
+		   		AND RYD.CLOSE_YN = #{V_CLOSE_YN} 
+		   </if>
+		ORDER BY RYD.ACCEPT_SEQ
+				,RYD.SEQ
+				,RYJM.SORT_SEQ
+	</select>
+	
+	<select id="SELECT_YD_REC_PRINT_03" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT RID.TEMPLE_CD
+			  ,RM.ACCEPT_DATE
+			  ,RID.ACCEPT_SEQ
+			  ,RID.SEQ
+			  ,RM.PROPOSAL_BUD_NO
+			  ,PRO_SIN.NAME_KOR AS PRO_NAME_KOR
+			  ,RIJM.DONGCHAM_BUD_NO
+			  ,SIN.NAME_KOR
+			  ,RID.ACCEPT_SEQ || RID.SEQ AS PAGE_SKIP
+			  ,'亡' || SDBI.DECE_REL AS DECE_REL
+			  ,SDBI.HYO_REL AS HYO_REL
+			  ,CM_BON.NAME || CM_DS.NAME AS BON_NM
+			  ,'영가' AS DEATH_KOR
+			  ,DAE_SIN.BUD_CODE
+			  ,DAE_SIN.ADDR1
+			  ,DAE_SIN.ADDR2
+			  ,DAE_SIN.ZIP_CD
+			  ,'' AS TELNO
+			  ,RIJM.SORT_SEQ
+			  ,BOK_SIN.NAME_KOR AS BOK_NAME_KOR
+			  ,CM_BOK.NAME AS BOKWI_NM
+			  ,FN_TEMPLE_NAME(RID.TEMPLE_CD,'FULL_NAME') AS TEMPLE_NM
+			  ,DAE_SIN.ADDR1 || ' ' || DAE_SIN.ADDR2 || ' ' || FN_ADDR_BLDG2(DAE_SIN.BLDG_NUM) as ADDR_ALL
+		  FROM REC_YEONDEUNG_DETAIL    RID
+		  	  ,ASP_JUNGAK_MGT          AJM
+		  	  ,REC_DEUNG_CLASS_MGT     RDCM
+		  	  ,REC_YEONDEUNG_JOIN_MGT  RIJM
+		  	  ,REC_MASTER              RM
+		  	  ,SIN_CARD_MASTER         PRO_SIN
+		  	  ,SIN_CARD_MASTER         SIN
+		  	  ,SIN_CARD_MASTER         DAE_SIN
+		  	  ,SIN_CARD_MASTER       BOK_SIN
+		  	  ,ASP_CODE_MGT          ACM
+		  	  ,ASP_CODE_MGT          CM_BON
+		  	  ,ASP_CODE_MGT          CM_DS
+		  	  ,ASP_CODE_MGT          CM_BOK
+		  	  ,SIN_DEATH_INFO        SDI
+		  	  ,SIN_DEATH_BOKWI_INFO  SDBI 
+		 WHERE RID.TEMPLE_CD        = AJM.TEMPLE_CD 
+	       AND RID.ACCEPT_GBN       = AJM.ACCEPT_GBN 
+	       AND RID.JUNGAK_CD        = AJM.JUNGAK_CD 
+	       AND RID.TEMPLE_CD        = RDCM.TEMPLE_CD 
+	       AND RID.ACCEPT_GBN       = RDCM.ACCEPT_GBN 
+	       AND RID.YEONDEUNG_GBN    = RDCM.LIGHT_CODE 
+	       AND RID.TEMPLE_CD        = RIJM.TEMPLE_CD 
+	       AND RID.ACCEPT_GBN       = RIJM.ACCEPT_GBN 
+	       AND RID.ACCEPT_SEQ       = RIJM.ACCEPT_SEQ 
+	       AND RID.SEQ              = RIJM.SEQ 
+	       AND RID.JUNGAK_CD        = RIJM.JUNGAK_CD 
+	       AND RID.LIGHT_NO         = RIJM.LIGHT_NO 
+	       AND RID.TEMPLE_CD        = RM.TEMPLE_CD 
+	       AND RID.ACCEPT_SEQ       = RM.ACCEPT_SEQ 
+	       AND RID.TEMPLE_CD        = PRO_SIN.TEMPLE_CD 
+	       AND RM.PROPOSAL_BUD_NO   = PRO_SIN.BUD_NO
+	       AND PRO_SIN.TEMPLE_CD    = DAE_SIN.TEMPLE_CD
+	       AND PRO_SIN.DAEJU_BUD_NO = DAE_SIN.BUD_NO
+	       AND RIJM.TEMPLE_CD       = SDBI.TEMPLE_CD
+	       AND RIJM.BOKWIJA_NO      = SDBI.BUD_NO
+	       AND RIJM.DONGCHAM_BUD_NO = SDBI.DECE_BUD_NO
+	       AND SDBI.TEMPLE_CD       = SDI.TEMPLE_CD
+	       AND SDBI.DECE_BUD_NO     = SDI.BUD_NO
+	       AND SDI.TEMPLE_CD        = SIN.TEMPLE_CD 
+	       AND SDI.BUD_NO           = SIN.BUD_NO 
+	       AND RID.TEMPLE_CD        = SDI.TEMPLE_CD 
+	       AND SIN.BUD_NO           = SDI.BUD_NO 
+	       AND SDBI.TEMPLE_CD       = BOK_SIN.TEMPLE_CD
+	       AND SDBI.BUD_NO          = BOK_SIN.BUD_NO
+	       AND RID.DEL_YN           = 'F'       
+	       AND ACM.GROUP_CD(+)      = 'GANJI' 
+	       AND ACM.CODE(+)          = SIN.SEXAGENARY 
+	       AND CM_BON.GROUP_CD(+)   = 'BON' 
+	       AND CM_BON.CODE(+)       = SDI.BON 
+	       AND CM_DS.GROUP_CD(+)    = 'DEATH_SEXGBN' 
+	       AND CM_DS.CODE(+)        = SIN.SEX_GBN 
+	       AND CM_BOK.GROUP_CD(+)   = 'BOKWIGBN' 
+	       AND CM_BOK.CODE(+)       = SDBI.BOKWI_KIBU_GBN
+	       AND SIN.DEL_YN           = 'F'
+		   AND RID.TEMPLE_CD        = #{V_TEMPLE_CD}
+		   AND RDCM.FAMILY_YN       = #{V_FAM_GBN}
+		   AND RM.ACCEPT_DATE      >= #{V_ACCEPT_SDATE}
+		   AND RM.ACCEPT_DATE   &lt;= #{V_ACCEPT_EDATE}
+		   <if test='V_PROPOSAL_BUD_NO != null and  V_PROPOSAL_BUD_NO != "" '>
+		   	AND RM.PROPOSAL_BUD_NO LIKE #{V_PROPOSAL_BUD_NO} || '%'
+		   </if>
+		   <if test='V_USER_ID != null and  V_USER_ID != "" '>
+		   	AND RID.CRT_USER = #{V_USER_ID}
+		   </if>
+		   <if test='V_JUNGAK_CD != null and  V_JUNGAK_CD != "" and V_JUNGAK_CD != 0'>
+		   	AND RID.JUNGAK_CD = #{V_JUNGAK_CD{
+		   </if>
+		   <if test='V_CODE != null and  V_CODE != "" and V_CODE != 0'>
+		   	AND RID.YEONDEUNG_GBN = #{V_CODE}
+		   </if>
+		   <if test='V_CLOSE_YN != null and  V_CLOSE_YN != "" '>
+		   	AND RID.CLOSE_YN = #{V_CLOSE_YN}
+		   </if>		
+		ORDER BY ACCEPT_SEQ
+			    ,SEQ
+			    ,SORT_SEQ
+	</select>
+	
+	
+	<select id="SELECT_YD2_REC_PRINT_02" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT RYD.TEMPLE_CD
+			  ,RYD.ACCEPT_SEQ
+			  ,RYD.SEQ
+			  ,RYJM.SORT_SEQ
+			  ,RM.PROPOSAL_BUD_NO
+			  ,PRO_SIN.NAME_KOR AS PRO_NAME_KOR
+			  ,RYD.JUNGAK_CD
+			  ,AJM.JUNGAK_NM
+			  ,RYJM.DONGCHAM_BUD_NO
+			  ,SIN.NAME_KOR
+			  ,RYD.LIGHT_NO
+			  ,RDCM.LIGHT_NM
+			  ,RYD.YEONDEUNG_YEAR
+			  ,DECODE(SPIRITUAL_GBN,'2','','망') || DEATH_BOK.DECE_REL AS DECE_REL
+			  ,DECODE(SPIRITUAL_GBN,'2','','망') AS MANG
+			  ,DEATH_BOK.DECE_REL AS DECE_REL2
+			  ,TRIM(BON_ACM.NAME || ' ' ||SEX_ACM.NAME) AS BON_SEX_NM
+			  ,BOKWI.NAME_KOR AS BOK_NAME_KOR
+			  ,BOKWI.ADDR1
+			  ,BOKWI.ADDR2
+			  ,DEATH_BOK.HYO_REL
+			  ,DECODE(EQUAL_GBN,'2','동일') || NVL(ACM_SPI.NAME,'영가') AS YOUNGGA
+			  ,RYD.ACCEPT_SEQ || RYD.SEQ AS PAGE_SKIP
+			  ,(SELECT COUNT(*) 
+    			  FROM REC_YEONDEUNG_JOIN_MGT 
+    			  WHERE TEMPLE_CD = RYD.TEMPLE_CD
+    			    AND ACCEPT_SEQ = RYD.ACCEPT_SEQ
+    			    AND  SEQ = RYD.SEQ
+    				AND ACCEPT_GBN = RYD.ACCEPT_GBN
+    				AND JUNGAK_CD = RYD.JUNGAK_CD
+    				AND ACCEPT_SEQ = RYD.ACCEPT_SEQ
+    				AND LIGHT_NO   = RYD.LIGHT_NO )AS CNT
+    		  ,FN_TEMPLE_NAME(RYD.TEMPLE_CD,'FULL_NAME') AS TEMPLE_NM
+    		  ,SUVILA.FN_TEMPLE_INFO(#{V_TEMPLE_CD},'PRINT_FORM_YN') PRINT_FORM_YN
+    		  ,'../com/img/bg/report_chonhon_bg.gif' BACK_IMAGE
+    		  ,TRIM(BON_ACM.NAME) AS BON
+    		  ,TRIM(SEX_ACM.NAME) AS SEX_NM  
+		FROM REC_YEONDEUNG_DETAIL    RYD
+			,REC_YEONDEUNG_JOIN_MGT  RYJM
+			,REC_MASTER              RM
+			,ASP_JUNGAK_MGT          AJM
+			,REC_DEUNG_CLASS_MGT     RDCM
+			,SIN_CARD_MASTER         PRO_SIN
+			,SIN_CARD_MASTER         SIN
+			,SIN_DEATH_INFO          DEATH
+			,SIN_DEATH_BOKWI_INFO    DEATH_BOK
+			,SIN_CARD_MASTER         BOKWI
+			,ASP_CODE_MGT          	 BON_ACM
+			,ASP_CODE_MGT         	 SEX_ACM
+			,ASP_CODE_MGT          	 BOK_ACM
+			,ASP_CODE_MGT          	 ACM_SPI
+			,ASP_CODE_MGT            ACM_DYN
+	   WHERE RYD.TEMPLE_CD               = RYJM.TEMPLE_CD 
+    	 AND RYD.SEQ             	 	 = RYJM.SEQ 
+    	 AND RYD.ACCEPT_GBN          	 = RYJM.ACCEPT_GBN 
+    	 AND RYD.JUNGAK_CD           	 = RYJM.JUNGAK_CD 
+    	 AND RYD.ACCEPT_SEQ          	 = RYJM.ACCEPT_SEQ 
+    	 AND RYD.LIGHT_NO            	 = RYJM.LIGHT_NO 
+    	 AND RYD.TEMPLE_CD           	 = RM.TEMPLE_CD 
+    	 AND RYD.ACCEPT_SEQ          	 = RM.ACCEPT_SEQ 
+    	 AND RYD.TEMPLE_CD           	 = AJM.TEMPLE_CD 
+    	 AND RYD.JUNGAK_CD           	 = AJM.JUNGAK_CD 
+    	 AND RYD.ACCEPT_GBN          	 = AJM.ACCEPT_GBN 
+    	 AND RYD.TEMPLE_CD           	 = RDCM.TEMPLE_CD 
+    	 AND RYD.ACCEPT_GBN          	 = RDCM.ACCEPT_GBN 
+    	 AND RYD.YEONDEUNG_GBN           = RDCM.LIGHT_CODE 
+    	 AND RM.TEMPLE_CD                = PRO_SIN.TEMPLE_CD 
+    	 AND RM.PROPOSAL_BUD_NO          = PRO_SIN.BUD_NO    
+    	 AND RYJM.TEMPLE_CD              = DEATH_BOK.TEMPLE_CD
+    	 AND RYJM.BOKWIJA_NO             = DEATH_BOK.BUD_NO
+    	 AND RYJM.DONGCHAM_BUD_NO        = DEATH_BOK.DECE_BUD_NO
+    	 AND DEATH_BOK.TEMPLE_CD         = DEATH.TEMPLE_CD
+    	 AND DEATH_BOK.DECE_BUD_NO       = DEATH.BUD_NO
+    	 AND DEATH.TEMPLE_CD             = SIN.TEMPLE_CD 
+    	 AND DEATH.BUD_NO                = SIN.BUD_NO
+    	 AND DEATH.TEMPLE_CD             = SIN.TEMPLE_CD
+    	 AND DEATH.BUD_NO                = SIN.BUD_NO
+    	 AND BOKWI.TEMPLE_CD             = DEATH_BOK.TEMPLE_CD
+    	 AND BOKWI.BUD_NO                = DEATH_BOK.BUD_NO
+    	 AND BON_ACM.GROUP_CD(+)         = 'BON' 
+    	 AND BON_ACM.CODE(+)             = DEATH.BON 
+    	 AND SEX_ACM.GROUP_CD(+)         = 'DEATH_SEXGBN' 
+    	 AND SEX_ACM.CODE(+)             = SIN.SEX_GBN
+    	 AND BOK_ACM.GROUP_CD(+)         = 'BOKWIGBN' 
+    	 AND BOK_ACM.CODE(+)             = DEATH_BOK.BOKWI_KIBU_GBN
+    	 AND ACM_SPI.GROUP_CD(+)         = 'SPIRITUAL_GBN'
+      	 AND ACM_SPI.CODE(+)             =  DEATH_BOK.SPIRITUAL_GBN
+      	 AND ACM_DYN.GROUP_CD(+)         = 'DEATH_GBN'
+      	 AND ACM_DYN.CODE(+)             =  DEATH_BOK.DEATH_YN
+    	 AND RYD.DEL_YN                  = 'F' 
+    	 AND SIN.DEL_YN                  = 'F'
+    	 AND RYD.TEMPLE_CD               = #{V_TEMPLE_CD}     
+    	 AND RDCM.DEATH_YN               = #{V_DEATH_GBN}     
+    	 AND RM.ACCEPT_DATE          &gt;= #{V_ACCEPT_SDATE}
+    	 AND RM.ACCEPT_DATE          &lt;= #{V_ACCEPT_EDATE}
+    	 <if test='V_FAM_GBN != null and  V_FAM_GBN != "" '>
+    	 	AND RDCM.FAMILY_YN  = #{V_FAM_GBN} 
+    	 </if>
+    	 <if test='V_PROPOSAL_BUD_NO != null and  V_PROPOSAL_BUD_NO != "" '>
+    	 	AND RM.PROPOSAL_BUD_NO LIKE #{V_PROPOSAL_BUD_NO} || '%'
+    	 </if>
+    	 <if test='VV_USER_ID != null and  VV_USER_ID != "" '>
+    	 	AND RYD.CRT_USER = #{V_USER_ID}
+    	 </if>
+    	 <if test='V_JUNGAK_CD != null and  V_JUNGAK_CD != "" and  V_JUNGAK_CD != 0'>
+    	 	AND RYD.JUNGAK_CD = #{V_JUNGAK_CD}
+    	 </if>
+    	 <if test='V_CODE != null and  V_CODE != "" and  V_CODE != 0'>
+    	 	AND RYD.YEONDEUNG_GBN = #{V_CODE}
+    	 </if>
+    	 ORDER BY  RYD.ACCEPT_SEQ
+    	 		 , RYD.SEQ
+    	 		 , RYJM.SORT_SEQ
+	</select>
+	
+		
+	
+	<select id="SELECT_YD_REC_PRINT_02_NEW" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT RYD.TEMPLE_CD
+			  ,RYD.ACCEPT_SEQ
+			  ,RYD.SEQ
+			  ,RYJM.SORT_SEQ
+			  ,RM.PROPOSAL_BUD_NO
+			  ,PRO_SIN.NAME_KOR AS PRO_NAME_KOR
+			  ,RYD.JUNGAK_CD
+			  ,AJM.JUNGAK_NM
+			  ,RYJM.DONGCHAM_BUD_NO
+			  ,SIN.NAME_KOR
+			  ,RYD.LIGHT_NO
+			  ,RDCM.LIGHT_NM
+			  ,RYD.YEONDEUNG_YEAR
+			  ,'亡' || DEATH_BOK.DECE_REL AS DECE_REL
+			  ,NVL(BON_ACM.NAME,'  ') || SEX_ACM.NAME AS BON_SEX_NM
+			  ,BOKWI.NAME_KOR || BOK_ACM.ETC1 AS BOK_NAME_KOR
+			  ,BOKWI.ADDR1
+			  ,BOKWI.ADDR2
+			  ,DEATH_BOK.HYO_REL
+			  ,'영가' AS YOUNGGA
+			  ,RYD.ACCEPT_SEQ || RYD.SEQ AS PAGE_SKIP
+			  ,RYD.ACCEPT_SEQ || RYD.SEQ || BOKWI.BUD_NO AS PAGE_SKIP_NEW
+			  ,(SELECT COUNT(*) 
+			      FROM REC_YEONDEUNG_JOIN_MGT 
+			     WHERE TEMPLE_CD   = RYD.TEMPLE_CD
+			       AND ACCEPT_SEQ  = RYD.ACCEPT_SEQ
+			       AND  SEQ        = RYD.SEQ
+			       AND ACCEPT_GBN  = RYD.ACCEPT_GBN
+			       AND JUNGAK_CD   = RYD.JUNGAK_CD
+			       AND ACCEPT_SEQ  = RYD.ACCEPT_SEQ
+			       AND LIGHT_NO    = RYD.LIGHT_NO
+			       AND BOKWIJA_NO = BOKWI.BUD_NO
+			   ) AS CNT
+			  ,DECODE(FN_TEMPLE_INFO(RYD.TEMPLE_CD,'PRINT_YEONDEUNG_YN'),'T',FN_TEMPLE_NAME(RYD.TEMPLE_CD,'FULL_NAME'),'') TEMPLE_NM
+			  ,NVL(BON_ACM.NAME,'') as BON
+			  ,SEX_ACM.NAME as SEX_NM  
+		  FROM REC_YEONDEUNG_DETAIL     RYD
+		  	  ,REC_YEONDEUNG_JOIN_MGT   RYJM
+		  	  ,REC_MASTER            	RM
+		  	  ,ASP_JUNGAK_MGT           AJM
+		  	  ,REC_DEUNG_CLASS_MGT      RDCM
+		  	  ,SIN_CARD_MASTER          PRO_SIN
+		  	  ,SIN_CARD_MASTER          SIN
+		  	  ,SIN_DEATH_INFO           DEATH
+		  	  ,SIN_DEATH_BOKWI_INFO     DEATH_BOK
+		  	  ,SIN_CARD_MASTER          BOKWI
+		  	  ,ASP_CODE_MGT          	BON_ACM
+		  	  ,ASP_CODE_MGT          	SEX_ACM
+		  	  ,ASP_CODE_MGT          	BOK_ACM
+		 WHERE RYD.TEMPLE_CD             = RYJM.TEMPLE_CD 
+		   AND RYD.SEQ             = RYJM.SEQ 
+		   AND RYD.ACCEPT_GBN          = RYJM.ACCEPT_GBN 
+		   AND RYD.JUNGAK_CD           = RYJM.JUNGAK_CD 
+		   AND RYD.ACCEPT_SEQ          = RYJM.ACCEPT_SEQ 
+		   AND RYD.LIGHT_NO            = RYJM.LIGHT_NO 
+		   AND RYD.TEMPLE_CD           = RM.TEMPLE_CD 
+		   AND RYD.ACCEPT_SEQ          = RM.ACCEPT_SEQ 
+		   AND RYD.TEMPLE_CD           = AJM.TEMPLE_CD 
+		   AND RYD.JUNGAK_CD           = AJM.JUNGAK_CD 
+		   AND RYD.ACCEPT_GBN          = AJM.ACCEPT_GBN 
+		   AND RYD.TEMPLE_CD           = RDCM.TEMPLE_CD 
+		   AND RYD.ACCEPT_GBN          = RDCM.ACCEPT_GBN 
+		   AND RYD.YEONDEUNG_GBN       = RDCM.LIGHT_CODE 
+		   AND RM.TEMPLE_CD            = PRO_SIN.TEMPLE_CD 
+		   AND RM.PROPOSAL_BUD_NO      = PRO_SIN.BUD_NO    
+		   AND RYJM.TEMPLE_CD          = DEATH_BOK.TEMPLE_CD
+		   AND RYJM.BOKWIJA_NO         = DEATH_BOK.BUD_NO
+		   AND RYJM.DONGCHAM_BUD_NO    = DEATH_BOK.DECE_BUD_NO
+		   AND DEATH_BOK.TEMPLE_CD     = DEATH.TEMPLE_CD
+		   AND DEATH_BOK.DECE_BUD_NO   = DEATH.BUD_NO
+		   AND DEATH.TEMPLE_CD         = SIN.TEMPLE_CD 
+		   AND DEATH.BUD_NO            = SIN.BUD_NO
+		   AND DEATH.TEMPLE_CD         = SIN.TEMPLE_CD
+		   AND DEATH.BUD_NO            = SIN.BUD_NO
+		   AND BOKWI.TEMPLE_CD         = DEATH_BOK.TEMPLE_CD
+		   AND BOKWI.BUD_NO            = DEATH_BOK.BUD_NO
+		   AND BON_ACM.GROUP_CD(+)     = 'BON' 
+		   AND BON_ACM.CODE(+)         = DEATH.BON 
+		   AND SEX_ACM.GROUP_CD(+)     = 'DEATH_SEXGBN' 
+		   AND SEX_ACM.CODE(+)         = SIN.SEX_GBN
+		   AND BOK_ACM.GROUP_CD(+)     = 'BOKWIGBN' 
+		   AND BOK_ACM.CODE(+)         = DEATH_BOK.BOKWI_KIBU_GBN
+		   AND RYD.DEL_YN              = 'F' 
+		   AND SIN.DEL_YN              = 'F'
+		   AND RYD.TEMPLE_CD           = #{V_TEMPLE_CD}
+		   <if test="V_ACCEPT_SEQ1 != '' and V_ACCEPT_SEQ1 != null  ">
+		   		AND ( RYD.ACCEPT_SEQ IN (${V_ACCEPT_SEQ1})
+		   </if>
+		   <if test="V_ACCEPT_SEQ2 != '' and V_ACCEPT_SEQ2 != null  ">
+		   		OR  RYD.ACCEPT_SEQ IN (${V_ACCEPT_SEQ2})
+		   </if>
+		   <if test="V_ACCEPT_SEQ3 != '' and V_ACCEPT_SEQ3 != null  ">
+		   		OR  RYD.ACCEPT_SEQ IN (${V_ACCEPT_SEQ3})
+		   </if>
+		   <if test="V_ACCEPT_SEQ4 != '' and V_ACCEPT_SEQ4 != null  ">
+		   		OR  RYD.ACCEPT_SEQ IN (${V_ACCEPT_SEQ4})
+		   </if>
+		   <if test="V_ACCEPT_SEQ5 != '' and V_ACCEPT_SEQ5 != null  ">
+		   		OR  RYD.ACCEPT_SEQ IN (${V_ACCEPT_SEQ5})
+		   </if>
+		   <if test="V_ACCEPT_SEQ6 != '' and V_ACCEPT_SEQ6 != null  ">
+		   		OR  RYD.ACCEPT_SEQ IN (${V_ACCEPT_SEQ6})
+		   </if>
+		   <if test="V_ACCEPT_SEQ7 != '' and V_ACCEPT_SEQ7 != null  ">
+		   		OR  RYD.ACCEPT_SEQ IN (${V_ACCEPT_SEQ7})
+		   </if>
+		   <if test="V_ACCEPT_SEQ8 != '' and V_ACCEPT_SEQ8 != null  ">
+		   		OR  RYD.ACCEPT_SEQ IN (${V_ACCEPT_SEQ8})
+		   </if>
+		   <if test="V_ACCEPT_SEQ9 != '' and V_ACCEPT_SEQ9 != null  ">
+		   		OR  RYD.ACCEPT_SEQ IN (${V_ACCEPT_SEQ9})
+		   </if>
+		   <if test="V_ACCEPT_SEQ10 != '' and V_ACCEPT_SEQ10 != null  ">
+		   		OR  RYD.ACCEPT_SEQ IN (${V_ACCEPT_SEQ10})
+		   </if>
+		   <if test="V_ACCEPT_SEQ1 != '' and V_ACCEPT_SEQ1 != null  ">
+		   		)
+		   </if>     		   		  
+		ORDER BY RYD.ACCEPT_SEQ
+				,RYD.SEQ
+				,RYJM.SORT_SEQ
+	</select>
+	
+</mapper>

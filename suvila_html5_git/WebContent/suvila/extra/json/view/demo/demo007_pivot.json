@@ -1,0 +1,18 @@
+{ 
+    "success":true,
+    "msg":"",
+    "data":{
+    "list":[
+				 {"custNo":"1","custName":"홍길동","addr":"경기도 파주시 금촌로 50 후곡마을 ", "area":"서울", "point":0.5,"year":"2014" ,"merryCls":false, "commonCode": "001", "commonCodeList":[{"value":"001", "display":"코드001"},{"value":"002", "display":"코드002"},{"value":"003", "display":"코드003"}]},
+			     {"custNo":"1","custName":"홍길동","addr":"경기도 파주시 금촌로 50 후곡마을 ", "area":"서울", "point":0.1,"year":"2015" ,"merryCls":false, "commonCode": "001", "commonCodeList":[{"value":"001", "display":"코드001"},{"value":"002", "display":"코드002"},{"value":"003", "display":"코드003"}]},
+			     {"custNo":"1","custName":"홍길동","addr":"경기도 파주시 금촌로 50 후곡마을 ", "area":"부산", "point":0.8,"year":"2016" ,"merryCls":false, "commonCode": "001", "commonCodeList":[{"value":"001", "display":"코드001"},{"value":"002", "display":"코드002"},{"value":"003", "display":"코드003"}]},
+				 {"custNo":"2","custName":"산신령","addr":"경기도 파주시 금촌로 50 후곡마을 ", "area":"서울", "point":0.9,"year":"2014" ,"merryCls":false, "commonCode": "001", "commonCodeList":[{"value":"001", "display":"코드001"},{"value":"002", "display":"코드002"},{"value":"003", "display":"코드003"}]},
+			     {"custNo":"2","custName":"산신령","addr":"경기도 파주시 금촌로 50 후곡마을 ", "area":"서울", "point":1000,"year":"2015" ,"merryCls":false, "commonCode": "001", "commonCodeList":[{"value":"001", "display":"코드001"},{"value":"002", "display":"코드002"},{"value":"003", "display":"코드003"}]},
+			     {"custNo":"2","custName":"산신령","addr":"경기도 파주시 금촌로 50 후곡마을 ", "area":"부산", "point":1000,"year":"2016" ,"merryCls":false, "commonCode": "001", "commonCodeList":[{"value":"001", "display":"코드001"},{"value":"002", "display":"코드002"},{"value":"003", "display":"코드003"}]},
+				 {"custNo":"3","custName":"임걱정","addr":"경기도 파주시 금촌로 50 후곡마을 ", "area":"부산", "point":1000,"year":"2014" ,"merryCls":false, "commonCode": "001", "commonCodeList":[{"value":"001", "display":"코드001"},{"value":"002", "display":"코드002"},{"value":"003", "display":"코드003"}]},
+			     {"custNo":"3","custName":"임걱정","addr":"경기도 파주시 금촌로 50 후곡마을 ", "area":"부산", "point":1000,"year":"2015" ,"merryCls":false, "commonCode": "001", "commonCodeList":[{"value":"001", "display":"코드001"},{"value":"002", "display":"코드002"},{"value":"003", "display":"코드003"}]},
+			     {"custNo":"3","custName":"임걱정","addr":"경기도 파주시 금촌로 50 후곡마을 ", "area":"서울", "point":1000,"year":"2016" ,"merryCls":false, "commonCode": "001", "commonCodeList":[{"value":"001", "display":"코드001"},{"value":"002", "display":"코드002"},{"value":"003", "display":"코드003"}]},		
+				 {"custNo":"4","custName":"이문세","addr":"경기도 파주시 금촌로 50 후곡마을 ", "area":"서울", "point":1000,"year":"2014" ,"merryCls":false, "commonCode": "001", "commonCodeList":[{"value":"001", "display":"코드001"},{"value":"002", "display":"코드002"},{"value":"003", "display":"코드003"}]}
+			 ]
+    }
+}

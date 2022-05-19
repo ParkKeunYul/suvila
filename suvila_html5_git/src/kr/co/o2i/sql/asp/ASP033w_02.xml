@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ASP033w_02DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+
+	<select id="SELECT_ISSUE_INFO" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT TEMPLE_CD
+		      ,FN_TEMPLE_NAME(TEMPLE_CD,'FULL_NAME') TEMPLE_NM
+		      ,TO_CHAR( CRT_DATE , 'YYYYMM' ) APP_MONTH
+		      ,SUM( CASE WHEN ISSUE_STATE in (1,2,3,4) THEN 1 ELSE 0 END ) APP_CNT
+		      ,SUM( CASE WHEN ISSUE_STATE = 2 THEN 1 ELSE 0 END ) COM_CNT
+		      ,SUM( CASE WHEN ISSUE_STATE = 3 THEN 1 ELSE 0 END ) DELAY_CNT
+		FROM SIN_CARD_ISSUE_DETAIL
+		WHERE TO_CHAR( CRT_DATE , 'YYYYMM' ) = #{S_MONTH}
+		<if test="VV_TEMPLE_CD != '' and VV_TEMPLE_CD != null">
+			AND TEMPLE_CD                      = #{VV_TEMPLE_CD}
+		</if>
+		  AND DEL_YN                         = 'F'
+		  AND NVL(CANCEL_YN, 'F')            = 'F'
+		GROUP by TEMPLE_CD
+		        ,TO_CHAR( CRT_DATE , 'YYYYMM' )
+		ORDER by TEMPLE_CD asc
+	</select>
+	
+	
+	<select id="SELECT_ISSUE_INFO_DETAIL" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT TEMPLE_CD
+		      ,FN_TEMPLE_NAME(TEMPLE_CD,'FULL_NAME') TEMPLE_NM 
+		      ,TO_CHAR( CRT_DATE , 'YYYYMMDD' )  APP_DAY
+		      ,SUM( CASE WHEN ISSUE_STATE in(1,2,3,4) THEN 1 ELSE 0 END ) APP_CNT
+		      ,SUM( CASE WHEN ISSUE_STATE = 2 THEN 1 ELSE 0 END ) COM_CNT
+		      ,SUM( CASE WHEN ISSUE_STATE = 3 THEN 1 ELSE 0 END ) DELAY_CNT
+		FROM SIN_CARD_ISSUE_DETAIL
+		WHERE TO_CHAR( CRT_DATE , 'YYYYMM' ) = #{S_MONTH}
+		  AND TEMPLE_CD                      = #{S_TEMPLE}
+		  AND DEL_YN                         = 'F'
+		  AND NVL(CANCEL_YN, 'F')            = 'F'
+		GROUP by TEMPLE_CD
+		        ,TO_CHAR( CRT_DATE , 'YYYYMMDD' )
+		ORDER by TEMPLE_CD asc 
+		        ,TO_CHAR( CRT_DATE , 'YYYYMMDD' )
+	</select>
+	
+</mapper>

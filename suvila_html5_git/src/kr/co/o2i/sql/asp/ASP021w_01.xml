@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ASP021w_01DAO">
+
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+	</resultMap>
+	
+	<select id="SELECT_PG_INFO" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT 
+			 A.PGCODE
+			,A.PGNAME
+			,A.USE_YN
+			,A.REMARK
+			,B.SEQ
+			,B.RATE_COMMISSION
+			,B.COMMISSION_FROM
+			,B.COMMISSION_TO
+			,'S' as SQL_MODE
+		FROM  ASP_PG_INFO A ,
+			(SELECT 
+			   RANK() OVER(PARTITION BY A.PGCODE ORDER BY  A.SEQ DESC ) AS SEQNUM
+			  ,A.PGCODE
+			  ,A.SEQ 
+			  ,A.RATE_COMMISSION
+			  ,A.COMMISSION_FROM
+			  ,A.COMMISSION_TO
+			FROM 
+			ASP_PG_INFO_HIS A ) B
+	   WHERE 1=1
+		AND A.PGCODE = B.PGCODE
+		 AND B.SEQNUM = 1
+		 <if test='PGNAME != nul and  PGNAME != "" '>
+		 	AND A.PGNAME LIKE '%' || #{PGNAME} || '%' 
+		 </if>		  
+	</select>
+	
+	<select id="SELECT_PG_INFO_HIS" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT 
+			 A.PGCODE
+			,A.PGNAME
+			,B.SEQ
+			,B.RATE_COMMISSION
+			,B.COMMISSION_FROM
+			,B.COMMISSION_TO
+		FROM 
+			ASP_PG_INFO A
+		   ,ASP_PG_INFO_HIS B
+	   WHERE 1=1
+		 AND A.PGCODE = B.PGCODE 
+		 AND A.PGCODE = #{PGCODE}
+	   ORDER BY B.SEQ DESC
+	</select>
+	
+	<select id="SELECT_PGCODE" resultType="String" >
+		SELECT  LPAD(MAX(TO_NUMBER(PGCODE))+1, 2 , '0') AS PGCODE
+		 FROM SUVILA.ASP_PG_INFO
+	</select>
+	
+	<insert id="INSERT_ASP_PG_INFO" parameterType="kr.co.o2i.util.CommonMap" >
+		INSERT INTO ASP_PG_INFO(
+			 PGCODE
+			,PGNAME
+			,USE_YN
+			,REMARK
+		 )VALUES(
+			 #{PGCODE}
+			,#{PGNAME}
+			,#{USE_YN}
+			,#{REMARK}
+		 )
+	</insert>
+	
+	
+	
+	<insert id="INSERT_ASP_PG_INFO_HIS" parameterType="java.util.Map" >
+		INSERT INTO ASP_PG_INFO_HIS(
+			 PGCODE
+			,SEQ
+			,RATE_COMMISSION
+			,COMMISSION_FROM
+			,COMMISSION_TO
+		)VALUES(
+			 #{PGCODE}
+			,(SELECT NVL(MAX(SEQ),0)+1 FROM 
+				ASP_PG_INFO_HIS
+				WHERE 1=1
+				AND PGCODE =#{PGCODE}
+			)
+			, #{RATE_COMMISSION}
+			,REPLACE( #{COMMISSION_FROM} , '/' , '')
+			,REPLACE( #{COMMISSION_TO} , '/' , '')
+		)
+	</insert>
+	
+</mapper>

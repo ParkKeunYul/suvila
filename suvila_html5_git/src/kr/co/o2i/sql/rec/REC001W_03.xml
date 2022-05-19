@@ -1,0 +1,607 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC001w_03DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 
+	</resultMap>
+
+	<select id="SELECT_IDKIND" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT LIGHT_CODE
+		      ,LIGHT_NM
+		FROM (
+			SELECT
+			       0 AS LIGHT_CODE, 
+			       '전체' AS LIGHT_NM,    
+			       0 as SORT_SEQ
+			  FROM DUAL
+			UNION ALL
+			SELECT
+			       LIGHT_CODE,  
+			       LIGHT_NM,    
+			       SORT_SEQ
+			  FROM REC_DEUNG_CLASS_MGT
+			 WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+			   AND ACCEPT_GBN = #{V_ACCEPT_GBN}			   
+			ORDER by SORT_SEQ
+				    ,LIGHT_CODE
+		)
+	</select>
+	
+	<select id="SELECT_JGKIND" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+		      ,ACCEPT_GBN
+		      ,JUNGAK_CD
+		      ,JUNGAK_NM
+		FROM (
+			SELECT
+			       #{V_TEMPLE_CD} AS TEMPLE_CD,
+			       0 AS ACCEPT_GBN, 
+			       0 AS JUNGAK_CD,
+			       '전체' AS JUNGAK_NM,
+			       0 as SORT_SEQ,
+			       'I' AS JUNGAK_GBN
+			  FROM DUAL
+			UNION ALL
+			SELECT
+			       BUI.TEMPLE_CD,
+			       BUI.ACCEPT_GBN, 
+			       BUI.JUNGAK_CD,
+			       DECODE(JUN.JUNGAK_GBN,'I','(내)','(외)') || JUN.JUNGAK_NM AS JUNGAK_NM,
+			       JUN.SORT_SEQ,
+			       JUN.JUNGAK_GBN
+			  FROM REC_BUILDING_MGT BUI, ASP_JUNGAK_MGT JUN
+			 WHERE BUI.TEMPLE_CD = JUN.TEMPLE_CD
+			   AND BUI.JUNGAK_CD = JUN.JUNGAK_CD
+			   AND BUI.ACCEPT_GBN= JUN.ACCEPT_GBN
+			   AND BUI.TEMPLE_CD = #{V_TEMPLE_CD}
+			   AND JUN.ACCEPT_GBN= #{V_ACCEPT_GBN}
+			ORDER BY ACCEPT_GBN,JUNGAK_GBN ,SORT_SEQ , JUNGAK_NM
+		)
+	</select>
+	
+	
+	<select id="SELECT_IDREC" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+			  ,CMS_TRADE_CD
+			  ,FILTER_KEY
+			  ,ACCEPT_SEQ
+			  ,SEQ
+			  ,ACCEPT_GBN
+			  ,ACCEPT_DATE
+			  ,ACCEPT_NAME
+			  ,PROPOSAL_BUD_NO
+			  ,PROPOSAL_NAME_KOR
+			  ,APPROVAL_GBN
+			  ,JUNGAK_CD
+			  ,JUNGAK_NM
+			  ,LIGHT_NO
+			  ,DONGCHAM_BUD_NO
+			  ,DECE_GBN
+			  ,NAME_KOR
+			  ,SORT_SEQ
+			  ,INDEUNG_GBN
+			  ,LIGHT_NM
+			  ,FAMILY_YN
+			  ,INDEUNG_YEAR
+			  ,INDEUNG_MONTH
+			  ,INDEUNG_PERIOD
+			  ,PAYMENT_PLAN_AMT
+			  ,PAYMENT_AMT
+			  ,DECODE(LIMIT_YN,'F',0,(PAYMENT_PLAN_AMT-PAYMENT_AMT)) MISU_AMT
+			  ,MEMO
+			  ,REMARK
+			  ,DEL_YN
+			  ,CRT_USER
+			  ,UPT_USER
+			  ,CRT_DATE
+			  ,UPT_DATE
+			  ,REMOTE
+			  ,CLOSE_YN
+			  ,LIMIT_YN
+			  ,SMS_YN
+			  ,MOBILE_TELNO
+			  ,SMS_GROUP_TRANS
+			  ,PROPOSAL_DEL_YN
+		FROM (SELECT DET.TEMPLE_CD
+					,MST.CMS_TRADE_CD
+					,DET.ACCEPT_SEQ || DET.SEQ AS FILTER_KEY
+					,DET.ACCEPT_SEQ
+					,DET.SEQ
+					,DET.ACCEPT_GBN
+					,MST.ACCEPT_DATE
+					,COD.NAME AS ACCEPT_NAME
+					,MST.PROPOSAL_BUD_NO
+					,SMS.NAME_KOR AS PROPOSAL_NAME_KOR
+					,MST.APPROVAL_GBN
+					,DET.JUNGAK_CD
+					,JUN.JUNGAK_NM
+					,DET.LIGHT_NO
+					,MGT.DONGCHAM_BUD_NO
+					,DECODE(DEA.BUD_NO,NULL,'F','T') AS DECE_GBN
+					,CAD.NAME_KOR
+					,MGT.SORT_SEQ
+					,DET.INDEUNG_GBN
+					,DEU.LIGHT_NM
+					,DEU.FAMILY_YN
+					,DET.INDEUNG_YEAR
+					,DET.INDEUNG_MONTH
+					,DET.INDEUNG_PERIOD
+					,DET.PAYMENT_PLAN_AMT
+					,(SELECT NVL(SUM(HIS.AMOUNT),0)
+		                FROM REC_PAYMENT_HIS HIS
+		               WHERE SUB.TEMPLE_CD  = HIS.TEMPLE_CD
+		                 AND SUB.ACCEPT_SEQ = HIS.ACCEPT_SEQ
+		                 AND SUB.SEQ        = HIS.SEQ
+		              ) AS PAYMENT_AMT
+		            ,MST.MEMO
+		            ,DET.REMARK
+		            ,DET.DEL_YN
+		            ,DET.CRT_USER
+		            ,DET.UPT_USER
+		            ,TO_CHAR(DET.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+		            ,TO_CHAR(DET.UPT_DATE,'YYYYMMDD') AS UPT_DATE
+		            ,DET.REMOTE
+		            ,DET.CLOSE_YN
+		            ,MGT.BOKWIJA_NO
+		            ,BOK.NAME_KOR AS BOKWIJA_NM
+		            ,NVL(DET.LIMIT_YN,'T') AS LIMIT_YN
+		            ,DECODE(MST.SMS_YN,'T',DECODE(SMS.MOBILE_TELNO1||SMS.MOBILE_TELNO2||SMS.MOBILE_TELNO3,NULL,'N','Y'),'N') SMS_YN
+		            <!-- ,SMS.MOBILE_TELNO1||SMS.MOBILE_TELNO2||SMS.MOBILE_TELNO3 MOBILE_TELNO -->
+		            ,SMS.MOBILE_TELNO1 || DECODE(SMS.MOBILE_TELNO1,NULL,'','-') || SMS.MOBILE_TELNO2 || DECODE(SMS.MOBILE_TELNO2,NULL,'','-') || SMS.MOBILE_TELNO3 AS MOBILE_TELNO
+		            ,SMS.SMS_GROUP_TRANS
+		            ,SMS.DEL_YN as PROPOSAL_DEL_YN
+		       FROM REC_MASTER MST
+		           ,SIN_CARD_MASTER SMS
+		           ,REC_SUB SUB
+		           ,REC_INDEUNG_DETAIL DET
+		           ,REC_INDEUNG_JOIN_MGT MGT
+		           ,REC_BUILDING_MGT BID
+		           ,REC_DEUNG_CLASS_MGT DEU
+		           ,SIN_CARD_MASTER BOK
+		           ,ASP_JUNGAK_MGT JUN
+		           ,SIN_CARD_MASTER CAD
+		           ,ASP_CODE_MGT COD
+		           ,SIN_DEATH_INFO DEA
+		       WHERE MST.TEMPLE_CD   = SUB.TEMPLE_CD
+		         AND MST.ACCEPT_SEQ  = SUB.ACCEPT_SEQ
+		         AND SUB.TEMPLE_CD   = DET.TEMPLE_CD
+		         AND SUB.ACCEPT_SEQ  = DET.ACCEPT_SEQ
+		         AND SUB.SEQ         = DET.SEQ
+		         AND MST.PROPOSAL_BUD_NO = SMS.BUD_NO(+)
+		         AND MST.TEMPLE_CD   = SMS.TEMPLE_CD(+)
+		         AND DET.TEMPLE_CD   = MGT.TEMPLE_CD
+		         AND DET.ACCEPT_GBN  = MGT.ACCEPT_GBN
+		         AND DET.SEQ         = MGT.SEQ
+		         AND DET.JUNGAK_CD   = MGT.JUNGAK_CD
+		         AND DET.ACCEPT_SEQ  = MGT.ACCEPT_SEQ
+		         AND DET.LIGHT_NO    = MGT.LIGHT_NO
+		         AND DET.TEMPLE_CD   = BID.TEMPLE_CD
+		         AND DET.ACCEPT_GBN  = BID.ACCEPT_GBN
+		         AND DET.JUNGAK_CD   = BID.JUNGAK_CD
+		         AND DET.TEMPLE_CD   = DEU.TEMPLE_CD
+		         AND DET.INDEUNG_GBN = DEU.LIGHT_CODE
+		         AND MGT.TEMPLE_CD   = CAD.TEMPLE_CD(+)
+		         AND MGT.DONGCHAM_BUD_NO = CAD.BUD_NO(+)
+		         AND MGT.TEMPLE_CD   = DEA.TEMPLE_CD(+)
+		         AND MGT.DONGCHAM_BUD_NO = DEA.BUD_NO(+)
+		         AND MGT.TEMPLE_CD   = BOK.TEMPLE_CD(+)
+		         AND MGT.BOKWIJA_NO  = BOK.BUD_NO(+)
+		         AND COD.GROUP_CD(+) = 'REC'
+		         AND DET.ACCEPT_GBN  = COD.CODE(+)
+		         AND MGT.SORT_SEQ    = '1'
+		         AND BID.TEMPLE_CD   = JUN.TEMPLE_CD
+		         AND BID.JUNGAK_CD   = JUN.JUNGAK_CD
+		         AND DEU.ACCEPT_GBN  = JUN.ACCEPT_GBN
+		         AND DEU.ACCEPT_GBN  = '2'
+		         AND SUB.DEL_YN      = 'F'
+		         AND DET.TEMPLE_CD   = #{V_TEMPLE_CD}
+		         AND MST.ACCEPT_DATE BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		         <if test="V_PROPOSAL_BUD_NO != '' and V_PROPOSAL_BUD_NO != null  ">
+		         	AND MST.PROPOSAL_BUD_NO LIKE SUBSTR(#{V_PROPOSAL_BUD_NO},0,10) || '%'
+		         </if>
+		         <if test="V_JUNGAK_CD != '0' and V_JUNGAK_CD != 0 and V_JUNGAK_CD != '' and V_JUNGAK_CD != null ">
+		         	AND DET.JUNGAK_CD = #{V_JUNGAK_CD}
+		         </if>
+		         <if test="V_CODE != '0' and V_CODE != 0  and V_CODE != '' and V_CODE != null ">
+		         	AND DET.INDEUNG_GBN = #{V_CODE}
+		         </if>
+		         <if test="V_CLOSE_YN != '' ">
+		         	AND DET.CLOSE_YN = #{V_CLOSE_YN} 
+		         </if>
+		         <if test="VV_USER_ID != '' and VV_USER_ID != null  ">
+		          	AND MST.CRT_USER = #{VV_USER_ID}
+		         </if>
+		         <if test="V_CLASS_CD != '0'  and  V_CLASS_CD != 0  and V_CLASS_CD != '' and V_CLASS_CD != null ">
+		         	AND MST.PROPOSAL_BUD_NO IN (SELECT BUD_NO FROM SIN_CLASS_INFO WHERE TEMPLE_CD = #{V_TEMPLE_CD} AND CLASS_CD = #{V_CLASS_CD})
+		         </if>
+				 <if test="V_APPROV != '' and V_APPROV != null  ">
+					AND MST.APPROVAL_GBN = #{V_APPROV}
+				 </if>
+				 <choose>
+				 	<when test="V_PAY_STATE == '1'">
+				 		) WHERE (PAYMENT_PLAN_AMT-PAYMENT_AMT) &lt;= 0
+				 	</when>
+				 	<when test="V_PAY_STATE == '2'">
+				 		) WHERE (PAYMENT_PLAN_AMT-PAYMENT_AMT) > 0
+				 	</when>
+				 	<otherwise>
+				 		)
+				 	</otherwise>
+				 </choose>
+		ORDER BY ACCEPT_SEQ
+	</select>
+	
+	<select id="SELECT_YDREC" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+			  ,FILTER_KEY
+			  ,ACCEPT_SEQ
+			  ,SEQ
+			  ,ACCEPT_GBN
+			  ,ACCEPT_DATE
+			  ,ACCEPT_NAME
+			  ,PROPOSAL_BUD_NO
+			  ,PROPOSAL_NAME_KOR
+			  ,APPROVAL_GBN
+			  ,JUNGAK_CD
+			  ,JUNGAK_NM
+			  ,LIGHT_NO
+			  ,DONGCHAM_BUD_NO
+			  ,DECE_GBN
+			  ,NAME_KOR
+			  ,SORT_SEQ
+			  ,YEONDEUNG_GBN
+			  ,LIGHT_NM
+			  ,YEONDEUNG_YEAR
+			  ,PAYMENT_PLAN_AMT
+			  ,PAYMENT_AMT
+			  ,(PAYMENT_PLAN_AMT-PAYMENT_AMT) MISU_AMT
+			  ,MEMO
+			  ,REMARK
+			  ,DEL_YN
+			  ,CRT_USER
+			  ,UPT_USER
+			  ,CRT_DATE
+			  ,UPT_DATE
+			  ,REMOTE
+			  ,CLOSE_YN
+			  ,YEONDEUNG_MONTH
+			  ,YEONDEUNG_PERIOD
+			  ,FAMILY_YN
+			  ,SMS_YN
+			  ,MOBILE_TELNO
+			  ,SMS_GROUP_TRANS
+			  ,PROPOSAL_DEL_YN
+		  FROM (SELECT DET.TEMPLE_CD
+		  			  ,DET.ACCEPT_SEQ || DET.SEQ AS FILTER_KEY
+		  			  ,DET.ACCEPT_SEQ
+		  			  ,DET.SEQ
+		  			  ,DET.ACCEPT_GBN
+		  			  ,MST.ACCEPT_DATE
+		  			  ,COD.NAME AS ACCEPT_NAME
+		  			  ,MST.PROPOSAL_BUD_NO
+		  			  ,SMS.NAME_KOR AS PROPOSAL_NAME_KOR
+		  			  ,MST.APPROVAL_GBN
+		  			  ,DET.JUNGAK_CD
+		  			  ,JUN.JUNGAK_NM
+		  			  ,DET.LIGHT_NO
+		  			  ,MGT.DONGCHAM_BUD_NO
+		  			  ,DECODE(DEA.BUD_NO,NULL,'F','T') AS DECE_GBN
+		  			  ,CAD.NAME_KOR
+		  			  ,MGT.SORT_SEQ
+		  			  ,DET.YEONDEUNG_GBN
+		  			  ,DEU.LIGHT_NM
+		  			  ,DET.YEONDEUNG_YEAR
+		  			  ,DET.PAYMENT_PLAN_AMT
+		  			  ,(SELECT NVL(SUM(HIS.AMOUNT),0)
+		                 FROM REC_PAYMENT_HIS HIS
+		                WHERE SUB.TEMPLE_CD  = HIS.TEMPLE_CD
+		                  AND SUB.ACCEPT_SEQ = HIS.ACCEPT_SEQ
+		                  AND SUB.SEQ        = HIS.SEQ
+		               ) AS PAYMENT_AMT
+		              ,MST.MEMO
+		              ,DET.REMARK
+		              ,DET.DEL_YN
+		              ,DET.CRT_USER
+		              ,DET.UPT_USER
+		              ,TO_CHAR(DET.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+		              ,TO_CHAR(DET.UPT_DATE,'YYYYMMDD') AS UPT_DATE
+		              ,DET.REMOTE
+		              ,DET.CLOSE_YN
+		              ,DET.YEONDEUNG_MONTH
+		              ,DET.YEONDEUNG_PERIOD
+		              ,DEU.FAMILY_YN
+		              ,DECODE(MST.SMS_YN,'T',DECODE(SMS.MOBILE_TELNO1||SMS.MOBILE_TELNO2||SMS.MOBILE_TELNO3,NULL,'N','Y'),'N') SMS_YN
+		              <!-- ,SMS.MOBILE_TELNO1||SMS.MOBILE_TELNO2||SMS.MOBILE_TELNO3 MOBILE_TELNO -->
+		              ,SMS.MOBILE_TELNO1 || DECODE(SMS.MOBILE_TELNO1,NULL,'','-') || SMS.MOBILE_TELNO2 || DECODE(SMS.MOBILE_TELNO2,NULL,'','-') || SMS.MOBILE_TELNO3 AS MOBILE_TELNO
+		              ,SMS.SMS_GROUP_TRANS
+		              ,SMS.DEL_YN as PROPOSAL_DEL_YN
+		         FROM REC_MASTER MST
+		         	 ,SIN_CARD_MASTER SMS
+		         	 ,REC_SUB SUB
+		         	 ,ASP_CODE_MGT COD
+		         	 ,REC_YEONDEUNG_DETAIL DET
+		         	 ,REC_YEONDEUNG_JOIN_MGT MGT
+		         	 ,REC_BUILDING_MGT BID
+		         	 ,REC_DEUNG_CLASS_MGT DEU
+		         	 ,ASP_JUNGAK_MGT JUN
+		         	 ,SIN_CARD_MASTER CAD
+		         	 ,SIN_DEATH_INFO DEA
+		        WHERE MST.TEMPLE_CD   = SUB.TEMPLE_CD
+		          AND MST.ACCEPT_SEQ  = SUB.ACCEPT_SEQ
+		          AND SUB.TEMPLE_CD   = DET.TEMPLE_CD
+		          AND SUB.ACCEPT_SEQ  = DET.ACCEPT_SEQ
+		          AND SUB.SEQ         = DET.SEQ
+		          AND MST.TEMPLE_CD   = SMS.TEMPLE_CD(+)
+		          AND MST.PROPOSAL_BUD_NO  = SMS.BUD_NO(+)
+		          AND DET.TEMPLE_CD   = MGT.TEMPLE_CD
+		          AND DET.ACCEPT_GBN  = MGT.ACCEPT_GBN
+		          AND COD.GROUP_CD(+) = 'REC'
+		          AND DET.ACCEPT_GBN  = COD.CODE(+)
+		          AND DET.SEQ         = MGT.SEQ
+		          AND DET.JUNGAK_CD   = MGT.JUNGAK_CD
+		          AND DET.ACCEPT_SEQ  = MGT.ACCEPT_SEQ
+		          AND DET.LIGHT_NO    = MGT.LIGHT_NO
+		          AND DET.TEMPLE_CD   = BID.TEMPLE_CD
+		          AND DET.ACCEPT_GBN  = BID.ACCEPT_GBN
+		          AND DET.JUNGAK_CD   = BID.JUNGAK_CD
+		          AND DET.TEMPLE_CD   = DEU.TEMPLE_CD
+		          AND DET.YEONDEUNG_GBN = DEU.LIGHT_CODE
+		          AND MGT.TEMPLE_CD   = CAD.TEMPLE_CD(+)
+		          AND MGT.DONGCHAM_BUD_NO = CAD.BUD_NO(+)
+		          AND MGT.TEMPLE_CD   = DEA.TEMPLE_CD(+)
+		          AND MGT.DONGCHAM_BUD_NO = DEA.BUD_NO(+)
+		          AND MGT.SORT_SEQ    = '1'
+		          AND BID.TEMPLE_CD   = JUN.TEMPLE_CD
+		          AND BID.JUNGAK_CD   = JUN.JUNGAK_CD
+		          AND DEU.ACCEPT_GBN  = JUN.ACCEPT_GBN
+		          AND DEU.ACCEPT_GBN  = '4'
+		          AND SUB.DEL_YN      = 'F'
+		          AND DET.TEMPLE_CD   = #{V_TEMPLE_CD}
+		          AND MST.ACCEPT_DATE BETWEEN #{V_ACCEPT_SDATE} AND #{V_ACCEPT_EDATE}
+		          <if test="V_CLOSE_YN != '' ">
+		          	AND DET.CLOSE_YN = #{V_CLOSE_YN}
+		          </if>
+		          <if test="V_PROPOSAL_BUD_NO != '' and V_PROPOSAL_BUD_NO != null  ">
+		          	AND MST.PROPOSAL_BUD_NO LIKE SUBSTR(#{V_PROPOSAL_BUD_NO},0,10) || '%'
+		          </if>
+		          <if test="V_JUNGAK_CD != 0 and V_JUNGAK_CD != '' and V_JUNGAK_CD != null ">		          
+		          	AND DET.JUNGAK_CD = #{V_JUNGAK_CD}
+		          </if>
+		          <if test="V_CODE != '0' and V_CODE != 0  and V_CODE != '' and V_CODE != null ">
+		          	AND DET.YEONDEUNG_GBN = #{V_CODE} 
+		          </if>
+				  <if test="VV_USER_ID != '' and VV_USER_ID != null  ">
+				   	AND MST.CRT_USER = #{VV_USER_ID} 
+				  </if>
+				  <if test="V_CLASS_CD != '0'  and  V_CLASS_CD != 0  and V_CLASS_CD != '' and V_CLASS_CD != null ">
+				  	AND MST.PROPOSAL_BUD_NO IN (SELECT BUD_NO FROM SIN_CLASS_INFO WHERE TEMPLE_CD = #{V_TEMPLE_CD} AND CLASS_CD = #{V_CLASS_CD})
+				  </if>
+				  <if test="V_APPROV != '' and V_APPROV != null  ">
+				  	AND MST.APPROVAL_GBN = #{V_APPROV}
+				  </if>
+				  <choose>
+				 	<when test="V_PAY_STATE == '1'">
+				 		) WHERE (PAYMENT_PLAN_AMT-PAYMENT_AMT) &lt;= 0
+				 	</when>
+				 	<when test="V_PAY_STATE == '2'">
+				 		) WHERE (PAYMENT_PLAN_AMT-PAYMENT_AMT) > 0
+				 	</when>
+				 	<otherwise>
+				 		)
+				 	</otherwise>
+				 </choose>
+		ORDER BY ACCEPT_SEQ
+	</select>
+	
+	<select id="SELECT_DONGCHAM" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT JOI.TEMPLE_CD
+			  ,JOI.ACCEPT_SEQ
+			  ,JOI.SEQ
+			  ,JOI.ACCEPT_GBN
+			  ,JOI.JUNGAK_CD
+			  ,JOI.LIGHT_NO
+			  ,JOI.SORT_SEQ
+			  ,JOI.DONGCHAM_BUD_NO
+			  ,MST.NAME_KOR
+			  ,MST.SACRED_KOR
+			  ,MST.LUNAR_SOLAR
+			  ,LUN.NAME AS LUNAR_SOLAR_NM
+			  ,MST.BIRTHDAY
+			  ,MST.SEX_GBN
+			  ,SEX.NAME AS SEX_GBN_NM
+			  ,MST.ZIP_CD
+			  ,MST.ADDR1 || MST.ADDR2 AS ADDR
+			  ,MST.TELNO1 || DECODE(MST.TELNO1, NULL,'','-') || MST.TELNO2 || DECODE(MST.TELNO2, NULL,'','-') || MST.TELNO3 AS TELNO
+			  ,MST.MOBILE_TELNO1 || DECODE(MST.MOBILE_TELNO1, NULL,'','-') || MST.MOBILE_TELNO2 || DECODE(MST.MOBILE_TELNO2, NULL,'','-') || MST.MOBILE_TELNO3 AS MOBILE_TELNO
+			  ,MST.EMAIL
+			  ,JOI.DEL_YN
+			  ,JOI.REMARK
+			  ,JOI.UPT_USER
+			  ,JOI.CRT_USER
+			  ,TO_CHAR(JOI.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+			  ,TO_CHAR(JOI.UPT_DATE,'YYYYMMDD') AS UPT_DATE
+			  ,JOI.REMOTE
+			  ,JOI.BOKWIJA_NO
+			  ,BOK.NAME_KOR AS BOKWIJA_NM
+		  FROM SIN_CARD_MASTER MST
+		  	  ,ASP_CODE_MGT LUN
+		  	  ,ASP_CODE_MGT SEX
+		  	  ,SIN_CARD_MASTER BOK
+		  	  <if test="V_ACCEPT_GBN == 2">
+		  	  	,REC_INDEUNG_JOIN_MGT JOI
+		  	  </if>
+		  	  <if test="V_ACCEPT_GBN == 4">
+		  	  	,REC_YEONDEUNG_JOIN_MGT JOI
+		  	  </if>
+		  	  <if test="V_ACCEPT_GBN == 12">
+		  	  	,REC_WONBUL_JOIN_MGT JOI
+		  	  </if>		
+		 WHERE JOI.TEMPLE_CD       = MST.TEMPLE_CD
+		   AND JOI.DONGCHAM_BUD_NO = MST.BUD_NO
+		   AND JOI.TEMPLE_CD       = BOK.TEMPLE_CD(+)
+		   AND JOI.BOKWIJA_NO      = BOK.BUD_NO(+)
+		   AND LUN.GROUP_CD(+)     = 'LUNAR_SOLAR'
+		   AND LUN.CODE(+)         = MST.LUNAR_SOLAR
+		   AND SEX.GROUP_CD(+)     = 'SEXGBN'
+		   AND SEX.CODE(+)         = MST.LUNAR_SOLAR
+		   AND JOI.TEMPLE_CD       = #{V_TEMPLE_CD}
+		   AND JOI.ACCEPT_SEQ      = #{V_ACCEPT_SEQ}
+		   AND JOI.SEQ             = #{V_SEQ}
+		   AND JOI.ACCEPT_GBN      = #{V_ACCEPT_GBN}
+		   AND JOI.JUNGAK_CD       = #{V_JUNGAK_CD}
+		   AND JOI.LIGHT_NO        = #{V_LIGHT_NO}
+	</select>
+	
+	<delete id="DELETE_ALL_DONGCHAM" parameterType="kr.co.o2i.util.CommonMap">
+		DELETE FROM 
+		<choose>
+			<when test="V_ACCEPT_GBN == 2  ">REC_INDEUNG_JOIN_MGT</when>
+			<when test="V_ACCEPT_GBN == 4  ">REC_YEONDEUNG_JOIN_MGT</when>
+			<when test="V_ACCEPT_GBN == 12 ">REC_WONBUL_JOIN_MGT</when>
+		</choose>
+		 WHERE TEMPLE_CD   = #{V_TEMPLE_CD}
+		   AND ACCEPT_GBN  = #{V_ACCEPT_GBN} 		
+		   AND ACCEPT_SEQ  = #{V_ACCEPT_SEQ} 			
+		   AND SEQ         = #{V_SEQ}		
+		   AND JUNGAK_CD   = #{V_JUNGAK_CD} 			
+		   AND LIGHT_NO    = #{V_LIGHT_NO} 			
+	</delete>
+	
+	<insert id="INSERT_INDEUNG_JOIN"  parameterType="java.util.Map">
+		INSERT INTO REC_INDEUNG_JOIN_MGT (
+		        DONGCHAM_BUD_NO
+		       ,DEL_YN
+		       ,REMARK
+		       ,CRT_USER
+		       ,CRT_DATE
+		       ,SORT_SEQ
+		       ,UPT_DATE
+		       ,UPT_USER
+		       ,REMOTE
+		       ,TEMPLE_CD
+		       ,SEQ
+		       ,ACCEPT_GBN
+		       ,JUNGAK_CD
+		       ,ACCEPT_SEQ
+		       ,LIGHT_NO
+		       ,BOKWIJA_NO
+		) VALUES (
+		        #{DONGCHAM_BUD_NO}
+		       ,DECODE(#{DEL_YN ,jdbcType=VARCHAR},'','F',#{DEL_YN,jdbcType=VARCHAR})
+		       ,#{REMARK ,jdbcType=VARCHAR}
+		       ,#{CRT_USER ,jdbcType=VARCHAR}
+		       ,SYSDATE
+		       ,(SELECT NVL(MAX(SORT_SEQ)+1,1)
+		          FROM REC_INDEUNG_JOIN_MGT
+		         WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		           AND SEQ        = #{SEQ}
+		           AND ACCEPT_GBN = #{ACCEPT_GBN}
+		           AND JUNGAK_CD  = #{JUNGAK_CD}
+		           AND ACCEPT_SEQ = #{ACCEPT_SEQ}
+		           AND LIGHT_NO   = #{LIGHT_NO})
+		       ,SYSDATE
+		       ,#{UPT_USER}
+		       ,#{REMOTE}
+		       ,#{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{ACCEPT_GBN}
+		       ,#{JUNGAK_CD}
+		       ,#{ACCEPT_SEQ}
+		       ,#{LIGHT_NO}
+		       ,#{BOKWIJA_NO ,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<insert id="INSERT_YEONDEUNG_JOIN"  parameterType="java.util.Map">
+		INSERT INTO REC_YEONDEUNG_JOIN_MGT (
+		       DONGCHAM_BUD_NO,
+		       DEL_YN,
+		       REMARK,
+		       CRT_USER,
+		       CRT_DATE,
+		       SORT_SEQ,
+		       UPT_DATE,
+		       UPT_USER,
+		       REMOTE,
+		       TEMPLE_CD,
+		       SEQ,
+		       ACCEPT_GBN,
+		       JUNGAK_CD,
+		       ACCEPT_SEQ,
+		       LIGHT_NO,
+		       BOKWIJA_NO
+		) VALUES (
+		        #{DONGCHAM_BUD_NO}
+		       ,DECODE(#{DEL_YN ,jdbcType=VARCHAR},'','F',#{DEL_YN ,jdbcType=VARCHAR})
+		       ,#{REMARK ,jdbcType=VARCHAR}
+		       ,#{CRT_USER}
+		       ,SYSDATE
+		       ,(SELECT NVL(MAX(SORT_SEQ)+1,1)
+		          FROM REC_YEONDEUNG_JOIN_MGT
+		         WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		           AND SEQ        = #{SEQ}
+		           AND ACCEPT_GBN = #{ACCEPT_GBN}
+		           AND JUNGAK_CD  = #{JUNGAK_CD}
+		           AND ACCEPT_SEQ = #{ACCEPT_SEQ}
+		           AND LIGHT_NO   = #{LIGHT_NO})
+		       ,SYSDATE
+		       ,#{UPT_USER}
+		       ,#{REMOTE}
+		       ,#{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{ACCEPT_GBN}
+		       ,#{JUNGAK_CD}
+		       ,#{ACCEPT_SEQ}
+		       ,#{LIGHT_NO}
+		       ,#{BOKWIJA_NO  ,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<insert id="INSERT_WONBUL_JOIN"  parameterType="java.util.Map">
+		INSERT INTO REC_WONBUL_JOIN_MGT (
+		       DONGCHAM_BUD_NO,
+		       DEL_YN,
+		       REMARK,
+		       CRT_USER,
+		       CRT_DATE,
+		       SORT_SEQ,
+		       UPT_DATE,
+		       UPT_USER,
+		       REMOTE,
+		       TEMPLE_CD,
+		       SEQ,
+		       ACCEPT_GBN,
+		       JUNGAK_CD,
+		       ACCEPT_SEQ,
+		       LIGHT_NO,
+		       BOKWIJA_NO
+		) VALUES (
+		        #{DONGCHAM_BUD_NO}
+		       ,DECODE(#{DEL_YN,jdbcType=VARCHAR},'','F',#{DEL_YN,jdbcType=VARCHAR})
+		       ,#{REMARK ,jdbcType=VARCHAR}
+		       ,#{CRT_USER}
+		       ,SYSDATE
+		       ,(SELECT NVL(MAX(SORT_SEQ)+1,1)
+		          FROM REC_WONBUL_JOIN_MGT
+		         WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		           AND SEQ        = #{SEQ}
+		           AND ACCEPT_GBN = #{ACCEPT_GBN}
+		           AND JUNGAK_CD  = #{JUNGAK_CD}
+		           AND ACCEPT_SEQ = #{ACCEPT_SEQ}
+		           AND LIGHT_NO   = #{LIGHT_NO})
+		       ,SYSDATE
+		       ,#{UPT_USER}
+		       ,#{REMOTE}
+		       ,#{TEMPLE_CD}
+		       ,#{SEQ}
+		       ,#{ACCEPT_GBN}
+		       ,#{JUNGAK_CD}
+		       ,#{ACCEPT_SEQ}
+		       ,#{LIGHT_NO}
+		       ,#{BOKWIJA_NO ,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+</mapper>

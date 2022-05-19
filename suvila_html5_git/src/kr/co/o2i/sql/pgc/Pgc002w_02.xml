@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.o2i.dao.pgc.PGC002w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+
+	<!-- #사찰별 PG 정보 조회# -->
+	<select id="SELECT_PG_CARD_APPROVAL_MAIN" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT 
+		  A.TEMPLE_CD 
+		 ,A.BUD_NO
+		 ,A.NAME_KOR
+		 ,A.SUB_DATE
+		 ,A.COMMISSION  
+		 ,A.TELNO
+		 ,A.MOBILE_TELNO
+		 ,A.PGCODE
+		 ,A.PGAUTHCODE
+		 ,SUM(A.AMOUNT) AS AMOUNT
+		 ,SUM(A.COMMISSION)*0.1 AS COMMISSION_BILL
+		 ,MOBILE_TELNO_RENDER
+		 ,TEL_NO_RENDER
+		 FROM(
+				SELECT 
+				  A.TEMPLE_CD 
+				 ,A.BUD_NO
+				 ,B.NAME_KOR
+				 ,A.PGAUTHDATE AS SUB_DATE
+				 ,A.END_PRICE AS AMOUNT
+				 ,C.TP_RATE_COMMISSION 
+				 ,ROUND(DECODE(C.TP_RATE_COMMISSION,NULL,0, (A.END_PRICE * C.TP_RATE_COMMISSION)/ 100),0) AS COMMISSION 
+				 ,B.TELNO1 || B.TELNO2 || B.TELNO3  AS TELNO
+				 ,B.MOBILE_TELNO1 || B.MOBILE_TELNO2 || B.MOBILE_TELNO3 AS MOBILE_TELNO
+				 ,(CASE
+			    	WHEN NVL(B.MOBILE_TELNO1 , '-1') != '-1'  AND NVL(B.MOBILE_TELNO2 , '-1') != '-1' AND NVL(B.MOBILE_TELNO3 , '-1') != '-1'
+			    		THEN B.MOBILE_TELNO1||'-'||B.MOBILE_TELNO2||'-'||MOBILE_TELNO1
+			    	WHEN NVL(B.MOBILE_TELNO1 , '-1')  = '-1'  AND NVL(B.MOBILE_TELNO2 , '-1') != '-1' AND NVL(B.MOBILE_TELNO3 , '-1') != '-1'
+			    		THEN B.MOBILE_TELNO1||'-'||B.MOBILE_TELNO1
+			    	WHEN NVL(B.MOBILE_TELNO1 , '-1') != '-1'  AND NVL(B.MOBILE_TELNO2 , '-1')  = '-1' AND NVL(B.MOBILE_TELNO3 , '-1') != '-1'
+			    		THEN B.MOBILE_TELNO1||'-'||B.MOBILE_TELNO1
+			    	WHEN NVL(B.MOBILE_TELNO1 , '-1') != '-1'  AND NVL(B.MOBILE_TELNO2 , '-1') != '-1' AND NVL(B.MOBILE_TELNO3 , '-1')  = '-1'
+			    		THEN B.MOBILE_TELNO1||'-'||B.MOBILE_TELNO2
+			    	WHEN NVL(B.MOBILE_TELNO1 , '-1')  = '-1'  AND NVL(B.MOBILE_TELNO2 , '-1') != '-1' AND NVL(B.MOBILE_TELNO3 , '-1')  = '-1'
+			    		THEN B.MOBILE_TELNO1
+			    	WHEN NVL(B.MOBILE_TELNO1 , '-1')  = '-1'  AND NVL(B.MOBILE_TELNO2 , '-1')  = '-1' AND NVL(B.MOBILE_TELNO3 , '-1')  = '-1'
+			    		THEN ''
+			    	ELSE  B.MOBILE_TELNO1||'-'||B.MOBILE_TELNO2||'-'||B.MOBILE_TELNO3
+			     END ) AS MOBILE_TELNO_RENDER
+			     ,(CASE
+			    	WHEN NVL(B.TELNO1 , '-1') != '-1'  AND NVL(B.TELNO2 , '-1') != '-1' AND NVL(B.TELNO3 , '-1') != '-1'
+			    		THEN B.TELNO1||'-'||B.TELNO2||'-'||TELNO3
+			    	WHEN NVL(B.TELNO1 , '-1')  = '-1'  AND NVL(B.TELNO2 , '-1') != '-1' AND NVL(B.TELNO3 , '-1') != '-1'
+			    		THEN B.TELNO2||'-'||B.TELNO3
+			    	WHEN NVL(B.TELNO1 , '-1') != '-1'  AND NVL(B.TELNO2 , '-1')  = '-1' AND NVL(B.TELNO3 , '-1') != '-1'
+			    		THEN B.TELNO1||'-'||B.TELNO3
+			    	WHEN NVL(B.TELNO1 , '-1') != '-1'  AND NVL(B.TELNO2 , '-1') != '-1' AND NVL(B.TELNO3 , '-1')  = '-1'
+			    		THEN B.TELNO1||'-'||B.TELNO2
+			    	WHEN NVL(B.TELNO1 , '-1') != '-1'  AND NVL(B.TELNO2 , '-1')  = '-1' AND NVL(B.TELNO3 , '-1')  = '-1'
+			    		THEN B.TELNO1
+			    	WHEN NVL(B.TELNO1 , '-1')  = '-1'  AND NVL(B.TELNO2 , '-1')  = '-1' AND NVL(B.TELNO3 , '-1')  = '-1'
+			    		THEN ''
+			    	ELSE  B.TELNO1||'-'||B.TELNO2||'-'||B.TELNO3
+			     END ) AS TEL_NO_RENDER 
+				 ,A.PGCODE
+				 ,A.PGAUTHCODE
+				 FROM REC_CARDPAY A , SIN_CARD_MASTER B , ASP_TEMPLE_PG_INFO_HIS C 
+				WHERE 1=1
+				AND A.TEMPLE_CD     = B.TEMPLE_CD
+				AND A.BUD_NO        = B.BUD_NO
+				AND A.TEMPLE_CD     = C.TEMPLE_CD(+)
+				AND A.PGCODE        = C.PGCODE(+)
+				AND A.PGAUTHDATE   >= C.TP_COMMISSION_FROM(+)
+				AND A.PGAUTHDATE &lt;= DECODE(C.TP_COMMISSION_TO(+),'00000000','99999999',C.TP_COMMISSION_TO(+))
+				<if test='param.PART == 1'>
+					AND A.PGAUTHDATE  BETWEEN #{param.FROM_SUB_DATE} AND  #{param.TO_SUB_DATE}
+				</if>
+				<if test='param.PART != 1'>
+					AND A.PGAUTHDATE BETWEEN (SELECT PLUS_YYYYMMDD FROM (SELECT A.PLUS_YYYYMMDD ,RANK() OVER( ORDER BY PLUS_YYYYMMDD DESC) NUM FROM ASP_PLUS_MINUS_MAPPER A WHERE A.PLUS_YYYYMMDD &lt;= TO_CHAR(TO_DATE(#{param.IN_DATE}),'YYYYMMDD') AND A.ETC4 ='Y') WHERE NUM = 6) AND (SELECT PLUS_YYYYMMDD-1 FROM (SELECT A.PLUS_YYYYMMDD ,RANK() OVER( ORDER BY PLUS_YYYYMMDD DESC) NUM FROM ASP_PLUS_MINUS_MAPPER A WHERE A.PLUS_YYYYMMDD &lt;= TO_CHAR(TO_DATE(#{param.IN_DATE}),'YYYYMMDD') AND A.ETC4 ='Y' ) WHERE NUM = 5) AND (SELECT ETC4 FROM ASP_PLUS_MINUS_MAPPER WHERE PLUS_YYYYMMDD = TO_CHAR(TO_DATE(#{param.IN_DATE}),'YYYYMMDD')) = 'Y' 
+				</if>
+					AND A.TEMPLE_CD =#{param.TEMPLE_CD}
+				<if test='param.BUD_NO != "" and param.BUD_NO != null'>
+					AND A.BUD_NO  = #{param.BUD_NO}
+				</if>
+		)A
+		GROUP BY 
+		  A.TEMPLE_CD 
+		 ,A.BUD_NO
+		 ,A.NAME_KOR
+		 ,A.SUB_DATE
+		 ,A.COMMISSION  
+		 ,A.TELNO
+		 ,A.MOBILE_TELNO
+		 ,A.PGCODE
+		 ,A.PGAUTHCODE
+		 ,MOBILE_TELNO_RENDER
+		 ,TEL_NO_RENDER
+		 ORDER BY A.SUB_DATE, A.BUD_NO
+	</select>
+
+	<!--  #사찰별 PG 정보 상세# -->
+	<select id="SELECT_PG_CARD_APPROVAL_DETAIL" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT 
+		     A.TEMPLE_CD
+			,A.ACCEPT_SEQ -- 접수번호
+		    ,SUBSTR(C.SUB_DATE,1,8) AS SUB_DATE      
+		    ,B.ACCEPT_GBN
+		    ,DECODE(LENGTH(C.PAYMENT_YYYYMM),6,C.PAYMENT_YYYYMM,'') AS PAYMENT_YYYYMM 
+		    ,C.AMOUNT
+		    ,C.PGCODE
+		    ,C.AUTHCODE 
+		FROM REC_MASTER A , REC_SUB B , REC_PAYMENT_HIS C
+		WHERE 1=1
+		  AND A.TEMPLE_CD     = B.TEMPLE_CD
+		  AND A.ACCEPT_SEQ    = B.ACCEPT_SEQ
+		  AND B.TEMPLE_CD     = C.TEMPLE_CD
+		  AND B.ACCEPT_SEQ    = C.ACCEPT_SEQ
+		  AND B.SEQ           = C.SEQ
+		  AND C.APPROVAL_GBN  ='2'
+		  AND C.SUB_DATE LIKE '%'
+		  AND C.PAYMENT_YYYYMM LIKE '%'
+		  AND A.TEMPLE_CD = #{param.TEMPLE_CD}
+		  AND C.AUTHCODE  = #{param.AUTHCODE}
+		  AND C.PGCODE    = #{param.PGCODE}
+	</select>
+
+	
+
+</mapper>

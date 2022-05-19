@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ASP006w_01DAO">
+
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+	</resultMap>
+	
+	<resultMap id="asp006w_01a" type="java.util.Map"> 
+		<result  property="SEL_YN" column="SEL_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+		<result  property="USE_YN" column="USE_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+	</resultMap>
+	
+
+	
+	<select id="SELECT_EVENT_ALARM_ITEM" parameterType="kr.co.o2i.util.CommonMap" resultMap="asp006w_01a">
+		SELECT
+		       COL_ID,
+		       GROUP_CD,
+		       CODE,
+		       COL_NAME,
+		       USE_YN,
+		       CRT_USER,
+		       UPT_USER,
+		       CRT_DATE,
+		       UPT_DATE,
+		       REMOTE,
+		       'F' AS SEL_YN
+		  FROM ASP_TEMPLE_EVENT_ALARM_ITEM
+		 WHERE GROUP_CD = 'SMSREC'
+		   AND CODE     = #{V_CODE}
+		ORDER BY USE_YN
+	</select>
+	
+	<select id="SELECT_COLUMN_NAME" parameterType="kr.co.o2i.util.CommonMap" resultMap="asp006w_01a">
+		SELECT COLUMN_NAME
+		      ,'F' AS SEL_YN
+		  FROM USER_TAB_COLUMNS
+		 WHERE TABLE_NAME = #{V_TABLE_NAME}
+		 GROUP BY COLUMN_NAME
+	</select>
+	
+	<select id="SELECT_TABLE_NAME" parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT DISTINCT TABLE_NAME
+		  FROM USER_TAB_COLUMNS
+		 WHERE TABLE_NAME LIKE 'REC_%'
+		    OR TABLE_NAME LIKE 'SIN_%'
+		    OR TABLE_NAME LIKE 'ASP_%'
+		ORDER BY TABLE_NAME
+	</select>
+	
+	<insert id="INSERT_EVENT_ALARM_ITEM" parameterType="java.util.Map" >
+		INSERT INTO ASP_TEMPLE_EVENT_ALARM_ITEM (
+		       COL_ID,
+		       GROUP_CD,
+		       CODE,
+		       COL_NAME,
+		       USE_YN,
+		       CRT_USER,
+		       UPT_USER,
+		       CRT_DATE,
+		       REMOTE,
+		       UPT_DATE
+		) VALUES (
+		       #{COL_ID    ,jdbcType=VARCHAR}
+		       ,'SMSREC'
+		       ,#{CODE     ,jdbcType=VARCHAR}
+		       ,#{COL_NAME ,jdbcType=VARCHAR}
+		       ,DECODE(#{USE_YN ,jdbcType=VARCHAR},'','T',#{USE_YN ,jdbcType=VARCHAR})
+		       ,#{CRT_USER ,jdbcType=VARCHAR}
+		       ,#{UPT_USER ,jdbcType=VARCHAR}
+		       ,SYSDATE
+		       ,#{V_REMOTE ,jdbcType=VARCHAR}
+		       ,SYSDATE
+		)
+	</insert>
+
+	<update id="UPDATE_EVENT_ALARM_ITEM" parameterType="java.util.Map" >
+		UPDATE ASP_TEMPLE_EVENT_ALARM_ITEM 
+		   SET COL_NAME = #{COL_NAME   ,jdbcType=VARCHAR}
+		      ,USE_YN   = DECODE(#{USE_YN ,jdbcType=VARCHAR},'','T',#{USE_YN ,jdbcType=VARCHAR})
+		      ,UPT_USER = #{UPT_USER   ,jdbcType=VARCHAR}
+		      ,UPT_DATE = SYSDATE
+		      ,REMOTE   = #{REMOTE     ,jdbcType=VARCHAR}
+		 WHERE COL_ID   = #{COL_ID     ,jdbcType=VARCHAR}
+	  	   AND GROUP_CD = #{GROUP_CD   ,jdbcType=VARCHAR}
+	  	   AND CODE     = #{CODE       ,jdbcType=VARCHAR}
+	</update>
+	
+	<delete id="DELETE_EVENT_ALARM_ITEM"  parameterType="java.util.Map">
+		DELETE FROM ASP_TEMPLE_EVENT_ALARM_ITEM
+		 WHERE COL_ID   = #{COL_ID   ,jdbcType=VARCHAR}
+		   AND GROUP_CD = #{GROUP_CD ,jdbcType=VARCHAR}
+		   AND CODE     = #{CODE     ,jdbcType=VARCHAR}
+	</delete>
+</mapper>

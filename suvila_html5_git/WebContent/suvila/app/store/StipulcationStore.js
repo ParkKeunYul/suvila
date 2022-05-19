@@ -1,0 +1,14 @@
+Ext.define('ExFrm.store.StipulcationStore',{ 
+	extend:'Ext.data.Store',
+	config:{
+		proxy:{
+			model:'ExFrm.model.StipulcationModel',
+			type:'ajax',
+			url:'./extra/json/common/Stipulation.json',
+			reader:{
+				type:'json',
+				rootProperty:'data.list'
+			}
+		}
+	}
+});

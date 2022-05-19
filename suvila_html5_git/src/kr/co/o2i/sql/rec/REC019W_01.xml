@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC019w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result property="USE_YN"  column="USE_YN"   typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+
+	<select id="SELECT_MGT"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT TEMPLE_CD
+			  ,SEQ_NO
+			  ,BUD_BOX_NM
+			  ,USE_YN
+			  ,REMARK
+			  ,CRT_USER
+			  ,TO_CHAR(CRT_DATE,'YYYYMMDD') AS CRT_DATE
+			  ,TO_CHAR(UPT_DATE,'YYYYMMDD') AS UPT_DATE
+			  ,UPT_USER
+			  ,REMOTE
+		  FROM REC_BUD_BOX_MGT
+		 WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+		 ORDER BY SEQ_NO
+	</select>
+	
+	<insert id="INSERT_MGT" parameterType="java.util.Map">
+		INSERT INTO REC_BUD_BOX_MGT (
+		        TEMPLE_CD
+		       ,SEQ_NO
+		       ,BUD_BOX_NM
+		       ,USE_YN
+		       ,REMARK
+		       ,CRT_USER
+		       ,CRT_DATE
+		       ,UPT_DATE
+		       ,UPT_USER
+		       ,REMOTE
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,(SELECT NVL(MAX(SEQ_NO)+1,1)
+		           FROM REC_BUD_BOX_MGT
+		          WHERE TEMPLE_CD  = #{TEMPLE_CD})
+		       ,#{BUD_BOX_NM}
+		       ,#{USE_YN}
+		       ,#{REMARK ,jdbcType=VARCHAR}
+		       ,#{CRT_USER}
+		       ,SYSDATE
+		       ,SYSDATE
+		       ,#{UPT_USER}
+		       ,#{REMOTE}
+		)
+	</insert>
+	
+	<update id="UPDATE_MGT"  parameterType="java.util.Map">
+		UPDATE REC_BUD_BOX_MGT 
+		   SET BUD_BOX_NM = #{BUD_BOX_NM}
+		   	  ,USE_YN     = #{USE_YN  ,jdbcType=VARCHAR}
+		   	  ,REMARK     = #{REMARK  ,jdbcType=VARCHAR}
+		   	  ,UPT_DATE   = SYSDATE
+		   	  ,UPT_USER   = #{UPT_USER}
+		   	  ,REMOTE     = #{REMOTE}
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		   AND SEQ_NO     = #{SEQ_NO}
+	</update>
+	
+	
+	<select id="SELECT_DETAIL"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT DET.TEMPLE_CD
+			  ,DET.SEQ
+			  ,DET.ACCEPT_SEQ
+			  ,DET.SEQ_NO
+			  ,HIS.SUB_DATE
+			  ,MGT.BUD_BOX_NM
+			  ,HIS.AMOUNT
+			  ,DET.REMARK
+			  ,DET.CRT_USER
+			  ,DET.UPT_USER
+			  ,TO_CHAR(DET.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+			  ,TO_CHAR(DET.UPT_DATE,'YYYYMMDD') AS UPT_DATE
+			  ,DET.DEL_YN
+			  ,DET.REMOTE
+			  ,TO_CHAR(SYSDATE,'YYYYMMDD') AS TODAY
+			  ,SUBSTR(DET.ACCEPT_SEQ,0,8) AS ACCEPT_DATE
+			  ,'S' as SQL_MODE
+		  FROM REC_BUD_BOX_DETAIL DET
+		  	  ,REC_PAYMENT_HIS HIS
+		  	  ,REC_BUD_BOX_MGT MGT
+		  	  ,REC_MASTER MST
+		 WHERE DET.TEMPLE_CD       = HIS.TEMPLE_CD
+		   AND DET.ACCEPT_SEQ      = HIS.ACCEPT_SEQ
+		   AND DET.SEQ             = HIS.SEQ
+		   AND DET.TEMPLE_CD       = MGT.TEMPLE_CD
+		   AND DET.SEQ_NO          = MGT.SEQ_NO
+		   AND DET.TEMPLE_CD       = MST.TEMPLE_CD
+		   AND DET.ACCEPT_SEQ      = MST.ACCEPT_SEQ
+		   AND DET.TEMPLE_CD       = #{V_TEMPLE_CD}
+		   AND MST.ACCEPT_DATE    >= #{V_SDATE}
+		   AND MST.ACCEPT_DATE &lt;= #{V_EDATE}
+		   <if test="VV_USER_ID != '' and VV_USER_ID != null  ">
+		   		AND DET.ACCEPT_SEQ IN (SELECT DISTINCT ACCEPT_SEQ        
+		                                 FROM REC_BUD_BOX_USER_INFO      
+		                                WHERE TEMPLE_CD = #{V_TEMPLE_CD}  
+		                                  AND USER_ID   = #{VV_USER_ID})   
+		   </if>
+		ORDER BY DET.ACCEPT_SEQ DESC
+	</select>
+	
+	
+	<insert id="INSERT_DETAIL" parameterType="java.util.Map">
+		INSERT INTO REC_BUD_BOX_DETAIL (
+		        TEMPLE_CD
+		       ,SEQ
+		       ,CRT_USER
+		       ,CRT_DATE
+		       ,REMARK
+		       ,UPT_DATE
+		       ,UPT_USER
+		       ,DEL_YN
+		       ,REMOTE
+		       ,ACCEPT_SEQ
+		       ,SEQ_NO
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,'1'
+		       ,#{V_USER_ID}
+		       ,SYSDATE
+		       ,#{REMARK  ,jdbcType=VARCHAR}
+		       ,SYSDATE
+		       ,#{V_USER_ID}
+		       ,'F'
+		       ,#{REMOTE}
+		       ,#{ACCEPT_SEQ}
+		       ,#{SEQ_NO}
+		)
+	</insert>
+	
+	<update id="UPDATE_DETAIL"  parameterType="java.util.Map">
+		UPDATE REC_BUD_BOX_DETAIL 
+		   SET SEQ_NO     = #{SEQ_NO}
+		   	  ,REMARK     = #{REMARK  ,jdbcType=VARCHAR}
+		   	  ,UPT_DATE   = #{UPT_DATE}
+		   	  ,UPT_USER   = #{UPT_USER}
+		   	  ,DEL_YN     = #{DEL_YN}
+		   	  ,REMOTE     = #{REMOTE}
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		   AND SEQ        = #{SEQ}
+		   AND ACCEPT_SEQ = #{ACCEPT_SEQ}
+	</update>
+	
+	
+	<select id="SELECT_USER"  parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT USR.TEMPLE_CD
+			  ,USR.USE_YN
+			  ,USR.REMARK
+			  ,USR.USER_ID
+			  ,TEM.USER_NM
+			  ,USR.CRT_USER
+			  ,TO_CHAR(USR.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+			  ,TO_CHAR(USR.UPT_DATE,'YYYYMMDD') AS UPT_DATE
+			  ,USR.UPT_USER
+			  ,USR.REMOTE
+			  ,USR.SEQ
+			  ,USR.ACCEPT_SEQ
+			  ,USR.SEQ_NO
+		  FROM REC_BUD_BOX_USER_INFO USR, ASP_TEMPLE_USER TEM
+		 WHERE USR.TEMPLE_CD  = TEM.TEMPLE_CD
+		   AND USR.USER_ID    = TEM.USER_ID
+		   AND USR.TEMPLE_CD  = #{V_TEMPLE_CD}
+		   AND USR.SEQ        = #{V_SEQ}
+		   AND USR.ACCEPT_SEQ = #{V_ACCEPT_SEQ}
+		   AND USR.SEQ_NO     = #{V_SEQ_NO}
+	</select>
+	
+	
+	<insert id="INSERT_USER" parameterType="java.util.Map">
+		INSERT INTO REC_BUD_BOX_USER_INFO (
+		       TEMPLE_CD
+		      ,USE_YN
+		      ,REMARK
+		      ,USER_ID
+		      ,CRT_USER
+		      ,CRT_DATE
+		      ,UPT_DATE
+		      ,UPT_USER
+		      ,REMOTE
+		      ,SEQ
+		      ,ACCEPT_SEQ
+		      ,SEQ_NO
+		) VALUES (
+		       #{TEMPLE_CD}
+		      ,'T'
+		      ,#{REMARK  ,jdbcType=VARCHAR}
+		      ,#{USER_ID}
+		      ,#{V_USER_ID}
+		      ,SYSDATE
+		      ,SYSDATE
+		      ,#{V_USER_ID}
+		      ,#{REMOTE}
+		      ,'1'
+		      ,#{ACCEPT_SEQ}
+		      ,#{SEQ_NO}
+		)
+	</insert>
+	
+	
+	<insert id="INSERT_MASTER" parameterType="java.util.Map">
+		INSERT INTO REC_MASTER (
+		       TEMPLE_CD
+		      ,ACCEPT_SEQ
+		      ,ACCEPT_DATE
+		      ,DEL_YN
+		      ,CRT_USER
+		      ,UPT_USER
+		      ,CRT_DATE
+		      ,UPT_DATE
+		      ,REMOTE
+		) VALUES (
+		       #{TEMPLE_CD}
+		      ,#{ACCEPT_SEQ}
+		      ,TO_CHAR(SYSDATE, 'YYYYMMDD')
+		      ,'F'
+		      ,#{CRT_USER}
+		      ,#{UPT_USER}
+		      ,SYSDATE
+		      ,SYSDATE
+		      ,#{REMOTE}
+		)
+	</insert>
+	
+	
+	<insert id="INSERT_SEQ" parameterType="java.util.Map">
+		INSERT INTO REC_SUB (
+		       TEMPLE_CD
+		      ,SEQ
+		      ,ACCEPT_SEQ
+		      ,ACCEPT_GBN
+		      ,DEL_YN
+		) VALUES (
+		       #{TEMPLE_CD}
+		      ,'1'
+		      ,#{ACCEPT_SEQ}
+		      ,'10'
+		      ,'F'
+		)
+	</insert>
+	
+	<insert id="INSERT_MISU" parameterType="java.util.Map">
+		INSERT INTO REC_PAYMENT_HIS (
+		       TEMPLE_CD
+		      ,SEQ
+		      ,ACCEPT_SEQ
+		      ,SUB_DATE
+		      ,AMOUNT
+		      ,CRT_USER
+		      ,REMOTE
+		      ,REMARK
+		) VALUES (
+		       #{TEMPLE_CD}
+		      ,'1'
+		      ,#{ACCEPT_SEQ}
+		      ,(SELECT TO_CHAR(CURRENT_TIMESTAMP,'YYYYMMDDHH24MISSFF') FROM DUAL)
+		      ,#{AMOUNT}
+		      ,#{V_USER_ID}
+		      ,#{REMOTE}
+		      ,''
+		)
+	</insert>
+	
+	<update id="UPDATE_MISU" parameterType="java.util.Map">
+		UPDATE REC_PAYMENT_HIS 
+		   SET AMOUNT     = #{AMOUNT}
+		   	  ,CRT_USER   = #{CRT_USER}
+		   	  ,REMOTE     = #{REMOTE}
+		   	  ,REMARK     = #{REMARK  ,jdbcType=VARCHAR}
+		 WHERE TEMPLE_CD  = #{TEMPLE_CD}
+		   AND SEQ        = #{SEQ}
+		   AND ACCEPT_SEQ = #{ACCEPT_SEQ}
+		   AND SUB_DATE   = #{SUB_DATE}
+	</update>
+</mapper>

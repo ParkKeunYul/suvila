@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC013w_02DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="SEL_YN" column="SEL_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+
+	
+	
+	<select id="SELECT_REC_MANAGE_MGT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		    SELECT TEMPLE_CD
+		    	  ,REL_ACCEPT_GBN
+		    	  ,MANAGE_CODE
+		    	  ,MANAGE_NM
+		    	  ,'F' AS SEL_YN
+			  FROM REC_MANAGE_MGT
+			 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+			   AND USE_YN    = 'T'
+			  ORDER BY MANAGE_CODE
+	</select>
+	
+	
+	<insert id="INSERT_REC_MANAGE_DETAIL" parameterType="java.util.Map">
+		INSERT INTO REC_MANAGE_DETAIL (
+		       TEMPLE_CD,
+		       ACCEPT_SEQ,
+		       SEQ,
+		       MANAGE_CODE,
+		       PAYMENT_AMT,
+		       MANAGE_END_YN,
+		       REMARK,
+		       DEL_YN,
+			   RECEIPT_AMT,
+			   MANAGE_PERIOD,
+			   FIRST_PAYMENT_YYYYMM,
+		       CRT_USER,
+		       UPT_USER,
+		       CRT_DATE,
+		       UPT_DATE,
+		       REMOTE,
+		       REL_ACCEPT_SEQ,
+		       REL_SEQ,
+		       PERIOD_TYPE
+		) VALUES (
+		       #{TEMPLE_CD},
+		       #{ACCEPT_SEQ},
+		       #{SEQ},
+		       #{MANAGE_CODE},
+		       #{BASE_AMT},
+		       DECODE(#{MANAGE_END_YN},'','F',#{MANAGE_END_YN}),
+		       #{REMARK  ,jdbcType=VARCHAR},
+		       DECODE(#{DEL_YN},'','F',#{DEL_YN}),
+			   #{PAYMENT_PLAN_AMT},
+			   #{MANAGE_PERIOD},
+			   #{FIRST_PAYMENT_YYYYMM},
+		       #{V_USER_ID},
+		       #{V_USER_ID},
+		       SYSDATE,
+		       SYSDATE,
+		       #{REMOTE},
+		       #{REL_ACCEPT_SEQ},
+		       #{REL_SEQ},
+		       #{PERIOD_TYPE  ,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+</mapper>

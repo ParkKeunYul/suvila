@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="ACC009w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" /> 		
+	</resultMap>
+
+<!--
+	<resultMap id="acc006w_01a" type="java.util.Map"> 
+		<result  property="CHECK_P" column="CHECK_P"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" />
+	</resultMap>
+-->
+
+	<select id="SELECT_BUDGET" resultMap="boardMap" parameterType="kr.co.o2i.util.CommonMap" >
+		SELECT A.TEMPLE_CD
+		      ,A.ACCT_GBN		      
+		      ,( CASE
+		      		WHEN A.IE_GBN = 'I' THEN '세입'
+		      		ELSE '세출'
+		      	END ) IE_GBN_NM
+		      ,A.IE_GBN
+		      ,A.KWAN
+		      ,A.HANG
+		      ,A.MOK
+		      ,A.ACCT_NM
+		      ,A.KWAN_NAME
+		      ,A.HANG_NAME
+		      ,A.MOK_NAME
+		      ,#{V_YEAR} AS YEAR
+		      ,TO_NUMBER( NVL(B.AMOUNT1 , 0) ) AMOUNT1
+		      ,B.REMARK
+		 FROM ACC_ACCOUNTS A
+		     ,ACC_BUDGET B
+		WHERE A.TEMPLE_CD  = B.TEMPLE_CD(+)
+		  AND A.IE_GBN     = B.IE_GBN(+)
+		  AND A.ACCT_GBN   = B.ACCT_GBN(+)
+		  AND A.KWAN       = B.KWAN(+)
+		  AND A.HANG       = B.HANG(+)
+		  AND A.MOK        = B.MOK(+)
+		  AND A.MOK       != '0'
+		  AND A.TEMPLE_CD  = #{V_TEMPLE_CD}
+		  AND A.ACCT_GBN   = #{V_ACCT_GBN}
+		  AND A.IE_GBN     = #{V_IE_GBN}
+		  <if test='V_KWAN != 0  and V_KWAN != "0" '>
+		  		AND A.KWAN = #{V_KWAN}  
+		  </if>
+		  <if test='V_HANG != 0  and V_HANG != "0" '>
+		  		AND A.HANG = #{V_HANG}
+		  </if>
+		  AND B.YEAR(+)    = #{V_YEAR}
+		ORDER BY A.ACCT_GBN
+		        ,A.IE_GBN
+		        ,A.KWAN
+		        ,A.HANG
+		        ,A.MOK
+	</select>
+
+	<insert id="INSERT_ACC_BUDGET" parameterType="java.util.Map" >
+		INSERT INTO ACC_BUDGET(
+			 TEMPLE_CD
+			,ACCT_GBN
+			,IE_GBN
+			,KWAN
+			,HANG
+			,MOK
+			,YEAR
+			,AMOUNT1
+			,REMARK
+			,CRT_USER
+			,CRT_DATE
+			,UPT_USER
+			,UPT_DATE
+			,REMOTE
+		)VALUES(
+			 #{TEMPLE_CD}
+			,#{ACCT_GBN}
+			,#{IE_GBN}
+			,#{KWAN}
+			,#{HANG}
+			,#{MOK}
+			,#{YEAR}
+			,#{AMOUNT1}
+			,#{REMARK     ,jdbcType=VARCHAR}
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_USER_ID}
+			,SYSDATE
+			,#{V_REMOTE}
+		)
+	</insert>
+	
+	<insert id="UPDATE_ACC_BUDGET" parameterType="java.util.Map" >
+		UPDATE ACC_BUDGET
+		   SET AMOUNT1		= #{AMOUNT1}
+		      ,REMARK		= #{REMARK    ,jdbcType=VARCHAR}
+		      ,UPT_USER		= #{V_USER_ID}
+		      ,UPT_DATE	    = SYSDATE
+		      ,REMOTE		= #{V_REMOTE}
+		 WHERE TEMPLE_CD    = #{TEMPLE_CD}
+		   AND ACCT_GBN     = #{ACCT_GBN}
+		   AND IE_GBN	    = #{IE_GBN}
+		   AND KWAN	        = #{KWAN}
+		   AND HANG	        = #{HANG}
+		   AND MOK		    = #{MOK}
+		   AND YEAR 	    = #{YEAR}
+	</insert>
+
+	<delete id="DELETE_ACC" parameterType="java.util.Map" >
+		DELETE FROM ACC_MONEY_MGT
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND ACT_DATE  = #{ACT_DATE}		    
+	</delete>
+
+
+	<select  id="EXIST_BUDGET" parameterType="java.util.Map"  resultType="Integer" > 
+		SELECT COUNT(*)			
+		  FROM ACC_BUDGET			
+		 WHERE TEMPLE_CD = #{TEMPLE_CD} 	
+		   AND ACCT_GBN  = #{ACCT_GBN} 		
+		   AND IE_GBN    = #{IE_GBN}  			
+		   AND KWAN      = #{KWAN} 			
+		   AND HANG      = #{HANG}			
+		   AND MOK       = #{MOK}				
+		   AND YEAR      = #{YEAR}		
+	</select>
+
+</mapper>

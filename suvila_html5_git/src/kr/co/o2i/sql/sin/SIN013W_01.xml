@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SIN013W_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="USE_YN" column="USE_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+
+	<select  id="SELECT_SMS_WAIT"  parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT ST.TR_COMP
+			  ,ST.TR_MSG_GB
+			  ,ST.TR_MSG_GB TR_MSG_GB_OLD
+			  ,ST.TR_NUM
+			  ,SUBSTR(ST.TR_SENDDATE,1,8) AS DAY
+			  ,SUBSTR(ST.TR_SENDDATE,9) AS TIME
+			  ,ST.TR_PHONE
+			  ,ST.TR_MSG
+			  ,ST.TR_ETC2 AS BUD_NO
+			  ,ACM_REC.NAME AS REC_NAME
+			  ,SIN.NAME_KOR
+		  FROM SMSKT.V_SMS_WAIT  ST
+		  	  ,ASP_CODE_MGT 	 ACM_REC
+		  	  ,SIN_CARD_MASTER	 SIN 
+		 WHERE ST.TR_ETC1  		  = '${V_TEMPLE_CD}'		 
+		   AND ST.TR_ETC3 		  = ACM_REC.GROUP_CD 
+		   AND ST.TR_ETC4 		  = ACM_REC.CODE 
+		   AND ST.TR_ETC1		  = SIN.TEMPLE_CD(+) 
+		   AND ST.TR_ETC2		  = SIN.BUD_NO(+) 
+		   AND ST.TR_ETC4 		 != '15'
+		   AND ST.TR_SENDDATE	 >= TO_CHAR(SYSDATE,'YYYYMMDD')||'000000'
+		   AND ST.TR_MSGTYPE 	  = '1'
+		   <if test='V_SEARCH_WORD != "" and V_SEARCH_WORD != null  '>
+		   		<if test='V_SEARCH_GBN == "BUD_NO" '>
+		   			AND SIN.BUD_NO LIKE '%'||#{V_SEARCH_WORD}||'%'
+		   		</if>
+		   		<if test='V_SEARCH_GBN == "NAME_KOR" '>
+		   			AND SIN.NAME_KOR LIKE '%'||#{V_SEARCH_WORD}||'%' 
+		   		</if>
+		   		<if test='V_SEARCH_GBN == "SACRED_KOR" '>
+		   			AND SIN.SACRED_KOR LIKE '%' || #{V_SEARCH_WORD} || '%'
+		   		</if>
+		   		<if test='V_SEARCH_GBN == "MOBILE_TELNO" '>
+		   			AND ST.TR_PHONE LIKE '%'||REPLACE(#{V_SEARCH_WORD},'-','')||'%'
+		   		</if>
+		   		<if test='V_SEARCH_GBN == "TELNO" '>
+		   			AND SIN.TELNO1 || SIN.TELNO2 || SIN.TELNO3 LIKE '%'||REPLACE(#{V_SEARCH_WORD},'-','')||'%'
+		   		</if>
+		   </if>
+		   <if test='V_SMS_REC != "" and V_SMS_REC != null and V_SMS_REC != "0" '>
+		   		AND  ST.TR_ETC4 = #{V_SMS_REC} 
+		   </if>
+		  ORDER BY SUBSTR(ST.TR_SENDDATE,1,8)
+		  		  ,ST.TR_ETC4
+		  		  ,ST.TR_SENDDATE 
+	</select>
+	
+	
+	
+	<insert id="COPY_LMS_WAIT" parameterType="java.util.Map">
+		INSERT INTO SMSKT.SDK_SMS_SEND(
+			 MSG_ID
+			,NOW_DATE
+			,USER_ID
+			,CDR_ID
+			,SCHEDULE_TYPE
+			,SMS_MSG
+			,CALLBACK
+			,RESERVED1
+			,RESERVED2
+			,RESERVED3
+			,RESERVED4
+			,RESERVED5
+			,RESERVED6
+			,DEST_INFO
+			,SEND_DATE
+		) 
+		SELECT SMSKT.SDK_SMS_SEQ.nextval
+		      ,NOW_DATE
+		      ,USER_ID
+		      ,CDR_ID
+		      ,SCHEDULE_TYPE
+		      ,#{TR_MSG}
+		      ,CALLBACK
+		      ,RESERVED1
+		      ,RESERVED2
+		      ,RESERVED3
+		      ,RESERVED4
+		      ,RESERVED5
+		      ,#{V_USER_ID}
+		      ,DEST_INFO
+		      ,#{DAY}||#{TIME}||'00'
+ 		  FROM SMSKT.SDK_MMS_SEND
+		 WHERE MSG_ID = #{TR_NUM}
+	</insert>
+	
+	<delete id="DELETE_LMS_WAIT"   parameterType="java.util.Map">
+		DELETE FROM SMSKT.SDK_MMS_SEND
+ 		 WHERE MSG_ID = #{TR_NUM}
+	</delete>
+	
+	<update id="UPDATE_LMS_WAIT"  parameterType="java.util.Map">
+		UPDATE SMSKT.SDK_MMS_SEND
+		   SET SEND_DATE  = #{DAY}||#{TIME}||'00'
+		       ,MMS_MSG   = #{V_TR_MSG}
+		       ,DEST_INFO = SUBSTR(DEST_INFO,1,INSTR(DEST_INFO,'^')-1)||'^'||#{TR_PHONE}
+		       ,RESERVED6 = #{V_USER_ID}
+		 WHERE MSG_ID     = #{TR_NUM}
+	</update>
+	
+	<insert id="COPY_SMS_WAIT" parameterType="java.util.Map">
+		INSERT INTO SMSKT.SDK_MMS_SEND(
+			 MSG_ID
+			,NOW_DATE
+			,USER_ID
+			,CDR_ID
+			,SCHEDULE_TYPE
+			,MMS_MSG
+			,CALLBACK
+			,RESERVED1
+			,RESERVED2
+			,RESERVED3
+			,RESERVED4
+			,RESERVED5
+			,RESERVED6
+			,DEST_INFO
+			,SEND_DATE
+		)
+		SELECT SMSKT.SDK_MMS_SEQ.nextval
+			  ,NOW_DATE
+			  ,USER_ID
+			  ,CDR_ID
+			  ,SCHEDULE_TYPE
+			  ,#{TR_MSG}
+			  ,CALLBACK
+			  ,RESERVED1
+			  ,RESERVED2
+			  ,RESERVED3
+			  ,RESERVED4
+			  ,RESERVED5
+			  ,#{V_USER_ID}
+			  ,DEST_INFO
+			  ,#{DAY}||#{TIME}||'00'
+		  FROM SMSKT.SDK_SMS_SEND
+		 WHERE MSG_ID = #{TR_NUM}
+	</insert>
+	
+	<delete id="DELETE_SMS_WAIT"   parameterType="java.util.Map">
+		DELETE FROM SMSKT.SDK_SMS_SEND
+ 		 WHERE MSG_ID = #{TR_NUM}
+	</delete>
+	
+	<update id="UPDATE_SMS_WAIT" parameterType="java.util.Map" >
+		UPDATE SMSKT.SDK_SMS_SEND
+		   SET SEND_DATE  = #{DAY}||#{TIME}||'00'
+		       ,SMS_MSG   = #{V_TR_MSG}
+		       ,DEST_INFO = SUBSTR(DEST_INFO,1,INSTR(DEST_INFO,'^')-1)||'^'||#TR_PHONE#
+		       ,RESERVED6 = #{V_USER_ID}
+		 WHERE MSG_ID     = #{TR_NUM}
+	</update>
+	
+</mapper>

@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="REC011w_03DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result property="CONTENT" column="CONTENT" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler" />
+		<result  property="SEL_YN" column="SEL_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+
+
+	<select id="SELECT_SUPPORT_MGT" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT 0 AS SORT
+			  ,''    AS SUPPORT_CODE
+			  ,'선택' AS SUPPORT_NM
+		  FROM REC_SUPPORT_MGT
+		UNION
+		SELECT 1 AS SORT
+			  ,SUPPORT_CODE
+			  ,SUPPORT_NM
+		  FROM REC_SUPPORT_MGT
+		 WHERE TEMPLE_CD   = #{V_TEMPLE_CD}
+		   AND USE_YN      = 'T'
+		ORDER BY SORT
+			    ,SUPPORT_CODE
+	</select>
+	
+	
+	<select id="SELECT_DETAIL" parameterType="kr.co.o2i.util.CommonMap"  resultMap="boardMap">
+		SELECT
+			TEMPLE_CD, 
+			CMS_TRADE_CD,
+			ACCEPT_SEQ, 
+			SEQ, 
+			PROPOSAL_BUD_NO,
+			PROPOSAL_BUD_NM,
+			DONGCHAM_BUD_NO,
+			SUPPORT_BUD_NAME,
+			APPROVAL_GBN,
+			SUPPORT_CODE,
+			SUPPORT_NM,
+			BUNNAB_DAY,
+			PAYMENT_AMT,
+			FIRST_PAYMENT_YYYYMM,
+			RECEIPT_AMT,
+			SUPPORT_END_YN, 
+			SUPPORT_PERIOD,
+			REMARK, 
+			DEL_YN,
+			MEMO,
+			AMOUNT,
+			MISU_MONTH,
+			SMS_YN,
+		    MOBILE_TELNO,
+		    FN_GET_NM('MOBILE',TEMPLE_CD,DONGCHAM_BUD_NO) SUPPORT_MOBILE_TELNO,
+		    DECODE(SUPPORT_PERIOD,0,'',TO_CHAR(ADD_MONTHS(TO_DATE(FIRST_PAYMENT_YYYYMM,'YYYYMM'),SUPPORT_PERIOD-1),'YYYYMM')) FINAL_PAYMENT_YYYYMM,
+		    ADDR1,
+		    ADDR2,
+		    AGE,
+		    (SELECT NVL(USER_NM,'') FROM ASP_TEMPLE_USER WHERE TEMPLE_CD = T1.TEMPLE_CD AND USER_ID = T1.CRT_USER AND USE_YN ='T') AS CRT_NM,
+		    ACCEPT_DATE,
+		    SUPPORT_END_DATE
+		FROM
+		(
+			SELECT
+				DET.TEMPLE_CD,
+				MST.CMS_TRADE_CD,
+				DET.ACCEPT_SEQ, 
+				DET.SEQ, 
+				MST.PROPOSAL_BUD_NO,
+				FN_GET_NM('BUD',MST.TEMPLE_CD,MST.PROPOSAL_BUD_NO)AS PROPOSAL_BUD_NM, 
+				FN_GET_NM('BUD',DET.TEMPLE_CD,DET.DONGCHAM_BUD_NO)AS SUPPORT_BUD_NAME,
+				DET.DONGCHAM_BUD_NO,
+				MST.APPROVAL_GBN,
+				DET.SUPPORT_CODE,
+				MGT.SUPPORT_NM,
+				MST.BUNNAB_DAY,
+				DET.PAYMENT_AMT,
+				DET.FIRST_PAYMENT_YYYYMM,
+				DET.RECEIPT_AMT,
+				DET.SUPPORT_END_YN, 
+				DET.SUPPORT_PERIOD, 
+				DET.REMARK, 
+				DET.DEL_YN,
+				MST.MEMO,
+				SUM(RPH.AMOUNT) AS AMOUNT,
+				CASE WHEN DET.PAYMENT_AMT = 0 THEN 0
+		        	ELSE
+		            	CASE WHEN TO_CHAR(SYSDATE,'YYYYMM') &lt; DET.FIRST_PAYMENT_YYYYMM THEN 0
+		            	ELSE
+		                    CASE WHEN DET.SUPPORT_PERIOD = 0 THEN
+		                        (SUM(RPH.AMOUNT)/DET.PAYMENT_AMT) - (TRUNC(MONTHS_BETWEEN(SYSDATE,TO_DATE(DET.FIRST_PAYMENT_YYYYMM,'YYYYMM')))+1)
+		                        WHEN DET.RECEIPT_AMT &lt;= SUM(RPH.AMOUNT) THEN
+		                            0
+		                        ELSE -1
+		                    END
+		                END
+		        END AS MISU_MONTH,
+		    DECODE(MST.SMS_YN,'T',DECODE(SMS.MOBILE_TELNO1||SMS.MOBILE_TELNO2||SMS.MOBILE_TELNO3,NULL,'N','Y'),'N') SMS_YN,
+		    SMS.MOBILE_TELNO1 || DECODE(SMS.MOBILE_TELNO1,NULL,'','-') || SMS.MOBILE_TELNO2 || DECODE(SMS.MOBILE_TELNO2,NULL,'','-') || SMS.MOBILE_TELNO3 AS MOBILE_TELNO,
+		    SMS.ADDR1,
+		    SMS.ADDR2,
+		    (CASE
+		     WHEN length(REPLACE(SMS.BIRTHDAY, ' ', '')) >=4   
+		     	AND SUBSTR( REPLACE(SMS.BIRTHDAY, ' ', '') , 0, 4) &lt;> '0000'  
+		     	AND SUBSTR( REPLACE(SMS.BIRTHDAY, ' ', '') , 0, 4) > 1900 
+		     	AND SUBSTR( REPLACE(SMS.BIRTHDAY, ' ', '') , 0, 4) &lt; 2020
+		        THEN (to_char(sysdate, 'YYYY') - substr(REPLACE(SMS.BIRTHDAY, ' ', ''),0,4 )+1)||''
+		     ELSE ''
+		    END   ) as AGE,
+		    DET.CRT_USER,
+		    TO_CHAR(TO_DATE(MST.ACCEPT_DATE,'YYYYMMDD'),'YYYY/MM/DD') AS ACCEPT_DATE,
+		    DET.SUPPORT_END_DATE
+			FROM REC_SUPPORT_DETAIL DET, 
+				REC_SUPPORT_MGT MGT, 
+				REC_MASTER MST, 
+				REC_SUB RS, 
+				REC_PAYMENT_HIS RPH,
+				SIN_CARD_MASTER SMS
+			WHERE DET.TEMPLE_CD     	= MGT.TEMPLE_CD
+			AND DET.SUPPORT_CODE    	= MGT.SUPPORT_CODE
+			AND DET.TEMPLE_CD       	= MST.TEMPLE_CD
+			AND DET.ACCEPT_SEQ      	= MST.ACCEPT_SEQ
+			AND DET.DEL_YN            	= 'F'
+			AND MST.TEMPLE_CD 			= RS.TEMPLE_CD
+			AND MST.ACCEPT_SEQ 			= RS.ACCEPT_SEQ
+			AND RS.TEMPLE_CD 			= RPH.TEMPLE_CD
+			AND RS.ACCEPT_SEQ 			= RPH.ACCEPT_SEQ
+			AND RS.SEQ 					= RPH.SEQ
+			AND RS.TEMPLE_CD 			= DET.TEMPLE_CD
+			AND RS.ACCEPT_SEQ 			= DET.ACCEPT_SEQ
+			AND RS.SEQ 					= DET.SEQ
+			AND DET.TEMPLE_CD       	= '${V_TEMPLE_CD}'
+		    AND MST.TEMPLE_CD  			= SMS.TEMPLE_CD(+)
+		  	AND MST.PROPOSAL_BUD_NO 	= SMS.BUD_NO(+)
+		  	<if test="V_DATE_GBN == 1">
+		  		AND MST.ACCEPT_DATE BETWEEN '${V_ACCEPT_SDATE}' AND '${V_ACCEPT_EDATE}'
+		  	</if>
+		  	<if test="V_DATE_GBN == 2">
+		  		AND RPH.PAYMENT_YYYYMM BETWEEN '${V_ACCEPT_SDATE}' AND '${V_ACCEPT_EDATE}'
+		  	</if>
+		  	<if test='V_PROPOSAL_BUD_NO != null and  V_PROPOSAL_BUD_NO != "" '>
+		  		AND MST.PROPOSAL_BUD_NO = #{V_PROPOSAL_BUD_NO}
+		  	</if>
+		  	<if test='V_SUPPORT_CODE != null and  V_SUPPORT_CODE != "" '>
+		  		AND DET.SUPPORT_CODE    = #{V_SUPPORT_CODE}
+		  	</if>
+			<if test='VV_USER_ID != null and  VV_USER_ID != "" '>
+				AND DET.CRT_USER = #{VV_USER_ID}
+			</if>
+			<if test='V_CLASS_CD != "0" and V_CLASS_CD != null and  V_CLASS_CD != "" '>
+				AND MST.PROPOSAL_BUD_NO IN (SELECT BUD_NO 
+											  FROM SIN_CLASS_INFO 
+											 WHERE TEMPLE_CD = MST.TEMPLE_CD 
+											   AND CLASS_CD = #{V_CLASS_CD})
+			</if>
+			<if test='V_APPROV != null and  V_APPROV != "" '>
+				AND MST.APPROVAL_GBN = #{V_APPROV}
+			</if>
+			GROUP BY DET.TEMPLE_CD, 
+				MST.CMS_TRADE_CD,
+				DET.ACCEPT_SEQ, 
+				DET.SEQ, 
+				MST.PROPOSAL_BUD_NO,
+				FN_GET_NM('BUD',MST.TEMPLE_CD,MST.PROPOSAL_BUD_NO), 
+				FN_GET_NM('BUD',DET.TEMPLE_CD,DET.DONGCHAM_BUD_NO),
+				DET.DONGCHAM_BUD_NO,
+				MST.APPROVAL_GBN,
+				DET.SUPPORT_CODE,
+				MGT.SUPPORT_NM,
+				MST.BUNNAB_DAY,
+				DET.PAYMENT_AMT,
+				DET.FIRST_PAYMENT_YYYYMM,
+				DET.RECEIPT_AMT,
+				DET.SUPPORT_END_YN, 
+				DET.SUPPORT_PERIOD,
+				DET.REMARK, 
+				DET.DEL_YN,
+				MST.MEMO,
+				DECODE(MST.SMS_YN,'T',DECODE(SMS.MOBILE_TELNO1||SMS.MOBILE_TELNO2||SMS.MOBILE_TELNO3,NULL,'N','Y'),'N'),
+				SMS.MOBILE_TELNO1 || DECODE(SMS.MOBILE_TELNO1,NULL,'','-') || SMS.MOBILE_TELNO2 || DECODE(SMS.MOBILE_TELNO2,NULL,'','-') || SMS.MOBILE_TELNO3,
+				SMS.ADDR1,
+			    SMS.ADDR2,
+			   (CASE
+			     WHEN length(REPLACE(SMS.BIRTHDAY, ' ', '')) >=4   
+			     	AND SUBSTR(REPLACE(SMS.BIRTHDAY, ' ', '') , 0, 4) &lt;> '0000'  
+			     	AND SUBSTR(REPLACE(SMS.BIRTHDAY, ' ', '') , 0, 4) > 1900 
+			     	AND SUBSTR(REPLACE(SMS.BIRTHDAY, ' ', '') , 0, 4) &lt; 2020
+			        THEN (to_char(sysdate, 'YYYY') - substr(REPLACE(SMS.BIRTHDAY, ' ', ''),0,4 )+1)||''
+			     ELSE ''
+			    END   ),
+			    DET.CRT_USER,
+		        TO_CHAR(TO_DATE(MST.ACCEPT_DATE,'YYYYMMDD'),'YYYY/MM/DD'),
+		        DET.SUPPORT_END_DATE
+		) T1
+		WHERE 1=1
+		<if test="V_PAY_STATE == 1">
+			AND MISU_MONTH >= 0
+		</if>		
+		<if test="V_PAY_STATE == 2">
+			AND MISU_MONTH &lt; 0 		
+		</if>
+		<if test="V_DATE_GBN == 2">
+			AND AMOUNT > 0
+		</if>
+		ORDER BY TEMPLE_CD, ACCEPT_SEQ, SEQ
+	</select>
+	
+	<update id="UPDATE_REC_SUPPORT_DETAIL" parameterType="java.util.Map">
+		UPDATE REC_SUPPORT_DETAIL 
+		  SET  SUPPORT_END_YN 		= #{SUPPORT_END_YN},
+			   REMARK				= #{REMARK  ,jdbcType=VARCHAR},
+			   UPT_USER			    = #{V_USER_ID},
+			   UPT_DATE			    = SYSDATE,
+			   REMOTE				= #{V_REMOTE},
+			   SUPPORT_END_DATE     = #{SUPPORT_END_DATE  ,jdbcType=VARCHAR}
+		 WHERE TEMPLE_CD 		    = #{V_TEMPLE_CD}
+		   AND SEQ					= #{SEQ}
+		   AND ACCEPT_SEQ			= #{ACCEPT_SEQ}
+		   AND SUPPORT_CODE		    = #{SUPPORT_CODE}
+	</update>
+	
+</mapper>

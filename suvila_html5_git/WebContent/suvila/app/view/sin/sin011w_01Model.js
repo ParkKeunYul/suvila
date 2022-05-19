@@ -1,0 +1,77 @@
+Ext.define('ExFrm.view.sin.sin011w_01Model', {
+    extend:'Ext.app.ViewModel', 
+    alias: 'viewmodel.sin011w_01', 
+    stores:{ 
+    	ds_main:{
+        	fields:['REMARK'],
+        	proxy:{
+                type:'ajax',
+                url:'/sin/SIN011W_01/select.suvila',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'
+                }
+				,timeout : 1000 * 60 * 30
+            }
+            ,autoLoad:false
+        },
+        ds_classMgt:{
+        	fields:['CODE'],
+        	proxy:{
+                type:'ajax',
+                url:'/asp/CodeSearch/sindoClassMgt.suvila',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'
+                }
+            }
+            ,autoLoad:false
+        },
+        ds_org_NmAll:{
+        	fields:['CODE'],
+        	proxy:{
+                type:'ajax',
+                url:'/rec/REC017W_01/groupmgtSelect.suvila',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'
+                }
+            }
+            ,autoLoad:false
+        },
+        ds_sms_doc:{
+        	fields:['CODE'],
+        	proxy:{
+                type:'ajax',
+                url:'/sin/SIN011W_01/selectSmsDoc.suvila',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'
+                }
+            }
+            ,autoLoad:false
+        },
+        ds_smsItem:{
+            fields:['field1'],
+            data:[{
+            	CODE:'', VALUE:'선택'
+            },{
+            	CODE:'TEMPLE_NM', VALUE:"[사찰명]"
+            },{
+            	CODE:'NAME_KOR', VALUE:"[이름]"
+            }],
+            autoLoad:true
+        },
+        ds_sms:{
+        	fields:['CODE'],
+        	proxy:{
+                type:'ajax',
+                reader:{
+                    type:'json',
+                    rootProperty:'data.list'
+                }
+            }
+            ,autoLoad:false
+        },
+    }
+});

@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="SIN010w_01DAO">
+
+	<resultMap id="boardMap" type="java.util.Map"> 
+		<result  property="USE_YN" column="USE_YN"    typeHandler="kr.co.o2i.handler.CustomTypeHandler" /> 
+	</resultMap>
+
+	<select  id="SELECT_MGT"  parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT TEMPLE_CD
+		      ,CLASS_CD
+		      ,CLASS_NAME
+		      ,USE_YN
+		      ,REMARK
+		      ,CRT_USER
+		      ,TO_CHAR(CRT_DATE,'YYYYMMDD') AS CRT_DATE
+		      ,UPT_USER
+		      ,TO_CHAR(UPT_DATE,'YYYYMMDD') AS UPT_DATE
+		      ,REMOTE
+		      ,SORT_SEQ
+		  FROM SIN_CLASS_MGT
+		 WHERE TEMPLE_CD  = #{V_TEMPLE_CD}
+		 ORDER by SORT_SEQ ASC  
+	</select>
+	
+	<insert id="INSERT_MGT" parameterType="java.util.Map">
+		INSERT INTO SIN_CLASS_MGT (
+		        TEMPLE_CD
+		       ,CLASS_CD
+		       ,CLASS_NAME
+		       ,USE_YN
+		       ,REMARK
+		       ,CRT_USER
+		       ,CRT_DATE
+		       ,UPT_USER
+		       ,UPT_DATE
+		       ,REMOTE
+		       ,SORT_SEQ
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,(SELECT NVL(MAX(CLASS_CD)+1,1)
+		          FROM SIN_CLASS_MGT
+		         WHERE TEMPLE_CD = #{TEMPLE_CD})
+		       ,#{CLASS_NAME}
+		       ,NVL(#{USE_YN},'T')
+		       ,#{REMARK ,jdbcType=VARCHAR}
+		       ,#{CRT_USER}
+		       ,SYSDATE
+		       ,#{UPT_USER}
+		       ,SYSDATE
+		       ,#{REMOTE}
+		       ,#{SORT_SEQ}
+		)
+	</insert>
+	
+	<update id="UPDATE_MGT" parameterType="java.util.Map">
+		UPDATE SIN_CLASS_MGT 
+		   SET CLASS_NAME = #{CLASS_NAME}
+		      ,USE_YN     = #{USE_YN}
+		      ,REMARK     = #{REMARK,jdbcType=VARCHAR}
+		      ,UPT_USER   = #{UPT_USER}
+		      ,UPT_DATE   = SYSDATE
+		      ,REMOTE     = #{REMOTE}
+		      ,SORT_SEQ   = #{SORT_SEQ}
+ 		 WHERE TEMPLE_CD  = #{TEMPLE_CD}
+   		   AND CLASS_CD   = #{CLASS_CD}
+	</update>
+	
+	<delete id="DELETE_MGT" parameterType="java.util.Map">
+		DELETE FROM SIN_CLASS_MGT
+ 		 WHERE TEMPLE_CD  = #{TEMPLE_CD}
+   	       AND CLASS_CD   = #{CLASS_CD}
+	</delete>
+	
+	<delete id="DELETE_INFO_ALL" parameterType="java.util.Map">
+		DELETE FROM SIN_CLASS_INFO
+         WHERE TEMPLE_CD = #{TEMPLE_CD}
+           AND CLASS_CD  = #{CLASS_CD}
+	</delete>
+	
+	<!-- <select  id="SELECT_INFO"  parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT TEMPLE_CD
+		      ,BUD_NO
+		      ,CLASS_CD
+	  	  FROM SIN_CLASS_INFO
+	 	 WHERE TEMPLE_CD = #{V_TEMPLE_CD}
+	   	   AND BUD_NO    = #{V_BUD_NO}
+	</select> -->
+	
+	<select  id="SELECT_INFO"  parameterType="kr.co.o2i.util.CommonMap" resultMap="boardMap">
+		SELECT SCI.TEMPLE_CD
+		      ,SCI.BUD_NO
+		      ,SCM.NAME_KOR
+		      ,SCM.TELNO1
+		      ,SCM.TELNO2
+		      ,SCM.TELNO3
+		      ,SCM.TELNO1 || DECODE(SCM.TELNO1,'','','-') || SCM.TELNO2 || DECODE(SCM.TELNO2,'','','-') || SCM.TELNO3 AS TELNO
+		      ,MOBILE_TELNO1
+		      ,MOBILE_TELNO2
+		      ,MOBILE_TELNO3
+		      ,SCM.MOBILE_TELNO1 || DECODE(SCM.MOBILE_TELNO1,'','','-') || SCM.MOBILE_TELNO2 || DECODE(SCM.MOBILE_TELNO2,'','','-') || SCM.MOBILE_TELNO3 AS MOBILE_TELNO
+		      ,SCM.ADDR1 || SCM.ADDR2 AS ADDR
+		      ,SCM.ADDR1
+		      ,SCM.ADDR2||' '||FN_ADDR_BLDG(SCM.BLDG_NUM) ADDR2
+		      ,SCM.ZIP_CD
+		      ,SCI.CLASS_CD
+		      ,MGT.CLASS_NAME
+		      ,SCI.MEMO
+		      ,SCI.CRT_USER
+		      ,TO_CHAR(SCI.CRT_DATE,'YYYYMMDD') AS CRT_DATE
+		      ,SCI.UPT_USER
+		      ,SCM.SACRED_KOR
+		      ,(SELECT CARD_NO 
+		          FROM SIN_CARD_HIS 
+		         WHERE TEMPLE_CD = #{V_TEMPLE_CD} 
+		           AND BUD_NO = SCI.BUD_NO 
+		           AND SEQ = (SELECT MAX(SEQ) FROM SIN_CARD_HIS WHERE TEMPLE_CD = #{V_TEMPLE_CD} AND BUD_NO = SCI.BUD_NO  )
+		        ) AS CARD_NO
+		      ,(CASE
+		           WHEN length(REPLACE(SCM.BIRTHDAY, ' ', '')) >=4   AND SUBSTR(replace(SCM.BIRTHDAY,' ','') , 0, 4) &lt;&gt; '0000'  AND SUBSTR(replace(SCM.BIRTHDAY,' ','') , 0, 4) > 1900 AND SUBSTR(replace(SCM.BIRTHDAY,' ','') , 0, 4) &lt; 2020
+		              THEN (to_char(sysdate, 'YYYY') - substr(REPLACE(SCM.BIRTHDAY, ' ', ''),0,4 )+1)||''
+		           ELSE ''
+		          END   ) as AGE
+		  FROM SIN_CLASS_INFO SCI
+		      ,SIN_CARD_MASTER SCM
+		      ,SIN_CLASS_MGT MGT
+		 WHERE SCI.TEMPLE_CD = SCM.TEMPLE_CD
+		   AND SCI.BUD_NO    = SCM.BUD_NO
+		   AND SCI.TEMPLE_CD = MGT.TEMPLE_CD
+		   AND SCI.CLASS_CD  = MGT.CLASS_CD
+		   AND SCM.DEL_YN = 'F'
+		   AND SCI.TEMPLE_CD = #{V_TEMPLE_CD}
+		   AND SCI.CLASS_CD  = #{V_CLASS_CD}
+	</select>
+	
+	<insert id="INSERT_INFO" parameterType="java.util.Map">
+		INSERT INTO SIN_CLASS_INFO (
+		        TEMPLE_CD
+		       ,BUD_NO
+		       ,MEMO
+		       ,CRT_USER
+		       ,CRT_DATE
+		       ,UPT_DATE
+		       ,UPT_USER
+		       ,REMOTE
+		       ,CLASS_CD
+		) VALUES (
+		        #{TEMPLE_CD}
+		       ,#{BUD_NO}
+		       ,#{MEMO,jdbcType=VARCHAR}
+		       ,#{CRT_USER}
+		       ,SYSDATE
+		       ,SYSDATE
+		       ,#{UPT_USER}
+		       ,#{REMOTE}
+		       ,#{CLASS_CD}
+		)
+	</insert>
+	
+	<delete id="DELETE_INFO" parameterType="java.util.Map">
+		DELETE FROM SIN_CLASS_INFO
+		 WHERE TEMPLE_CD = #{TEMPLE_CD}
+		   AND BUD_NO    = #{BUD_NO}
+		   AND CLASS_CD  = #{CLASS_CD}
+	</delete>
+	
+	
+	<select  id="SELECT_DUPLE_INFO" parameterType="java.util.Map" resultType="Integer">
+		SELECT COUNT(BUD_NO) AS BUD_COUNT                     
+	      FROM SIN_CLASS_INFO                               
+	     WHERE TEMPLE_CD = #{TEMPLE_CD} 
+	       AND CLASS_CD  = #{CLASS_CD} 
+	       AND BUD_NO    = #{BUD_NO} 
+	</select>
+	
+</mapper>

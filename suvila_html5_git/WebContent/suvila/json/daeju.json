@@ -1,0 +1,43 @@
+{
+	"msg":"성공",
+	"data":{
+		"info":{
+			"SEX_NM":"남자",
+			"UPT_USER":"matrix59",
+			"BUD_NO":"01-00004-0-02",
+			"PICTURE":"/asp/sin/SIN001P_05.bf?action=selectImage&X-UIClient=G40&bud_no=01-00004-0-02",
+			"EMAIL_TRANS":"F",
+			"ONESELF_YN":"F",
+			"EMAIL":"@",
+			"daejuBudNo":"01-00004-0-02",
+			"SINDO_GBN":"T",
+			"HWAJU_YN":"F",
+			"ADDR2":"풍전빌딩 2층 오투아이",
+			"ADDR1":"서울특별시 마포구 망원동 472-4",
+			"NAME_KOR":"오투아이",
+			"NEWS_YN":"F",
+			"SORT_SEQ":2,
+			"ISSUE_DATE":"20170223",
+			"REMOTE":"127.0.0.1",
+			"DAEJU_YN":1,
+			"ZIP_CD":"03962",
+			"CRT_USER":"matrix59",
+			"LUNAR_SOLAR":"T",
+			"POST_TRANS":"F",
+			"TEMPLE_CD":"000008",
+			"REPRESEN_REL":"건명",
+			"SMS_TRANS":"F",
+			"BLDG_NUM":"1144012300104720004000001",
+			"CARD_ISSUE_CNT":0,
+			"CHECK_P":"T",
+			"CRT_DATE":"20170223",
+			"SINDO_SEX_GBN":"T",
+			"BUD_CODE":"01-00004-0",
+			"NATION_CD":"223",
+			"UPT_DATE":"20170227",
+			"SEX_GBN":"T",
+			"BUNGA_YN":"F"
+		}
+	},
+	"success":true
+}

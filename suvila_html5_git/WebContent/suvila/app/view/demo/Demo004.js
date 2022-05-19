@@ -1,0 +1,120 @@
+Ext.define('ExFrm.view.demo.Demo004',{
+    extend:'ExFrm.view.widget.container.ExWindowMain',
+    alias:'widget.demo004',
+    requires:['ExFrm.view.demo.Demo004Controller',
+    'ExFrm.view.demo.Demo004Model'],
+    controller:'demo004',
+    viewModel:{
+        type:'demo004'
+    },
+    name:'Demo004',
+    title:'화면연동 데이터 전달',
+    closable:true,
+    layout:{
+        type:'vbox',
+        align:'stretch'
+    },
+    items:[{
+        xtype:'exformmain',
+        layout:{
+            type:'vbox',
+            align:'stretch'
+        },
+        items:[
+        {
+            xtype:'exfieldsetbox',
+            items:[{
+                xtype:'textfield',
+                reference:'sourceInput',
+            },{
+                xtype:'exbutton',
+                text:'찾기',
+                handler:'onPop'
+            },{
+                xtype:'textfield',
+                reference:'targetInput'
+            }]
+        },{
+            flex:1,
+            layout:{
+                type:'vbox',
+                align:'stretch'
+            },
+            height:300,
+            items:[{
+                layout:'hbox',
+                items:[{
+                    html:'화면연동 데이터 전달'
+                }]
+            },{
+                exGroupRef:true,
+                xtype:'exgrid',
+                reference:'selectGrid1',
+                width:'100%',
+                plugins:[{
+                    ptype:'cellediting'
+                }],     
+                selModel: {
+                    mode: 'MULTI'
+                },        
+                bind:{
+                    store:'{testInfo}'
+                }, 
+                columns:[
+                {                       
+                    text:'고객번호',
+                    dataIndex:'custNo',
+                    width:100,
+                    xtype:'excolumn',
+                    exAlign:'center'
+                },{
+                    xtype:'widgetcolumn',
+                    widget:{
+                        xtype:'button',
+                        record:{},
+                        text:'팝업',
+                        handler:'onPopupWidget'
+                    },
+                    onWidgetAttach:function(col, widget, rec, row){
+                        widget.record = rec; //(rec.get('check1'));
+                    }
+                },{
+
+                    xtype:'excolumn',
+                    text:'고객명',
+                    dataIndex:'custName',
+                    width:100
+                },{
+                    text:'생년월일',
+                    dataIndex:'birth',
+                    width:100,
+                    xtype:'excolumn',
+                    exType:'date'
+                },{
+                    text:'포인트',
+                    dataIndex:'point',
+                    width:100,
+                    xtype:'excolumn',
+                    exType:'number'
+                },{
+                    text:'주소',
+                    dataIndex:'addr',
+                    xtype:'excolumn',
+                    width:100,
+                }],
+                flex:1
+                
+            },{
+                xtype:'tbspacer',
+                height:10
+            },{
+                xtype:'exgridpagearrows',
+                reference:'detailGridArrows',
+                storeName:'detailInfo',
+                limit:10,
+                pageNumberCount:5
+            }]
+            
+        }]
+    }]
+})
